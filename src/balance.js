@@ -66,7 +66,7 @@ const BALANCE = {
   events: { minMin: 10, maxMin: 25 },
 
   // Storage & economy
-  storage: { invSlots: 100, invBase: 2500, invGrowth: 1.2, bankSlots: 30, invUp: 10, bankUp: 15, invCost: [5000, 40000, 250000, 1.5e6, 9e6], bankCost: [2000, 20000, 150000, 1e6, 6e6, 3.5e7] },
+  storage: { invSlots: 100, invHalf: 0.5, invGrowth: 6, bankSlots: 30, invUp: 10, bankUp: 15, invCost: [5000, 40000, 250000, 1.5e6, 9e6], bankCost: [2000, 20000, 150000, 1e6, 6e6, 3.5e7] },
   market: { saturation: 2500, floor: 0.15, halfLifeH: 2, dailySwing: 0.06 },
   // Prices rise with your level so gold stays meaningful as gathering income grows (~1.21x per level).
   // Shop items grow by priceGrowth per level from level 1 (never below 1.5x their sell value); upgrades/fees use the same index.

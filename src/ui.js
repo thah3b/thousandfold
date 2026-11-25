@@ -456,7 +456,7 @@ function tabAch() {
 
 // ---------- Shop ----------
 const shopPrice = (key, d) => { const it = ITEM(key), base = (it.cost || it.value * 4) * (1 - d.discount) * REGION_BY[ch.loc].priceMult; return it.type === 'supply' ? Math.ceil(base * Math.pow(BALANCE.economy.supplyGrowth, gateLevel(ch) - 1)) : Math.max(Math.ceil((it.value || 0) * 1.5), scaled(ch, base, 1)); };
-const hgCost = () => { const c = BALANCE.offline.upgradeCost[ch.offlineUpgrades]; return c ? scaled(ch, c, 1) : 0; }, invUpCost = () => scaled(ch, Math.round(BALANCE.storage.invBase * Math.pow(BALANCE.storage.invGrowth, ch.invUps || 0)), 1), bankUpCost = () => { const c = BALANCE.storage.bankCost[ch.bankUps]; return c ? scaled(ch, c, 1) : 0; };
+const hgCost = () => { const c = BALANCE.offline.upgradeCost[ch.offlineUpgrades]; return c ? scaled(ch, c, 1) : 0; }, invUpCost = () => { const S = BALANCE.storage, n = ch.invUps || 0, last = S.invCost.length - 1, base = n <= last ? S.invCost[n] : S.invCost[last] * Math.pow(S.invGrowth, n - last); return scaled(ch, Math.round(base * S.invHalf), 1); }, bankUpCost = () => { const c = BALANCE.storage.bankCost[ch.bankUps]; return c ? scaled(ch, c, 1) : 0; };
 const enchantGold = it => scaled(ch, BALANCE.enchant.goldCost(it.plus), it.lvl);
 function merchantOffers() {
   const day = Math.floor(Date.now() / 864e5);

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thousandfold v0.12a</title>
+<title>Thousandfold v0.12b</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <style>
@@ -269,8 +269,12 @@ main{grid-area:main;padding:18px max(16px,1.6vw) 40px}
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.12a';
+const GAME_VERSION = 'v0.12b';
 const PATCH_NOTES = [
+  { v: 'v0.12b', date: '2026-11-24', title: 'Inventory upgrade prices', notes: [
+    'Inventory upgrades are back on the original price curve, at half price: 2,500, 20,000, 125,000, 750,000, then 4.5 million gold, and each one after that costs 6 times the last. Prices still rise with your level.',
+    'There is still no limit on how many you can buy. Your 100-slot bag stays.',
+  ] },
   { v: 'v0.12a', date: '2026-11-24', title: 'Bigger bags', notes: [
     'Every character now starts with 100 inventory slots instead of 60. Existing characters get +40 slots on top of anything they already bought.',
     'Inventory upgrades (Bank → Storage) are half price, and there is no longer a limit: buy as many as you like. Each one costs 20% more than the last.',
@@ -480,7 +484,7 @@ const BALANCE = {
   events: { minMin: 10, maxMin: 25 },
 
   // Storage & economy
-  storage: { invSlots: 100, invBase: 2500, invGrowth: 1.2, bankSlots: 30, invUp: 10, bankUp: 15, invCost: [5000, 40000, 250000, 1.5e6, 9e6], bankCost: [2000, 20000, 150000, 1e6, 6e6, 3.5e7] },
+  storage: { invSlots: 100, invHalf: 0.5, invGrowth: 6, bankSlots: 30, invUp: 10, bankUp: 15, invCost: [5000, 40000, 250000, 1.5e6, 9e6], bankCost: [2000, 20000, 150000, 1e6, 6e6, 3.5e7] },
   market: { saturation: 2500, floor: 0.15, halfLifeH: 2, dailySwing: 0.06 },
   // Prices rise with your level so gold stays meaningful as gathering income grows (~1.21x per level).
   // Shop items grow by priceGrowth per level from level 1 (never below 1.5x their sell value); upgrades/fees use the same index.
@@ -4403,7 +4407,7 @@ function tabAch() {
 
 // ---------- Shop ----------
 const shopPrice = (key, d) => { const it = ITEM(key), base = (it.cost || it.value * 4) * (1 - d.discount) * REGION_BY[ch.loc].priceMult; return it.type === 'supply' ? Math.ceil(base * Math.pow(BALANCE.economy.supplyGrowth, gateLevel(ch) - 1)) : Math.max(Math.ceil((it.value || 0) * 1.5), scaled(ch, base, 1)); };
-const hgCost = () => { const c = BALANCE.offline.upgradeCost[ch.offlineUpgrades]; return c ? scaled(ch, c, 1) : 0; }, invUpCost = () => scaled(ch, Math.round(BALANCE.storage.invBase * Math.pow(BALANCE.storage.invGrowth, ch.invUps || 0)), 1), bankUpCost = () => { const c = BALANCE.storage.bankCost[ch.bankUps]; return c ? scaled(ch, c, 1) : 0; };
+const hgCost = () => { const c = BALANCE.offline.upgradeCost[ch.offlineUpgrades]; return c ? scaled(ch, c, 1) : 0; }, invUpCost = () => { const S = BALANCE.storage, n = ch.invUps || 0, last = S.invCost.length - 1, base = n <= last ? S.invCost[n] : S.invCost[last] * Math.pow(S.invGrowth, n - last); return scaled(ch, Math.round(base * S.invHalf), 1); }, bankUpCost = () => { const c = BALANCE.storage.bankCost[ch.bankUps]; return c ? scaled(ch, c, 1) : 0; };
 const enchantGold = it => scaled(ch, BALANCE.enchant.goldCost(it.plus), it.lvl);
 function merchantOffers() {
   const day = Math.floor(Date.now() / 864e5);

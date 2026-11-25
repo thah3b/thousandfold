@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.12a';
+const GAME_VERSION = 'v0.12b';
 const PATCH_NOTES = [
+  { v: 'v0.12b', date: '2026-11-24', title: 'Inventory upgrade prices', notes: [
+    'Inventory upgrades are back on the original price curve, at half price: 2,500, 20,000, 125,000, 750,000, then 4.5 million gold, and each one after that costs 6 times the last. Prices still rise with your level.',
+    'There is still no limit on how many you can buy. Your 100-slot bag stays.',
+  ] },
   { v: 'v0.12a', date: '2026-11-24', title: 'Bigger bags', notes: [
     'Every character now starts with 100 inventory slots instead of 60. Existing characters get +40 slots on top of anything they already bought.',
     'Inventory upgrades (Bank → Storage) are half price, and there is no longer a limit: buy as many as you like. Each one costs 20% more than the last.',
