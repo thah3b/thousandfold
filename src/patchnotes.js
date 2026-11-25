@@ -2,8 +2,13 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.12b';
+const GAME_VERSION = 'v0.12c';
 const PATCH_NOTES = [
+  { v: 'v0.12c', date: '2026-11-25', title: 'Play as a guest', notes: [
+    'New welcome screen on your first visit: sign in (Google or email), or play as a guest with no account.',
+    'Guests can play everything except the online features (leaderboards, friends, chat, trading, Auction House). Guest saves live only in this browser, so back them up with a save code in Settings. You can sign in any time to move them to the cloud.',
+    'Removed the "Thousandfold server (advanced)" connection box from the Account tab.',
+  ] },
   { v: 'v0.12b', date: '2026-11-24', title: 'Inventory upgrade prices', notes: [
     'Inventory upgrades are back on the original price curve, at half price: 2,500, 20,000, 125,000, 750,000, then 4.5 million gold, and each one after that costs 6 times the last. Prices still rise with your level.',
     'There is still no limit on how many you can buy. Your 100-slot bag stays.',

@@ -136,10 +136,11 @@ async function cloudInit() {
   cloud.provider = sbOn() ? 'supabase' : (window.claude && window.claude.use ? 'claude' : null);
   // Claude links block outside connections: if the server can't be reached from here, fall back to the link's built-in cloud.
   if (cloud.provider === 'supabase' && !(await sbReachable())) { cloud.sbBlocked = true; cloud.provider = window.claude && window.claude.use ? 'claude' : null; }
-  if (!cloud.provider) { cloud.state = 'unavailable'; return cloudRefreshUi(); }
+  if (!cloud.provider) { cloud.state = 'unavailable'; cloudRefreshUi(); return maybeWelcome(); }
   try { await P().init(); } catch (e) { cloud.state = 'error'; cloud.msg = String(e.message || e); }
   cloudRefreshUi();
-  if (cloud.state === 'ready') { await cloudCheckRemote(true); if (cloud.provider === 'supabase') socRefresh(); }
+  if (cloud.state === 'ready') { account.settings.signedInOnce = true; save(); await cloudCheckRemote(true); if (cloud.provider === 'supabase') socRefresh(); }
+  maybeWelcome();
 }
 async function cloudCheckRemote(onBoot) {
   try { cloud.meta = await P().getSave(); } catch (e) { cloud.msg = 'Could not reach the cloud: ' + (e.message || e); cloudRefreshUi(); return; }
@@ -196,13 +197,38 @@ function cloudChip() {
   const ss = cloud.provider === 'supabase' && cloud.state === 'ready' ? sbSession() : null, email = ss && ss.user && ss.user.email;
   const t = cloud.sbBlocked && cloud.state !== 'ready' ? 'Accounts: on the website'
     : cloud.state === 'ready' ? (email || 'Signed in')
-    : cloud.state === 'signedout' ? 'Account login'
+    : cloud.state === 'signedout' ? (account.settings.guest ? 'Guest \u00b7 Sign in' : 'Account login')
     : cloud.state === 'starting' ? 'Connecting\u2026' : 'Account: offline';
   const tip = cloud.state === 'ready' && cloud.meta ? `Cloud save ${new Date(cloud.meta.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : 'Account and cloud save';
   return `<button class="chip acctchip ${cloud.state === 'signedout' ? 'pri' : ''}" id="cloudchip" data-act="cloudopen" title="${esc(tip)}">${cloud.state === 'ready' ? '<span class="odot on"></span> ' : ''}${esc(t)}</button>`;
 }
 
 // ---------- UI ----------
+const GUEST_WARN = 'Your characters are saved only in this browser on this device. Clearing your browsing data, using a private window, or switching browsers or devices can lose them. Back them up with a save code (Settings \u2192 Save code), or sign in any time to keep them in the cloud.';
+function loginForm() {
+  return `<button class="gbtn" data-act="sbgoogle"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.1 5.5c4.2-3.9 7.2-9.6 7.2-17z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2.2 1.5-5 2.3-8.8 2.3-6.3 0-11.6-4.2-13.5-10l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>Sign in with Google</button>
+    <div class="orline"><span>or with email</span></div>
+    <div class="grid" style="gap:8px;max-width:360px"><input id="sbemail" type="email" autocomplete="email" placeholder="Email" aria-label="Email"><input id="sbpw" type="password" autocomplete="current-password" placeholder="Password (8+ characters)" aria-label="Password"></div>
+    <div class="err" id="sberr"></div><div class="row" style="margin-top:8px"><button class="pri" data-act="sbin">Sign in</button><button data-act="sbup">Create account</button></div>`;
+}
+// First visit: sign in, or play as a guest (saves stay in this browser).
+function welcomeModal() {
+  const canLogin = cloud.provider === 'supabase' && cloud.state === 'signedout';
+  modal(`<div class="welcome"><h2 style="margin:0 0 4px">Welcome to Thousandfold</h2><p class="mute" style="margin:0 0 14px">How would you like to play?</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;align-items:start">
+      <div class="card"><h3>Sign in</h3>${canLogin ? `<p class="mute" style="font-size:14px;margin:4px 0 10px">Keep your characters in the cloud, play on any device, and join leaderboards, friends, chat, trading and the Auction House.</p>${loginForm()}`
+        : cloud.sbBlocked ? `<p class="mute" style="font-size:14px;margin:4px 0 0">Accounts don\u2019t work on this Claude link. To sign in, play on the game\u2019s website: <a href="https://thah3b.github.io/thousandfold/" target="_blank" rel="noopener">thah3b.github.io/thousandfold</a>.</p>`
+        : `<p class="mute" style="font-size:14px;margin:4px 0 0">Sign-in is offline right now. You can play as a guest and sign in later from Account.</p>`}</div>
+      <div class="card"><h3>Play as a guest</h3><p class="mute" style="font-size:14px;margin:4px 0 10px">No account needed. Everything in the game works except the online features (leaderboards, friends, chat, trading, Auction House).</p>
+        <p class="guestnote" style="font-size:14px"><b>Heads up:</b> ${GUEST_WARN}</p>
+        <button class="pri" data-act="guest" style="margin-top:6px">Play as a guest</button></div>
+    </div></div>`);
+}
+function maybeWelcome() {
+  if (screen !== 'select' || account.settings.guest || account.settings.signedInOnce || cloud.state === 'starting' || $('#modal')) return;
+  if (cloud.state === 'ready') { account.settings.signedInOnce = true; save(); return; }
+  welcomeModal();
+}
 function cloudPanel() {
   const p = P(), st = cloud.state, m = cloud.meta;
   let body = '';
@@ -211,11 +237,8 @@ function cloudPanel() {
   else if (st === 'starting') body = '<p class="mute">Connecting…</p>';
   else if (st === 'error') body = `<p class="bad">${esc(cloud.msg)}</p>`;
   else if (st === 'signedout' && cloud.provider === 'claude') body = '<p>Cloud saves aren\u2019t available for you on this link right now. Sign in to Claude, or check back later. You can keep playing with saves in this browser and move them with save codes.</p>';
-  else if (st === 'signedout') body = `<p>Sign in to keep your characters in the cloud, play on any device, and use leaderboards, friends, chat and trading.</p>
-    <button class="gbtn" data-act="sbgoogle"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.1 5.5c4.2-3.9 7.2-9.6 7.2-17z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2.2 1.5-5 2.3-8.8 2.3-6.3 0-11.6-4.2-13.5-10l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>Sign in with Google</button>
-    <div class="orline"><span>or with email</span></div>
-    <div class="grid" style="gap:8px;max-width:360px"><input id="sbemail" type="email" autocomplete="email" placeholder="Email" aria-label="Email"><input id="sbpw" type="password" autocomplete="current-password" placeholder="Password (8+ characters)" aria-label="Password"></div>
-    <div class="err" id="sberr"></div><div class="row" style="margin-top:8px"><button class="pri" data-act="sbin">Sign in</button><button data-act="sbup">Create account</button></div>`;
+  else if (st === 'signedout') body = `${account.settings.guest ? `<p class="guestnote"><b>You\u2019re playing as a guest.</b> ${GUEST_WARN}</p>` : ''}<p>Sign in to keep your characters in the cloud, play on any device, and use leaderboards, friends, chat and trading.</p>
+    ${loginForm()}`;
   else {
     const ss = cloud.provider === 'supabase' ? sbSession() : null, via = ss && ss.user && ss.user.app_metadata && ss.user.app_metadata.provider === 'google' ? 'Google' : 'email';
     body = `<p style="margin:0">${ss && ss.user && ss.user.email ? `Signed in as <b>${esc(ss.user.email)}</b> <span class="mute">(${via})</span>` : `Signed in with your <b>${esc(p.label)}</b>`}.${cloud.isOwner ? ' <span class="chip">Game owner</span>' : ''}</p>
@@ -226,10 +249,7 @@ function cloudPanel() {
   }
   const local = account.slots.filter(Boolean).map(c => { const f = validateEntry(lbEntry(c)).concat((cloud.flags && cloud.flags[c.id]) || []); return `<div class="prow"><span>${esc(c.name)} · ${levelLabel(c)}</span>${f.length ? `<span class="bad" style="font-size:13px">Not ranked: ${esc([...new Set(f)].join('; '))}</span>` : '<span class="chip on" style="font-size:12px">Eligible</span>'}</div>`; }).join('');
   return `<div class="card"><div class="spread"><h3>Cloud save</h3>${cloudChip()}</div>${body}</div>
-    ${local ? `<div class="card" style="margin-top:12px"><h3>Leaderboard check</h3><p class="mute" style="margin:4px 0 8px;font-size:14px">Each character is checked before it is ranked: level against XP, stat points against levels, progress against the character's age, and fair names. ${cloud.provider === 'supabase' ? 'The server runs the same checks again.' : ''}</p><div class="grid" style="gap:6px">${local}</div></div>` : ''}
-    <details class="card" style="margin-top:12px"><summary><b>Thousandfold server (advanced)</b></summary><p class="mute" style="font-size:14px">For the standalone game: paste the Supabase project URL and anon key from the server package. Leave empty to use the game link's built-in cloud.</p>
-      <div class="grid" style="gap:8px;max-width:520px"><input id="sburl" placeholder="https://your-project.supabase.co" value="${esc(account.settings.sbUrl || '')}" aria-label="Supabase URL"><input id="sbkey" placeholder="anon key" value="${esc(account.settings.sbKey || '')}" aria-label="Supabase anon key"></div>
-      <div class="row" style="margin-top:8px"><button data-act="sbcfg">Save and reconnect</button></div></details>`;
+    ${local ? `<div class="card" style="margin-top:12px"><h3>Leaderboard check</h3><p class="mute" style="margin:4px 0 8px;font-size:14px">Each character is checked before it is ranked: level against XP, stat points against levels, progress against the character's age, and fair names. ${cloud.provider === 'supabase' ? 'The server runs the same checks again.' : ''}</p><div class="grid" style="gap:6px">${local}</div></div>` : ''}`;
 }
 function tabAccount() {
   const r = RACES.find(x => x.id === ch.race) || RACES[0], cl = CLASSES.find(x => x.id === ch.cls) || {};
@@ -266,6 +286,7 @@ async function cloudLoadLb() {
   cloud.lbLoading = false; if (screen === 'game' && tab === 'leaders') renderMain();
 }
 const CLOUD_HANDLERS = {
+  guest: () => { account.settings.guest = true; save(); closeModal(); toast('Playing as a guest. Back up your saves with a save code now and then (Settings).'); if (screen === 'select') renderSelect(); },
   cloudopen: () => { if (screen === 'game') HANDLERS.tab('account'); else modal(`${cloudPanel()}<div class="row" style="margin-top:12px"><button data-act="close">Close</button></div>`); },
   cloudup: () => cloudUpload(true),
   acname: () => { const v = $('#acname').value.trim(), p = nameProblem(v); if (p) { $('#acerr').textContent = p; return; } if (account.slots.some(c => c && c !== ch && c.name.toLowerCase() === v.toLowerCase())) { $('#acerr').textContent = 'Another of your characters already has that name.'; return; } const old = ch.name; ch.name = v; cloud.lastLb = ''; save(); addLog('sys', `${old} is now known as ${v}.`); toast('Name saved.', 'verd'); renderTop(); renderMain(); renderActions(); },
@@ -278,10 +299,9 @@ const CLOUD_HANDLERS = {
     const back = location.origin + location.pathname.replace(/index\.html$/, '');
     location.href = cloudCfg().url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(back);
   },
-  sbin: async () => { try { await PROVIDERS.supabase.signIn($('#sbemail').value.trim(), $('#sbpw').value); await cloudCheckRemote(true); socRefresh(); cloudRefreshUi(); if (screen !== 'game') { closeModal(); renderSelect(); } } catch (e) { $('#sberr').textContent = e.message || 'Sign-in failed.'; } },
-  sbup: async () => { const em = $('#sbemail').value.trim(), pw = $('#sbpw').value; if (pw.length < 8) { $('#sberr').textContent = 'Use at least 8 characters.'; return; } try { const r = await PROVIDERS.supabase.signUp(em, pw); if (r === 'confirm') $('#sberr').textContent = 'Check your email to confirm the account, then sign in.'; else { await PROVIDERS.supabase.init(); cloudRefreshUi(); } } catch (e) { $('#sberr').textContent = e.message || 'Could not create the account.'; } },
+  sbin: async () => { try { await PROVIDERS.supabase.signIn($('#sbemail').value.trim(), $('#sbpw').value); account.settings.signedInOnce = true; save(); await cloudCheckRemote(true); socRefresh(); cloudRefreshUi(); if (screen !== 'game') { closeModal(); renderSelect(); } } catch (e) { $('#sberr').textContent = e.message || 'Sign-in failed.'; } },
+  sbup: async () => { const em = $('#sbemail').value.trim(), pw = $('#sbpw').value; if (pw.length < 8) { $('#sberr').textContent = 'Use at least 8 characters.'; return; } try { const r = await PROVIDERS.supabase.signUp(em, pw); if (r === 'confirm') $('#sberr').textContent = 'Check your email to confirm the account, then sign in.'; else { await PROVIDERS.supabase.init(); account.settings.signedInOnce = true; save(); cloudRefreshUi(); if (screen !== 'game') { closeModal(); renderSelect(); } } } catch (e) { $('#sberr').textContent = e.message || 'Could not create the account.'; } },
   sbout: async () => { await PROVIDERS.supabase.signOut(); cloud.meta = null; cloud.lb = null; soc.me = undefined; soc.friends = []; soc.mail = 0; soc.trades = 0; soc.mailList = null; soc.tradeList = null; soc.msgs = {}; cloudRefreshUi(); socPaint(); },
-  sbcfg: () => { account.settings.sbUrl = $('#sburl').value.trim(); account.settings.sbKey = $('#sbkey').value.trim(); save(); cloud = Object.assign(cloud, { provider: null, state: 'starting', meta: null, lb: null, msg: '' }); cloudRefreshUi(); cloudInit(); },
   lbcat: k => { lbCat = k; renderMain(); },
   lbrefresh: () => { cloud.lbAt = 0; cloud.lb = null; renderMain(); },
   lbban: async uid => { try { await PROVIDERS.claude.ban(uid, !cloud.banned[uid]); cloud.lb = null; renderMain(); } catch (e) { toast('Could not change that entry.'); } },
