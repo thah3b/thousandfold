@@ -489,6 +489,7 @@ function tabShop() {
 function tabSettings() {
   const s = account.settings, opt = (k, v, n) => `<button class="chip ${s[k] === v ? 'on' : ''}" data-act="set" data-arg="${k}|${v}">${n}</button>`;
   return `<div class="spread"><h2>Settings</h2><span class="chip">Thousandfold <b>${GAME_VERSION}</b></span></div><div class="grid" style="margin-top:12px;max-width:760px">
+    ${guideCard()}
     <div class="card"><b>Theme</b><div class="row" style="margin-top:8px">${opt('theme', 'dark', 'Dark')}${opt('theme', 'light', 'Light')}${opt('theme', 'auto', 'Follow app')}</div></div>
     <div class="card"><b>Numbers</b><div class="row" style="margin-top:8px">${opt('num', 'short', '1.2K')}${opt('num', 'sci', '1.2e3')}</div></div>
     <div class="card"><b>Comfort</b><div class="row" style="margin-top:8px">${opt('large', !s.large, s.large ? 'Larger text: on' : 'Larger text: off')}${opt('reduced', !s.reduced, s.reduced ? 'Reduced motion: on' : 'Reduced motion: off')}${opt('sound', !s.sound, s.sound ? 'Sound: on' : 'Sound: off')}${opt('discOff', !s.discOff, s.discOff ? 'Discovery pop-ups: off' : 'Discovery pop-ups: on')}</div></div>
@@ -496,7 +497,7 @@ function tabSettings() {
       <div class="row"><button data-act="savenow">Save now</button><button data-act="copysave">Copy save code</button><button data-act="dlsave">Save as file</button><button data-act="importsave">Import save code</button></div><div id="savemsg" class="mute" style="font-size:14px;margin-top:6px"></div></div>
     <div class="card"><b>Character</b><div class="row" style="margin-top:8px"><button data-act="toselect">Character select</button></div></div>
     <div class="card"><b>About</b><p class="mute" style="margin:6px 0 0;font-size:14px">Play online at <a href="https://thah3b.github.io/thousandfold/" target="_blank" rel="noopener">thah3b.github.io/thousandfold</a> · <a href="https://thah3b.github.io/thousandfold/privacy.html" target="_blank" rel="noopener">Privacy policy</a> · <a href="https://thah3b.github.io/thousandfold/terms.html" target="_blank" rel="noopener">Terms of service</a></p></div>
-    <div class="card"><div class="spread"><h3>Patch notes</h3><span class="mute">Current: ${GAME_VERSION}</span></div><p class="mute" style="margin:4px 0 8px;font-size:14px">v0.(phase + 1) for each build phase; a letter (a, b, c) for smaller updates.</p>
+    <div class="card"><div class="spread"><h3>Patch notes</h3><span class="mute">Current: ${GAME_VERSION}</span></div><p class="mute" style="margin:4px 0 8px;font-size:14px">Alpha since v1.0. Each update counts up (v1.1, v1.2…) with a letter for small fixes (v1.1a); every fifth update starts a new major version (v1.5, then v2.0). Beta versions were v0.3 to v0.15.</p>
       ${PATCH_NOTES.map((p, i) => `<details class="pnote" ${i === 0 ? 'open' : ''}><summary><b>${p.v}</b> · ${esc(p.title)} <span class="mute">${esc(p.date)}</span></summary><ul>${p.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></details>`).join('')}</div></div>`;
 }
 function tabLater() { const l = LATER.find(x => x[0] === tab); return `<div class="later"><h2>${l[1]}</h2><div class="card"><p style="margin:0">${l[3]}</p><p class="mute" style="margin:8px 0 0">Planned for build phase ${l[2]}.</p></div></div>`; }
@@ -546,7 +547,7 @@ function tabMap() {
     <div class="mapwrap">${mapSvg()}</div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));margin-top:14px;align-items:start">
       <div class="card"><div class="spread"><h3>${st === 'fog' ? 'Unknown region' : esc(sel.name)}</h3><span class="chip">Level ${sel.lvl}+</span></div>
-        <p class="mute" style="margin:6px 0 10px">${st === 'fog' ? 'Travel nearer to learn more about this place.' : esc(sel.desc)}</p>${travelBox}</div>
+        <p class="mute" style="margin:6px 0 10px">${st === 'fog' ? 'Travel nearer to learn more about this place.' : esc(sel.desc)}</p>${st !== 'fog' && regionTalk(sel) ? `<p class="localtalk"><b>Local talk:</b> ${esc(regionTalk(sel))}</p>` : ''}${travelBox}</div>
       ${st === 'fog' ? '' : `<div class="card"><div class="spread"><h3>Exploration</h3><span class="num"><b data-live="xfrac:${sel.id}"></b> mapped</span></div><div class="bar" style="margin:8px 0"><i data-w="xfrac:${sel.id}"></i></div>
         ${here ? (xRun ? `<button data-act="stop" data-arg="${x.id}">Stop exploring</button>` : `<button class="pri" data-act="start" data-arg="${x.id}">Explore ${esc(sel.name)} · 1 stamina</button>`) : '<p class="mute" style="margin:0">Explore when you are here.</p>'}
         <div class="grid" style="gap:6px;margin-top:10px">${hamlet ? `<div class="area"><b>${esc(START_REGIONS.find(r => r.id === hamlet[0]).name)}</b><span class="mute" style="font-size:13px">${ENEMIES.filter(e => e.hamlet === hamlet[0]).map(e => esc(e.name)).join(', ')}</span></div>` : ''}

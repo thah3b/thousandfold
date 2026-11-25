@@ -366,7 +366,7 @@ function resolveFight(e, d, rng) {
   for (const l of e.loot) {
     const ch_ = l.chance * (l.rare ? 1 + d.drop + (d.M.loot || 0) : 1);
     if (l.ego && ch.egos[l.ego]) continue;
-    if (rng() < ch_) { if (l.ego) { grantEgo(l.ego); out.rare.push(l); continue; } if (l.secret && !ch.seen[l.key]) discover('Secret find', ITEM(l.key).name, `${ITEM(l.key).desc || ''} A secret drop from ${e.name}. Check your inventory.`, 'Inventory'); const q = l.rare ? 1 : probRound((l.min + rng() * (l.max - l.min)) * (1 + pb) * (1 + d.pool), rng); if (q > 0) { out.loot[l.key] = (out.loot[l.key] || 0) + q; if (l.rare) out.rare.push(l); } }
+    if (l.secret && !ch.seen[l.key] ? pityRoll('drop_' + l.key, 1) : rng() < ch_) { if (l.ego) { grantEgo(l.ego); out.rare.push(l); continue; } if (l.secret && !ch.seen[l.key]) discover('Secret find', ITEM(l.key).name, `${ITEM(l.key).desc || ''} A secret drop from ${e.name}. Check your inventory.`, 'Inventory'); const q = l.rare ? 1 : probRound((l.min + rng() * (l.max - l.min)) * (1 + pb) * (1 + d.pool), rng); if (q > 0) { out.loot[l.key] = (out.loot[l.key] || 0) + q; if (l.rare) out.rare.push(l); } }
   }
   ch.prof[e.id] = c0 + 1; ch.totals.slaying++; ch.counters.kills++;
   if (e.boss) ch.counters.bossWins++; if (UNDEAD.includes(e.eid)) ch.counters.undeadKills++; if (out.rare.length) ch.counters.rareDrops += out.rare.length;
@@ -419,7 +419,7 @@ function exploreTick(a, x, d) {
   const xp = x.xp * n * d.xpMult; addXp('exploration', xp);
   const g = agg[a.res] || (agg[a.res] = { xp: 0, n: 0 }); g.xp += xp; g.n += n;
   for (let i = 0; i < n; i++) if (rng() < BALANCE.explore.chestChance) findChest(x.region, false);
-  checkExplore(x.region);
+  checkExplore(x.region, false, null, n);
   const k1 = tierOf(ch.prof[x.id]); if (k1 > k0) tierUp(x, k1);
 }
 function findChest(rid, quiet, notes) {
@@ -429,10 +429,17 @@ function findChest(rid, quiet, notes) {
   const msg = `Found a cache in ${r.name}: ${N(gold)} gold and ${q} ${res.name}.`;
   if (quiet) notes.push(msg); else { addLog('lucky', msg); toast(esc(msg), 'gold'); }
 }
-function checkExplore(rid, quiet, notes) {
+// Hidden pieces (v1.0): each attempt has a tiny chance, and the 5,000th attempt always succeeds.
+const PITY = { chance: 0.000005, at: 5000 };
+function pityRoll(id, n) {
+  if (!ch || n <= 0) return false; ch.pity = ch.pity || {};
+  const c = (ch.pity[id] || 0) + n; ch.pity[id] = c;
+  return c >= PITY.at || rng() < 1 - Math.pow(1 - PITY.chance, n);
+}
+function checkExplore(rid, quiet, notes, n) {
   const r = REGION_BY[rid], f = exploreFrac(ch, rid), seen = ch.areasSeen[rid] || (ch.areasSeen[rid] = []), d = D();
   BALANCE.explore.areaAt.forEach((at, i) => { if (f >= at && !seen.includes(i)) { seen.push(i); if (i > 0) { const msg = `Discovered ${r.areas[i]} in ${r.name}.`; quiet ? notes.push(msg) : (addLog('tier', msg), toast(`<b>New area:</b> ${esc(r.areas[i])}`, 'verd')); dirty = true; } } });
-  if (f >= BALANCE.explore.hiddenAt && d.S.PER.total >= r.perReq && !seen.includes('hidden')) { seen.push('hidden'); ch.counters.hiddenFound++; const msg = `Your sharp eyes spot a hidden place in ${r.name}.`; { const he = ENEMIES.find(e => e.region === rid && e.area === 'hidden'); discover('Hidden place', `${r.name}: a hidden place`, `Your sharp eyes spot a way off the beaten path.${he ? ` Something lurks there: ${he.name}, a rare enemy with its own unique drop. Find it on the Combat tab.` : ''}`, 'Combat'); } quiet ? notes.push(msg) : (addLog('lucky', msg), toast(`<b>Hidden place found!</b> ${esc(r.name)}`, 'gold'), chime(880, 1320)); dirty = true; }
+  if (f >= BALANCE.explore.hiddenAt && d.S.PER.total >= r.perReq && !seen.includes('hidden') && pityRoll('hidden_' + rid, n == null ? 1 : n)) { seen.push('hidden'); ch.counters.hiddenFound++; const msg = `Your sharp eyes spot a hidden place in ${r.name}.`; { const he = ENEMIES.find(e => e.region === rid && e.area === 'hidden'); discover('Hidden place', `${r.name}: a hidden place`, `Your sharp eyes spot a way off the beaten path.${he ? ` Something lurks there: ${he.name}, a rare enemy with its own unique drop. Find it on the Combat tab.` : ''}`, 'Combat'); } quiet ? notes.push(msg) : (addLog('lucky', msg), toast(`<b>Hidden place found!</b> ${esc(r.name)}`, 'gold'), chime(880, 1320)); dirty = true; }
   ch.counters.regionsMapped = REGIONS.filter(x => exploreFrac(ch, x.id) >= 1).length;
 }
 function startTravel(to, fast) {
@@ -539,7 +546,7 @@ function offlineCombat(a, e, sec, d, sum, notes) {
     const w = Math.round(n * p), pb = BALANCE.tierYieldBonus[k];
     wins += w; fights += n; t -= n * f.time;
     xp += w * e.xp * (1 + pb) * d.xpMult; gold += w * (e.gold[0] + e.gold[1]) / 2 * (1 + pb);
-    for (const l of e.loot) { const q = w * l.chance * (l.rare ? 1 + d.drop : 1) * (l.rare ? 1 : (l.min + l.max) / 2 * (1 + pb) * (1 + d.pool)); loot[l.key] = (loot[l.key] || 0) + q; }
+    for (const l of e.loot) { if (l.secret && !ch.seen[l.key]) { if (w > 0 && pityRoll('drop_' + l.key, w)) { loot[l.key] = (loot[l.key] || 0) + 1; notes.push(`Secret find: ${ITEM(l.key).name}!`); } continue; } const q = w * l.chance * (l.rare ? 1 + d.drop : 1) * (l.rare ? 1 : (l.min + l.max) / 2 * (1 + pb) * (1 + d.pool)); loot[l.key] = (loot[l.key] || 0) + q; }
     const k0 = k; ch.prof[e.id] = c + w; for (let kk = k0 + 1; kk <= tierOf(ch.prof[e.id]); kk++) tierUp(e, kk, true, notes);
     if (w === 0) break;
   }
@@ -557,7 +564,7 @@ function offlineExplore(a, x, sec, d, sum, notes) {
   const xp = seg.done * x.xp * d.xpMult; addXp('exploration', xp, true, notes);
   const chests = probRound(seg.done * BALANCE.explore.chestChance, rng); for (let i = 0; i < Math.min(chests, 20); i++) findChest(x.region, true, notes);
   const s = sum[a.res] || (sum[a.res] = { done: 0, units: 0, xp: 0 }); s.done += seg.done; s.xp += xp;
-  checkExplore(x.region, true, notes);
+  checkExplore(x.region, true, notes, seg.done);
 }
 
 // ============================================================

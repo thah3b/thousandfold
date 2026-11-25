@@ -292,3 +292,12 @@ button.loreitem{cursor:pointer}button.loreitem:hover,.loreitem.on{border-color:v
 .profstats{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:13px;margin-top:10px;color:var(--mute)}
 .profstats b{color:var(--ink)}
 .profrow{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:8px}
+/* Guide */
+.guide details{border-top:1px solid var(--line);padding:8px 0}
+.guide details:first-child{border-top:0}
+.guide summary{cursor:pointer;list-style:none}
+.guide summary::before{content:'\25B8  ';color:var(--mute)}
+.guide details[open] summary::before{content:'\25BE  '}
+.guidebody{font-size:14px;line-height:1.5;margin-top:6px}
+.guidebody p{margin:0 0 8px}
+.localtalk{font-size:14px;margin:0 0 10px;padding:8px 10px;border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);border-radius:6px}

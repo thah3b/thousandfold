@@ -2,8 +2,14 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.15';
+const GAME_VERSION = 'v1.0';
 const PATCH_NOTES = [
+  { v: 'v1.0', date: '2026-11-25', title: 'Thousandfold 1.0: the alpha begins', notes: [
+    'The beta is over! Thousandfold is now in alpha. Thank you to everyone who played the beta. From here, updates count up from v1.1, with a new major version every fifth update.',
+    'New Game Guide in Settings: a readable explanation of every system, with a few hints from the locals for those who look closely.',
+    'The Map now shows what the locals say about each region you know.',
+    'Hidden places and rare oddities are now much harder to stumble on, but persistence always pays off in the end.',
+  ] },
   { v: 'v0.15', date: '2026-11-25', title: 'Player profiles', notes: [
     'Every signed-in player now has a public profile showing their characters: class, level and Ascension, title, achievements, collection, pets, companion, sentient weapons, top skills and more.',
     'Click a player\u2019s name in chat, your friends list or the leaderboards to see their profile, and add them as a friend from there.',
