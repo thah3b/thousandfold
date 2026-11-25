@@ -208,7 +208,7 @@ const NAV = [
   ['Gathering', GATHER_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['events', 'Events'], ['leaders', 'Leaderboards']]],
-  ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
+  ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['wardrobe', 'Wardrobe'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades'], ['guild', 'Guild']]],
   ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
 ];
@@ -264,7 +264,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { wardrobe: tabWardrobe, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -394,9 +394,9 @@ function tabChar() {
   const allocTotal = Object.values(ch.alloc).reduce((s, v) => s + v, 0);
   const diffs = [...DERIVED, ['pool', 'Yield (' + SKILLS[charSkill].name + ')', v => '+' + pct(v)], ['speed', 'Speed (' + SKILLS[charSkill].name + ')', v => '+' + pct(v)]].filter(([k]) => Math.abs(d1[k] - d0[k]) > 1e-9).map(([k, n, f]) => `<span>${n}</span><span class="${d1[k] > d0[k] ? 'up' : 'down'}">${f(d0[k])} → ${f(d1[k])}</span>`).join('');
   return `<div class="spread"><h2>Character</h2><button class="chip" data-act="tab" data-arg="talents">Skill points <b>${ch.skillPts}</b></button></div>
-    <div class="card" style="margin-top:12px"><div class="row">${portrait(ch, 72)}<div><h3>${esc(ch.name)}</h3><div>${ch.displayTitle ? `<span class="gold">${esc(ch.displayTitle)}</span> · ` : ''}${levelLabel(ch)} ${esc(race().name)} ${esc(tierName(ch.cls, ch.adv.spec, ch.adv.tier))}</div>
+    <div class="card" style="margin-top:12px"><div class="row" style="gap:16px;align-items:center">${heroShowcase(ch, 112, { cls: "small" })}<div style="flex:1;min-width:220px"><h3>${esc(ch.name)}</h3><div>${ch.displayTitle ? `<span class="gold">${esc(ch.displayTitle)}</span> · ` : ''}${levelLabel(ch)} ${esc(race().name)} ${esc(tierName(ch.cls, ch.adv.spec, ch.adv.tier))}</div>
       <div class="mute" style="font-size:14px">${esc(ch.gender || ch.pronouns || '')} · ${esc(ORIGINS.find(o => o.id === ch.origin).name)} from ${esc(regionName())}</div>
-      <div class="mute" style="font-size:14px">${esc(race().passive)} · Class: ${esc(modsText(INNATE[ch.cls]))}</div></div></div></div>
+      <div class="mute" style="font-size:14px">${esc(race().passive)} · Class: ${esc(modsText(INNATE[ch.cls]))}</div><div class="row" style="gap:6px;margin-top:8px"><button class="sm" data-act="tab" data-arg="wardrobe">Wardrobe</button></div></div></div></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));margin-top:14px;align-items:start">
     <div class="card"><div class="spread"><h3>Stats</h3><span>Unspent <b class="ember">${left}</b></span></div>
       ${STATS.map(s => { const b = d1.S[s.id], nb = nextBreak(b.total); return `<div class="srow"><div><b>${s.name}</b> <span class="mute">${s.id}</span><div class="d" title="${esc(s.long)}">${esc(s.short)}</div>
@@ -820,6 +820,7 @@ const HANDLERS = {
   ...PRESTIGE_HANDLERS,
   ...LORE_HANDLERS,
   ...PROFILE_HANDLERS,
+  ...FASHION_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },

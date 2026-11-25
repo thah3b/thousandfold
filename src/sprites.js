@@ -230,6 +230,7 @@ const PX_CLASS = {
   summoner: ['#5a4ab0', '#9fe2f2', 'orbstaff', 'circlet', '#2a2a6a', true], runesmith: ['#6a6a7a', '#6fd0e8', 'hammer', 'helm', '#3a4a5a', false],
   tidecaller: ['#2f6fa8', '#9fe2f2', 'trident', 'circlet', '#1f4a6a', true], wayfinder: ['#8a6a3a', '#e8c15a', 'map', 'hat', '#5a3a22', false],
 };
+PxGrid.prototype.shift = function (dx, dy) { const q = new Array(this.w * this.h).fill(0); for (let y = 0; y < this.h; y++) for (let x = 0; x < this.w; x++) { const c = this.p[y * this.w + x], X = x + dx, Y = y + dy; if (c && X >= 0 && Y >= 0 && X < this.w && Y < this.h) q[Y * this.w + X] = c; } this.p = q; return this; };
 PxGrid.prototype.layer = function (fn) { const t = new PxGrid(this.w, this.h); fn(t); t.outline(); t.p.forEach((c, i) => { if (c) this.p[i] = c; }); return this; };
 const PX_HATS = {
   wizard: (g, C) => { const P = pxPal(C.o); g.poly([[9, 9], [23, 9], [20, 3], [27, 1], [18, 0.5], [13, 3]], P.a); g.poly([[17, 9], [23, 9], [20, 3], [27, 1], [22, 2.2]], P.b); g.ell(16, 10.4, 14, 2.5, null, P); g.rect(9, 7, 14, 2, PXC.gold).rect(9, 8, 14, 1, PXC.goldD); for (const x of [11, 20]) g.set(x, 7, '#fff3b0'); g.poly([[16, 5], [18.6, 8], [16, 11], [13.4, 8]], '#3b82e4'); g.set(15, 7, '#cfeaff').set(16, 9, '#2a5aa8'); },
@@ -248,6 +249,17 @@ const PX_HATS = {
   lamp: (g, C) => { const P = pxPal('#e0c068'); g.ell(16, 10.5, 12, 7.6, null, P, (x, y) => y <= 11); g.rect(4, 11, 24, 1, '#a8822e'); g.rect(13, 7, 6, 3, '#5a5a6a'); g.ell(16, 6, 2.4, 2.4, '#fff6a0'); g.set(15, 5, '#ffffff'); },
   turban: (g, C) => { const P = pxPal('#e8dcc0'); g.ell(16, 9, 12.5, 7.6, null, P, (x, y) => y <= 11); g.line(6, 10, 24, 3, '#c9b890').line(8, 11, 26, 5, '#c9b890'); g.ell(16, 6.5, 1.8, 1.8, '#3b82c4'); g.set(15, 6, '#cfeaff'); },
   wide: (g, C) => { const P = pxPal('#4a4038'); g.ell(16, 10.4, 15.5, 2.4, null, P); g.ell(16, 7.4, 6.5, 4.2, null, P, (x, y) => y <= 9); },
+  flower: (g, C) => { for (const [x, c] of [[6, '#e88ab8'], [10, '#ffe08a'], [14, '#9fe2f2'], [18, '#e88ab8'], [22, '#ffe08a'], [26, '#c9a8ff']]) { g.ell(x, 9.5 - (x > 9 && x < 23 ? 1 : 0), 1.9, 1.9, c); g.set(x, 9 - (x > 9 && x < 23 ? 1 : 0), '#fff6c0'); } for (const x of [8, 12, 16, 20, 24]) g.set(x, 9, PXC.leaf); },
+  halo: (g, C) => { g.ell(16, 2.5, 7, 2, '#ffe89a'); g.ell(16, 2.5, 5, 1, 0); },
+  pirate: (g, C) => { const P = pxPal('#2a2a34'); g.poly([[3, 11], [29, 11], [25, 3], [16, 6], [7, 3]], P.a); g.poly([[16, 6], [25, 3], [29, 11], [16, 11]], P.b); g.rect(3, 10, 27, 1, PXC.gold); g.ell(16, 8, 1.6, 1.6, '#f2ece0'); g.set(15, 8, PX.out).set(17, 8, PX.out); },
+  santa: (g, C) => { g.poly([[6, 10], [26, 10], [20, 3], [27, 6], [14, 2]], '#d23a2a'); g.poly([[16, 10], [26, 10], [20, 3], [27, 6]], '#a82a20'); g.rect(5, 9, 23, 3, '#f6f2ea'); g.ell(28, 7, 2, 2, '#f6f2ea'); },
+  pumpkin: (g, C) => { const P = pxPal('#f08a2a'); g.ell(16, 7.5, 11, 6.5, null, P, (x, y) => y <= 11); for (const x of [11, 16, 21]) g.line(x, 2, x, 11, P.b); g.rect(15, 0, 2, 2, '#3f7a32'); },
+  bunny: (g, C) => { for (const x of [11, 21]) { g.ell(x, 4.5, 2.4, 5.5, '#f6f2ea'); g.ell(x, 4.5, 1, 4, '#f3a8a8'); } g.rect(7, 9, 19, 1, '#f3a8a8'); },
+  horns: (g, C) => { g.poly([[8, 9], [5, 1], [11, 7]], '#6a2030').poly([[24, 9], [27, 1], [21, 7]], '#6a2030'); g.set(6, 3, '#a8384a').set(26, 3, '#a8384a'); },
+  catears: (g, C) => { const H = pxPal('#3a3a4a'); g.poly([[6, 10], [7, 1], [13, 6]], H.a).poly([[19, 6], [25, 1], [26, 10]], H.b); g.poly([[8, 7], [8, 3.5], [11, 6]], '#f3a8a8').poly([[21, 6], [24, 3.5], [24, 7]], '#f3a8a8'); },
+  tiara: (g, C) => { g.rect(8, 9, 17, 1, PXC.metal); g.poly([[12, 9], [16, 3], [20, 9]], PXC.metal); g.poly([[16, 4.5], [17.6, 7], [16, 9], [14.4, 7]], '#e88ab8'); g.set(15, 6, '#ffffff'); },
+  beanie: (g, C) => { const P = pxPal(C.a); g.ell(16, 10, 11.8, 7.5, null, P, (x, y) => y <= 11); g.rect(4, 10, 25, 2, P.b); for (let x = 5; x < 28; x += 2) g.set(x, 10, P.d); g.ell(16, 2.5, 2.2, 2.2, '#f6f2ea'); },
+  chef: (g, C) => { const P = pxPal('#f6f2ea'); g.ell(12, 4.5, 4, 4, null, P).ell(20, 4.5, 4, 4, null, P).ell(16, 3, 4.5, 3.5, null, P); g.rect(7, 6, 19, 5, P.a).rect(7, 10, 19, 1, P.b); },
   crown: (g, C) => { g.rect(9, 5, 15, 4, PXC.gold).rect(9, 8, 15, 1, PXC.goldD); for (const x of [9, 13.5, 18.5, 23]) g.poly([[x - 1, 5], [x + 0.5, 1], [x + 2, 5]], PXC.gold); g.set(12, 6, '#e0573a').set(16, 6, '#3b82c4').set(20, 6, '#e0573a'); },
 };
 const PX_PROPS = {
@@ -264,6 +276,11 @@ const PX_PROPS = {
   whip: (g, C) => { g.line(10, 30, 7, 25, PXC.wood, PXC.woodD); g.line(7, 25, 3, 18, '#6b4426').line(3, 18, 1, 26, '#6b4426').line(1, 26, 4, 33, '#6b4426'); },
   flask: (g, C) => { g.rect(4, 20, 3, 4, PXC.glass).rect(4, 18, 3, 2, PXC.cork); g.ell(5.5, 27.5, 4.2, 4.2, PXC.glass); g.ell(5.5, 27.5, 4.2, 4.2, null, pxPal(C.a), (x, y) => y >= 27); g.set(3, 25, '#ffffff').set(3, 26, '#ffffff'); },
   lute: (g, C) => { g.line(5, 23, 2, 10, PXC.woodD, '#3a2414'); g.rect(1, 9, 3, 2, PXC.woodD); g.ell(5.5, 28.5, 4.6, 5, null, pxPal('#c89058')); g.ell(5.5, 27.5, 1.4, 1.4, '#4a2a14'); g.rect(3, 31, 5, 1, '#6b4426'); },
+  lantern: (g, C) => { g.line(9, 29, 5, 22, '#4a3a2a'); g.rect(2, 22, 7, 1, '#4a3a2a'); g.rect(2, 23, 7, 8, '#3a2e26').rect(3, 24, 5, 6, '#ffd86b').rect(4, 25, 2, 3, '#fff6c0'); g.rect(2, 31, 7, 1, '#3a2e26'); },
+  rod: (g, C) => { g.line(10, 33, 2, 4, PXC.wood, PXC.woodD); g.line(2, 4, 0, 20, '#e8e4d8'); g.set(0, 21, '#e0573a').set(0, 22, '#ffffff'); g.ell(8.5, 30, 1.6, 1.6, PXC.metalD); },
+  broom: (g, C) => { g.line(10, 33, 5, 8, PXC.wood, PXC.woodD); g.poly([[2, 3], [8, 3], [9, 9], [1, 9]], '#d9b26a'); g.rect(3, 8, 6, 1, '#a8463a'); for (const x of [3, 5, 7]) g.line(x, 3, x, 7, '#b08a4a'); },
+  balloon: (g, C) => { g.line(9, 29, 5, 12, '#e8e4d8'); g.ell(5, 7, 4.5, 5.5, null, pxPal(C.a)); g.set(3, 4, '#ffffff').set(3, 5, '#ffffff'); g.set(5, 13, pxTone(C.a, -0.3)); },
+  banner: (g, C) => { g.line(10, 35, 7, 2, PXC.wood, PXC.woodD); g.rect(0, 2, 7, 11, C.a).rect(0, 2, 7, 1, pxTone(C.a, 0.3)); g.poly([[0, 13], [7, 13], [3.5, 16]], C.a); g.ell(3.5, 7, 1.8, 1.8, PXC.gold); },
   map: (g, C) => { g.rect(1, 24, 9, 7, '#ecd9a8').rect(1, 24, 1, 7, '#c9b07a').rect(9, 24, 1, 7, '#c9b07a'); g.set(3, 26, '#a8463a').set(4, 27, '#a8463a').set(6, 28, '#a8463a').set(7, 27, '#c0574a').set(8, 26, '#c0574a').set(7, 25, '#c0574a').set(8, 28, '#c0574a'); },
 };
 // look = { race, gender, cls, hair, eye, outfit, accent, hat, prop, cape, mark, beard, elder }
@@ -289,8 +306,9 @@ function pxChibiGrid(look) {
     if (robe) { t.rect(15, 26, 2, 2, '#4fa8e8'); t.set(15, 26, '#cfeaff'); }
     t.rect(11, 28, 10, 2, '#6b4426').rect(11, 29, 10, 1, '#4a2e18'); t.rect(15, 28, 2, 2, PXC.gold);
   });
-  // arms and hands
-  g.layer(t => { t.rect(8, 24, 3, 5, O.a).rect(8, 24, 1, 5, O.c).rect(8, 28, 3, 1, A.a); t.rect(21, 24, 3, 5, O.b).rect(21, 28, 3, 1, A.b); t.ell(9.5, 30, 1.9, 1.7, S.a); t.ell(22.5, 30, 1.9, 1.7, S.b); });
+  // arms and hands (pose: idle, wave, wink, cast, cheer)
+  const pose = L.pose || 'idle', upR = pose === 'wave' || pose === 'cheer';
+  g.layer(t => { t.rect(8, 24, 3, 5, O.a).rect(8, 24, 1, 5, O.c).rect(8, 28, 3, 1, A.a); t.ell(9.5, 30, 1.9, 1.7, S.a); if (!upR) { t.rect(21, 24, 3, 5, O.b).rect(21, 28, 3, 1, A.b); t.ell(22.5, 30, 1.9, 1.7, S.b); } });
   // head and face
   g.layer(t => {
     if (L.race === 'elf') { t.poly([[7, 13], [0, 8], [7, 18]], S.a).poly([[25, 13], [32, 8], [25, 18]], S.b); t.line(5, 13, 2, 10, S.b).line(27, 13, 30, 10, S.d); }
@@ -331,18 +349,24 @@ function pxChibiGrid(look) {
     if (L.race === 'dragonkin') { t.line(9, 5, 6, 0, PXC.bone, PXC.boneD); t.line(22, 5, 25, 0, PXC.bone, PXC.boneD); }
   });
   if (hat && PX_HATS[hat]) g.layer(t => PX_HATS[hat](t, C));
+  if (upR) g.layer(t => { t.poly([[20.5, 23], [24, 23], [29, 18], [26.5, 16.5]], O.b); t.line(23, 23, 27.5, 18.6, A.b); t.ell(28.5, 15.5, 2, 2, S.b); });
+  if (pose === 'wink') { g.rect(19, 15, 4, 4, S.a); g.line(19, 17, 20, 16, PX.out).line(21, 16, 22, 17, PX.out); g.set(14, 20, '#a8503a').set(17, 20, '#a8503a'); }
+  if (pose === 'cheer') { g.rect(15, 20, 2, 2, '#8a3a2a'); g.set(15, 21, '#f08a8a'); sparkles.push([30, 12], [27, 11], [31, 16]); }
+  if (pose === 'cast') { const k = pxTone(ac === PXC.gold ? '#7fe8d8' : ac, 0.3); for (const [x, y] of [[22, 26], [25, 28], [24, 32], [20, 31], [26, 30]]) g.set(x, y, k); g.set(23, 29, '#ffffff'); }
   if (L.race === 'starborn') sparkles.push([26, 5], [25, 4], [27, 4], [26, 3]);
   for (const [x, y] of sparkles) g.set(x, y, L.race === 'starborn' && y < 6 && x > 20 ? '#ffe89a' : pxTone(ac === PXC.gold ? '#7fe8d8' : ac, 0.4));
   return g;
 }
 function pxChibi(look, size, opt) {
-  const k = 'c2:' + [look.race, look.gender, look.cls, look.hair, look.eye, look.outfit, look.accent, look.hat, look.prop, look.cape, look.robe, look.mark, look.beard, look.elder].join('|');
+  const k = 'c2:' + [look.race, look.gender, look.cls, look.hair, look.eye, look.outfit, look.accent, look.hat, look.prop, look.cape, look.robe, look.mark, look.beard, look.elder, look.pose].map(v => v === undefined ? '~' : v === null ? '0' : v).join('|');
   const o = opt || {}; return pxImg(k, size, () => pxChibiGrid(look), { ...o, h: o.h || Math.round(size * 36 / 32) });
 }
 // A player character's look.
 function pxLookOf(c) {
   const h = pxHash(c.name || '?');
-  return { race: c.race || 'human', gender: c.gender || 'Male', cls: c.cls || 'warrior', hair: c.race === 'undead' ? '#d9d4c8' : PX_HAIR[h % PX_HAIR.length], eye: PX_EYES[(h >>> 5) % PX_EYES.length], mark: c.mark };
+  const base = { race: c.race || 'human', gender: c.gender || 'Male', cls: c.cls || 'warrior', hair: c.race === 'undead' ? '#d9d4c8' : PX_HAIR[h % PX_HAIR.length], eye: PX_EYES[(h >>> 5) % PX_EYES.length], mark: c.mark };
+  if (c.look) return { ...base, ...c.look };
+  return typeof fashionLook === 'function' ? { ...base, ...fashionLook(c) } : base;
 }
 // NPCs: a stable look from the name, with a few role hats.
 const PX_NPC_ROLES = [[/Elder/, { hat: null, beard: true, elder: true, hair: '#e8e4d8', outfit: '#8a3a2a', prop: 'staff' }], [/Warden/, { hat: 'hood', outfit: '#3f6a32', prop: 'bow' }], [/Foreman/, { hat: 'lamp', outfit: '#6a5a4a', prop: 'hammer' }], [/Ferryman/, { hat: 'wide', outfit: '#4a5a5a', prop: 'staff' }], [/Caravaneer/, { hat: 'turban', outfit: '#c08850', prop: 'bag' }], [/Huntress|Hunter/, { hat: 'fur', outfit: '#6b4a32', prop: 'bow' }], [/Ser |Sir |Knight|Paladin/, { hat: 'helm', prop: 'sword' }], [/King|Queen|Jarl/, { hat: 'crown' }], [/Brother|Sister|Mother|Father/, { hat: 'hood' }]];

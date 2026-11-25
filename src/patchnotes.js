@@ -2,8 +2,17 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v1.1a';
+const GAME_VERSION = 'v1.2';
 const PATCH_NOTES = [
+  { v: 'v1.2', date: '2026-11-25', title: 'The Wardrobe', notes: [
+    'New Wardrobe tab (You \u2192 Wardrobe): change your hero\u2019s hat, outfit, cape, held item, hair colour and pose. It\u2019s all cosmetic, so wear whatever you like without losing any stats.',
+    '94 pieces to collect. Some are free, some are bought with gold, and others are earned: reach a level, win boss fights, take part in world events, collect pet species, find secrets, earn achievement points or Ascend. Locked pieces tell you how to get them.',
+    'New hats include cat ears, bunny ears, a pirate tricorn, a halo, a pumpkin head, a chef\u2019s toque and a crown. New held items include a lantern, a fishing rod, a broom, a balloon and a banner.',
+    'Poses: stand, wave, wink, spark or cheer.',
+    'Your hero now stands in a little scene on the Character and Wardrobe tabs, with your active pet beside you. Flying pets hover.',
+    'Your public profile shows your outfit, pose and pet too.',
+    'Two new achievements: Dressed Up and Fashionista.',
+  ] },
   { v: 'v1.1a', date: '2026-11-25', title: 'Better-looking heroes', notes: [
     'Hero portraits, companions and townsfolk have been redrawn at twice the detail: bigger heads, big shiny eyes, shaded faces and hair, capes and robes, and much fancier hats and weapons. The wizard hat now has a jewelled band, and staffs glow.',
     'Your look still comes from your race, gender and class, so existing characters update automatically.',

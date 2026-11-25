@@ -15,7 +15,7 @@ function profileCard() {
     const skills = SKILL_IDS.filter(s => c.skills[s]).map(s => [s, c.skills[s].level]).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const egos = Object.keys(c.egos || {}).map(k => (EGOS && EGOS[k] ? EGOS[k].name : k)).slice(0, 6);
     return {
-      name: c.name, race: c.race, cls: c.cls, gender: c.gender, mark: c.mark, adv: { tier: (c.adv && c.adv.tier) || 1 },
+      name: c.name, race: c.race, cls: c.cls, gender: c.gender, mark: c.mark, look: fashionLook(c), adv: { tier: (c.adv && c.adv.tier) || 1 },
       tierName: (() => { try { return tierName(c.cls, c.adv && c.adv.spec, (c.adv && c.adv.tier) || 1); } catch (e) { return ''; } })(),
       asc: c.ascension || 0, level: c.level, title: c.displayTitle || '', ach, coll,
       species: Object.keys(c.petDex || {}).length, pet: pet ? { sp: pet.sp, name: pet.name || '', level: pet.level || 1 } : null,
@@ -54,7 +54,7 @@ function profileHtml(d) {
   if (!C) return `<div class="profpage">${head}<p class="mute" style="margin-top:12px">${d.hidden ? 'This player keeps their characters private.' : 'This player hasn’t shared their characters yet.'}</p><div class="row"><button data-act="close">Close</button></div></div>`;
   const cards = chars.map(c => {
     const R = RACES.find(r => r.id === c.race) || RACES[0], K = CLASSES.find(k => k.id === c.cls) || CLASSES[0];
-    return `<div class="card profchar"><div class="row" style="gap:12px;align-items:flex-start">${portrait(c, 64)}<div style="flex:1;min-width:0">
+    return `<div class="card profchar"><div class="row" style="gap:12px;align-items:flex-start">${heroShowcase(c, 84, { cls: 'small', pet: c.pet })}<div style="flex:1;min-width:0">
         <h3 style="margin:0">${esc(c.name)}</h3>${c.title ? `<div class="gold" style="font-size:14px">${esc(c.title)}</div>` : ''}
         <div class="mute" style="font-size:14px">${esc(R.name)} ${esc(c.tierName || K.name)} · <b>${c.asc ? `A${c.asc} · ` : ''}Lv ${c.level}</b></div></div></div>
       <div class="profstats">

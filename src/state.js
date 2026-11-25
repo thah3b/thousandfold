@@ -52,6 +52,7 @@ function migrate(c) {
   if (!c.loc) c.loc = START_TO_REGION[c.region];
   c.visited = c.visited || { [c.loc]: true };
   c.secrets = c.secrets || {}; c.riddle = c.riddle || null;
+  c.fashion = c.fashion || {}; c.wardrobe = c.wardrobe || {};
   if (c.invSlots != null && !c.bag100) c.invSlots += BALANCE.storage.invSlots - 60; // v0.12a: base bag 60 -> 100
   c.bag100 = true;
   Object.assign(c, Object.assign({ market: {}, bank: {}, questStats: {}, seen: {}, bossKilled: {}, areasSeen: {}, clog: [], combatFood: null, travel: null, nextEvent: 0, eventBuff: null, hp: null, invSlots: BALANCE.storage.invSlots, bankSlots: BALANCE.storage.bankSlots, invUps: 0, bankUps: 0, savings: { bal: 0, t: Date.now() }, merchant: { day: 0, bought: {} }, titlesSeen: [], secretTitles: {}, pins: [], ach: {}, potions: {}, log: [] }, c));
