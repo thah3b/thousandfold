@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thousandfold v0.11</title>
+<title>Thousandfold v0.11a</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <style>
@@ -251,8 +251,12 @@ main{grid-area:main;padding:18px max(16px,1.6vw) 40px}
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.11';
+const GAME_VERSION = 'v0.11a';
 const PATCH_NOTES = [
+  { v: 'v0.11a', date: '2026-11-24', title: 'Game letters', notes: [
+    'The game team can now send letters, with gold or items attached, to one player or to everyone. They arrive in your Mailbox.',
+    'You can remove your own chat messages.',
+  ] },
   { v: 'v0.11', date: '2026-11-24', title: 'Phase 10: Friends, chat, mail and trading', notes: [
     'New Social section (needs a Thousandfold account on the website). Pick a display name; it is separate from your characters\u2019 names.',
     'Friends: add players by friend code or display name, accept or decline requests, see who is online, remove or block players.',
@@ -3470,7 +3474,7 @@ function tabChat() {
 function chatHtml() {
   const list = soc.msgs[soc.chan] || [];
   if (!list.length) return '<p class="mute" style="margin:auto;text-align:center">No messages yet.</p>';
-  return list.map(m => `<div class="cmsg ${m.mine ? 'mine' : ''}"><span class="cname">${m.mine ? 'You' : `<button class="linkbtn" data-act="socwho" data-arg="${esc(m.from)}|${esc(m.name)}">${esc(m.name)}</button>`}</span> <span class="mute" style="font-size:11px">${new Date(m.at).toLocaleTimeString([], { timeStyle: 'short' })}</span><div>${esc(m.body)}</div></div>`).join('');
+  return list.map(m => `<div class="cmsg ${m.mine ? 'mine' : ''}"><span class="cname">${m.mine ? 'You' : `<button class="linkbtn" data-act="socwho" data-arg="${esc(m.from)}|${esc(m.name)}">${esc(m.name)}</button>`}</span> <span class="mute" style="font-size:11px">${new Date(m.at).toLocaleTimeString([], { timeStyle: 'short' })}</span>${m.mine || (soc.me && soc.me.admin) ? ` <button class="linkbtn mute" style="font-size:11px" data-act="chatdel" data-arg="${m.id}">remove</button>` : ''}<div>${esc(m.body)}</div></div>`).join('');
 }
 function chatPaint(scroll) {
   if (tab !== 'chat') return; const el = document.getElementById('chatlog'); if (!el) return;
@@ -3523,6 +3527,7 @@ function tabMail() {
       ${offerEditor(gift.offer, 5, 'gift')}
       <textarea id="giftnote" maxlength="200" placeholder="Add a note (optional)" style="width:100%;margin-top:8px;height:60px" aria-label="Note">${esc(gift.note || '')}</textarea>
       <div class="row" style="margin-top:8px"><button class="pri" data-act="giftsend" ${gf ? '' : 'disabled'}>Send gift</button></div><div class="err" id="gifterr"></div></div>` : ''}
+    ${soc.me.admin ? adminMailPanel() : ''}
     <div class="grid" style="gap:6px;margin-top:12px">${soc.mailList === null ? '<p class="mute">Loading…</p>' : list.length ? list.map(m => { const has = +m.gold > 0 || Object.keys(m.items || {}).length; return `<div class="card mailrow ${m.claimed ? '' : 'new'}"><div class="spread"><b>${esc(m.subject || 'A letter')}</b><span class="mute" style="font-size:12px">${esc(m.from_name)} · ${new Date(m.at).toLocaleDateString()}</span></div>
       ${m.body ? `<p style="margin:6px 0;white-space:pre-wrap">${esc(m.body)}</p>` : ''}
       ${has ? `<div class="spread" style="margin-top:6px"><span>${m.claimed ? '<span class="mute">Collected:</span> ' : '🎁 '}${esc(offerText(m))}</span>${m.claimed ? `<button class="sm ghost" data-act="maildel" data-arg="${m.id}">Delete</button>` : `<button class="sm pri" data-act="mailclaim" data-arg="${m.id}">Collect to ${esc(ch.name)}</button>`}</div>` : `<div class="row" style="justify-content:flex-end"><button class="sm ghost" data-act="maildel" data-arg="${m.id}">Delete</button></div>`}
@@ -3642,6 +3647,48 @@ document.addEventListener('change', e => {
   const q = t.dataset && t.dataset.offerq; if (q) { const p = q.split('|')[0], k = q.slice(q.indexOf('|') + 1), o = p === 'gift' ? soc.gift && soc.gift.offer : soc.offer; if (o) o.items[k] = Math.max(1, Math.floor(+t.value || 1)); if (p === 'tr') renderMain(); }
 });
 setInterval(() => { if (screen === 'game' && socOn() && Date.now() - soc.lastTick > 20000) socRefresh(); }, 5000);
+
+// ---------- Admin letters (v0.11a) ----------
+let adminDraft = { to: '', subject: '', body: '', gold: 0, items: {} };
+function adminItemKeys() {
+  const keys = new Set([...RES.map(r => r.id), ...Object.keys(ITEMS)]);
+  return [...keys].filter(k => { try { return acceptItem(k); } catch (e) { return false; } }).sort((a, b) => ITEM(a).name.localeCompare(ITEM(b).name));
+}
+function adminMailPanel() {
+  const d = adminDraft, keys = adminItemKeys();
+  return `<details class="card" style="margin-top:12px;border-color:var(--ember)" ${d.open ? 'open' : ''}><summary><b>Admin: send a letter</b> <span class="mute" style="font-size:13px">to one player or everyone</span></summary>
+    <div class="grid" style="gap:8px;margin-top:10px;max-width:640px">
+      <input id="admto" placeholder="Display name (leave empty for everyone)" value="${esc(d.to)}" aria-label="Recipient display name">
+      <input id="admsubj" maxlength="80" placeholder="Subject" value="${esc(d.subject)}" aria-label="Subject">
+      <textarea id="admbody" maxlength="2000" placeholder="Message" style="height:90px" aria-label="Message">${esc(d.body)}</textarea>
+      <div class="row" style="gap:6px;align-items:center"><label class="mute" for="admgold" style="font-size:14px">Gold</label><input id="admgold" type="number" min="0" step="1" value="${d.gold || 0}" style="width:10em"></div>
+      <div class="grid" style="gap:4px">${Object.entries(d.items).map(([k, q]) => `<div class="prow"><span>${itemIcon(k, 18)} ${rname(k)}</span><span class="row" style="gap:4px"><input type="number" min="1" step="1" value="${q}" style="width:7em" data-admq="${esc(k)}" aria-label="Quantity"><button class="sm ghost" data-act="admrm" data-arg="${esc(k)}">×</button></span></div>`).join('')}</div>
+      <div class="row" style="gap:6px"><select id="admpick" aria-label="Item to attach" style="flex:1;min-width:0"><option value="">Attach an item…</option>${keys.filter(k => !(k in d.items)).map(k => `<option value="${esc(k)}">${esc(ITEM(k).name)}</option>`).join('')}</select><button class="sm" data-act="admadd">Add</button></div>
+      <div class="row"><button class="pri" data-act="admsend">Send letter</button></div><div class="err" id="admerr"></div>
+      <p class="mute" style="font-size:12px;margin:0">Letters to everyone reach every player who has picked a display name. Attachments are created by the server, not taken from your inventory.</p>
+    </div></details>`;
+}
+function readAdmin() {
+  const d = adminDraft, v = id => (document.getElementById(id) || {}).value;
+  d.to = v('admto') || ''; d.subject = v('admsubj') || ''; d.body = v('admbody') || ''; d.gold = Math.max(0, Math.floor(+v('admgold') || 0)); d.open = true;
+  document.querySelectorAll('[data-admq]').forEach(el => { d.items[el.dataset.admq] = Math.max(1, Math.floor(+el.value || 1)); });
+  return d;
+}
+Object.assign(SOCIAL_HANDLERS, {
+  admadd: () => { const d = readAdmin(), k = $('#admpick').value; if (k) d.items[k] = 1; renderMain(); },
+  admrm: k => { readAdmin(); delete adminDraft.items[k]; renderMain(); },
+  admsend: async () => {
+    const d = readAdmin();
+    if (!d.subject.trim()) { socErr('admerr', 'Add a subject.'); return; }
+    const who = d.to.trim() ? d.to.trim() : 'EVERY player';
+    if (!confirm(`Send "${d.subject}" to ${who}?`)) return;
+    try {
+      const n = await rpc('tf_admin_mail_to', { p_name: d.to.trim() || null, p_subject: d.subject, p_body: d.body, p_gift: { gold: d.gold, items: d.items } });
+      toast(`Letter sent to ${n} player${n === 1 ? '' : 's'}.`, 'verd'); adminDraft = { to: '', subject: '', body: '', gold: 0, items: {} }; soc.mailList = null; await socRefresh(); renderMain();
+    } catch (e) { socErr('admerr', e); }
+  },
+  chatdel: async id => { try { await rpc('tf_chat_delete', { p_id: +id }); const l = soc.msgs[soc.chan] || []; const i = l.findIndex(m => m.id === +id); if (i >= 0) l.splice(i, 1); chatPaint(false); } catch (e) { toast(esc(e.message)); } },
+});
 
 // ============================================================
 // UI — icons, screens, tabs and commands.

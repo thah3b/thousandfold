@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.11';
+const GAME_VERSION = 'v0.11a';
 const PATCH_NOTES = [
+  { v: 'v0.11a', date: '2026-11-24', title: 'Game letters', notes: [
+    'The game team can now send letters, with gold or items attached, to one player or to everyone. They arrive in your Mailbox.',
+    'You can remove your own chat messages.',
+  ] },
   { v: 'v0.11', date: '2026-11-24', title: 'Phase 10: Friends, chat, mail and trading', notes: [
     'New Social section (needs a Thousandfold account on the website). Pick a display name; it is separate from your characters\u2019 names.',
     'Friends: add players by friend code or display name, accept or decline requests, see who is online, remove or block players.',
