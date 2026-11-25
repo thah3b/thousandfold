@@ -2,8 +2,19 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v1.3';
+const GAME_VERSION = 'v1.4';
 const PATCH_NOTES = [
+  { v: 'v1.4', date: '2026-11-25', title: 'Quality of life', notes: [
+    'Active actions panel: switch between Full, Compact (a slim row of chips with progress bars) and Hidden. On phones it starts compact, so it no longer pushes everything down. New Stop all button.',
+    'Auto mode: fills any free stamina with gathering in your lowest skills. Switch it on from the Active actions panel or Settings.',
+    'New Automation settings: auto-use potions (drinks your best potion when a buff runs out), stack potion time (drinking the same potion again adds time, up to 24 hours) and stop at Grandmaster (optionally moving on to the next resource). All off by default except stacking.',
+    'Training: a Train all stats button.',
+    'Presets (Character tab): save your gear, tools, pets, outfit and Arena plan, and switch between up to 6 setups in one click.',
+    'Go buttons: board quests and region stories now take you straight there. If it\u2019s in another region, you travel and it starts when you arrive. Resources from other regions work the same way.',
+    'Inventory grid view: item tiles with hover details. Drag gear onto an equipment slot to equip it, or tap a tile for all its options.',
+    'A short guided tour for new characters, with a Skip button. Replay it any time from Settings.',
+    'Six new colour themes: Ember, Forest, Ocean, Parchment, Midnight and High contrast.',
+  ] },
   { v: 'v1.3', date: '2026-11-25', title: 'The Arena', notes: [
     'Faster fights: when your combat power is 50% or more above an enemy\u2019s, the fight takes just 0.1 seconds. Bosses still take their time.',
     'New Arena tab (Adventure \u2192 Arena): fight other players\u2019 heroes for rating. You need to be signed in.',

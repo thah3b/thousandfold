@@ -52,7 +52,7 @@ function migrate(c) {
   if (!c.loc) c.loc = START_TO_REGION[c.region];
   c.visited = c.visited || { [c.loc]: true };
   c.secrets = c.secrets || {}; c.riddle = c.riddle || null;
-  c.fashion = c.fashion || {}; c.wardrobe = c.wardrobe || {};
+  c.fashion = c.fashion || {}; c.wardrobe = c.wardrobe || {}; c.tour = c.tour || { done: true }; c.presets = c.presets || [];
   if (c.invSlots != null && !c.bag100) c.invSlots += BALANCE.storage.invSlots - 60; // v0.12a: base bag 60 -> 100
   c.bag100 = true;
   Object.assign(c, Object.assign({ market: {}, bank: {}, questStats: {}, seen: {}, bossKilled: {}, areasSeen: {}, clog: [], combatFood: null, travel: null, nextEvent: 0, eventBuff: null, hp: null, invSlots: BALANCE.storage.invSlots, bankSlots: BALANCE.storage.bankSlots, invUps: 0, bankUps: 0, savings: { bal: 0, t: Date.now() }, merchant: { day: 0, bought: {} }, titlesSeen: [], secretTitles: {}, pins: [], ach: {}, potions: {}, log: [] }, c));
@@ -61,7 +61,7 @@ function migrate(c) {
 function newCharacter(w) {
   const origin = ORIGINS.find(o => o.id === w.origin);
   const c = migrate({
-    quest: { step: 0, done: false },
+    quest: { step: 0, done: false }, tour: typeof account !== 'undefined' && account && account.tourSeen ? { done: true } : { step: 0 },
     id: 'c' + Date.now().toString(36), name: w.name.trim(), gender: w.gender,
     race: w.race, cls: w.cls, origin: w.origin, region: w.region, created: Date.now(), last: Date.now(),
     gold: 25 + origin.gold, xp: 0, level: 1, unspent: 0, skillPts: 0, respecs: 0, freeRespecs: 0, alloc: {}, prof: {}, inv: {}, actions: [], offlineUpgrades: 0, displayTitle: null,
@@ -125,6 +125,7 @@ function addXp(skill, xp, quiet, notes) {
   }
 }
 function tierUp(a, k, quiet, notes) {
+  if (k >= 9 && RES_BY[a.id] && typeof gmQueue !== 'undefined') gmQueue.push(a.id);
   const msg = `${a.name} proficiency: ${BALANCE.tierNames[k]}` + (k <= 5 ? ` (${fmtTime(actionSec(a, BALANCE.tierThresholds[k], D(a.skill).speed))} per action)` : a.inputs ? ` (${pct(extraChance(k))} chance of +50% output)` : ` (+${pct(BALANCE.tierYieldBonus[k])} ${a.kind === 'combat' ? 'loot and XP' : 'yield'})`);
   if (quiet) { notes.push(msg); return; }
   addLog('tier', msg); toast(`<b>Tier up!</b> ${esc(msg)}`, 'verd'); chime(659, 988); if (k >= 6) flash(); dirty = true;
@@ -460,7 +461,7 @@ function arrive(to, quiet, notes) {
   ch.counters.regionsVisited = Object.keys(ch.visited).length;
   const msg = `Arrived in ${REGION_BY[to].name}${first ? ' for the first time' : ''}.`;
   if (quiet) notes.push(msg); else { addLog('tier', msg); toast(`<b>${esc(REGION_BY[to].name)}</b>${first ? ' · new region!' : ''}`, first ? 'gold' : 'verd'); }
-  checkExplore(to, quiet, notes); dirty = true;
+  checkExplore(to, quiet, notes); if (typeof afterArrive === 'function') afterArrive(quiet, notes); dirty = true;
 }
 function encounter(now) {
   const t = ch.travel, pool = ENEMIES.filter(e => (e.region === t.to || e.region === t.from) && e.area === 0);

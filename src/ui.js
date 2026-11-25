@@ -128,7 +128,7 @@ function frame(t) {
     if (now - lastFlush >= BALANCE.logFlushMs) { lastFlush = now; flush(); }
     if (t - lastLive >= 1000 / BALANCE.uiHz) { lastLive = t; updateLive(); if (dirty) { dirty = false; renderMain(); renderActions(); renderTop(); } }
     if (now - lastSave >= BALANCE.autosaveMs) { lastSave = now; save(); }
-    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); }
+    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); qolTick(); }
     drawBars();
   }
   lastT = t; requestAnimationFrame(frame);
@@ -216,7 +216,7 @@ function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'mining'; agg = {}; rate = {};
   $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"></section><aside class="sidepanel" id="side"></aside></div>`;
   renderTop(); renderMain(); renderActions();
-  checkProgress(true, []); syncAcctSecrets();
+  checkProgress(true, []); syncAcctSecrets(); tourMaybe();
   const away = (Date.now() - ch.last) / 1000;
   if (away >= 8 * 3600 && ch.cls === 'monk') setTimeout(() => unlockSecret('cls_monk'), 500);
   if (away > 60) runOffline(away, true);
@@ -239,7 +239,10 @@ function renderNav() {
 function renderActions() {
   if (!ch || !$('#act')) return;
   const d = D(), used = staminaUsed();
-  $('#act').innerHTML = `<div class="spread"><h3>Active actions</h3><span class="num">Stamina <b data-live="stam"></b></span></div>
+  const view = actView();
+  if (view !== 'full') { $('#act').innerHTML = actHeader(view) + (view === 'compact' ? (ch.actions.length ? actChips() : '<p class="mute" style="margin:6px 0 0;font-size:14px">Nothing running.</p>') : ''); $('#act').dataset.view = view; updateLive(); return; }
+  $('#act').dataset.view = view;
+  $('#act').innerHTML = actHeader(view) + `
     <div class="pips" style="margin-top:6px" aria-label="Stamina ${used} of ${d.stamina}">${Array.from({ length: d.stamina }, (_, i) => `<i class="${i < used ? 'u' : ''}"></i>`).join('')}</div>
     ${ch.actions.length ? ch.actions.map(a => { const o = ACT(a.res); return `<div class="aslot ${a.vein > Date.now() ? 'vein' : ''}" data-res="${o.id}">${actIcon(o)}<div><div class="spread"><b>${esc(o.name)}</b>${tierBadge(ch.prof[o.id] || 0)}</div><div class="bar" style="margin:5px 0"><i></i></div><div class="meta">${SKILLS[o.skill].name} · <span data-live="time:${o.id}"></span> each${o.inputs ? ` · <span data-live="can:${o.id}"></span> left` : ` · streak <span data-live="streak:${o.id}"></span>`}${a.vein > Date.now() ? ` · <b class="gold">${NODE_BONUS[o.skill]}</b>` : ''}</div></div><button class="sm" data-act="stop" data-arg="${o.id}" aria-label="Stop ${esc(o.name)}">Stop</button></div>`; }).join('')
       : `<p class="mute" style="margin:10px 0 0">Nothing running. Pick something in any gathering or crafting skill; each running action occupies stamina.</p>`}`;
@@ -284,7 +287,7 @@ function tabGather(skill) {
       <div class="bar"><i data-w="tier:${o.id}"></i></div>
       <div class="row asell" role="group" aria-label="Auto-sell ${esc(o.name)}"><span class="mute" style="font-size:13px">Auto-sell</span>${[['off', 'Off'], ...BALANCE.economy.autoSellKeep.map(k => [k, k ? 'Keep ' + k.toLocaleString() : 'All'])].map(([v, n]) => `<button class="chip ${(v === 'off' ? ch.autoSell[o.id] == null : ch.autoSell[o.id] === v) ? 'on' : ''}" data-act="autosell" data-arg="${o.id}|${v}">${n}</button>`).join('')}</div>
       <div class="kv"><span>Done</span><span data-live="next:${o.id}"></span><span>Per action</span><span data-live="time:${o.id}"></span><span>Yield bonus</span><span>+${pct(BALANCE.tierYieldBonus[k])}</span><span>Stamina</span><span>${o.stamina}</span><span>XP / value</span><span>${N(o.xp)} / ${N(o.value)}g</span><span>Held</span><span data-live="inv:${o.id}"></span></div>
-      ${run ? `<button data-act="stop" data-arg="${o.id}">Stop</button>` : availableHere(o) ? `<button class="pri" data-act="start" data-arg="${o.id}">${SKILLS[skill].verb} ${esc(o.name)}</button>` : `<button data-act="goregion" data-arg="${REGIONS[o.band].id}">Found in ${esc(REGIONS[o.band].name)}</button>`}</div>`; };
+      ${run ? `<button data-act="stop" data-arg="${o.id}">Stop</button>` : availableHere(o) ? `<button class="pri" data-act="start" data-arg="${o.id}">${SKILLS[skill].verb} ${esc(o.name)}</button>` : `<button data-act="gostart" data-arg="${o.id}" title="Travel to ${esc(REGIONS[o.band].name)} and start on arrival">Found in ${esc(REGIONS[o.band].name)} · Go</button>`}</div>`; };
   const fresh = false;
   return skillHeader(skill, `You are in ${esc(REGION_BY[ch.loc].name)}. Common resources can be gathered anywhere; others only in their region, but once started they keep running while you travel.<br>${unl.length} of ${chain.length} unlocked · <span data-live="total:${skill}"></span> total · ${tool ? esc(tool.name) + ` (+${pct(tool.speed, 1)} speed)` : 'no tool'} · yield +${pct(d.pool)}`)
     + (fresh ? `<div class="card" style="margin-top:14px;border-color:var(--ember)"><b>First swings.</b> Start with Stone. Every resource has its own proficiency: each tier halves the time per action until it hits 0.1s at T6, at 1,000 it opens the next resource (if your skill level is high enough), and at 10,000 (Mastered) it starts multiplying yield. You have 2 stamina, so run two things at once: try a tree in Woodcutting too. Crafting skills turn what you gather into gear, potions and meals.</div>` : '')
@@ -345,9 +348,9 @@ function tabInv() {
     ${equipPanel()}
     <div class="row" style="margin:14px 0 8px"><input id="invq" placeholder="Search items" value="${esc(invQ)}" style="flex:1;min-width:160px" aria-label="Search items">
       <select id="invsort" aria-label="Sort">${[['rarity', 'Rarity'], ['value', 'Stack value'], ['qty', 'Quantity'], ['name', 'Name']].map(([v, n]) => `<option value="${v}" ${invSort === v ? 'selected' : ''}>${n}</option>`).join('')}</select>
-      <button data-act="selljunk">Sell all junk</button><button class="chip ${ch.autoSellJunk ? 'on' : ''}" data-act="autojunk">Auto-sell junk: ${ch.autoSellJunk ? 'on' : 'off'}</button></div>
+      <button class="chip ${account.settings.invGrid ? 'on' : ''}" data-act="invgrid">${account.settings.invGrid ? 'Grid view' : 'List view'}</button><button data-act="selljunk">Sell all junk</button><button class="chip ${ch.autoSellJunk ? 'on' : ''}" data-act="autojunk">Auto-sell junk: ${ch.autoSellJunk ? 'on' : 'off'}</button></div>
     <div class="row" style="margin-bottom:10px">${INV_FILTERS.map(([v, n]) => `<button class="chip ${invF === v ? 'on' : ''}" data-act="invf" data-arg="${v}">${n}</button>`).join('')}</div>
-    <div class="inv">${keys.length ? keys.map(invRow).join('') : `<p class="mute">${invQ || invF !== 'all' ? 'Nothing matches.' : 'Empty. Gathered resources land here.'}</p>`}</div>`;
+    <div class="${account.settings.invGrid ? 'igrid' : 'inv'}">${keys.length ? keys.map(account.settings.invGrid ? invTile : invRow).join('') : `<p class="mute">${invQ || invF !== 'all' ? 'Nothing matches.' : 'Empty. Gathered resources land here.'}</p>`}</div>`;
 }
 function invRow(key) {
   const it = ITEM(key), rc = RARITIES[it.rarity], m = priceMult(ch, key, Date.now());
@@ -363,7 +366,7 @@ function invRow(key) {
     <div class="row" style="gap:6px">${acts}<button class="sm" data-act="sell" data-arg="${esc(key)}|1">Sell 1</button><button class="sm" data-act="sell" data-arg="${esc(key)}|all">Sell all</button><button class="sm ghost" data-act="deposit" data-arg="${esc(key)}">Bank</button></div></div>`;
 }
 function equipPanel() {
-  const slot = (s, key, unarg) => `<div class="eslot">${key ? itemIcon(key, 28) : `<span class="eico"></span>`}<div><div class="mute" style="font-size:12px">${s}</div>${key ? `${rname(key)}<div class="mute" style="font-size:12px">${esc(statLine(ITEM(key)))}</div>` : '<span class="mute">Empty</span>'}</div>${key ? `<button class="sm ghost" data-act="unequip" data-arg="${unarg}" aria-label="Unequip ${s}">×</button>` : ''}</div>`;
+  const slot = (s, key, unarg) => `<div class="eslot" data-drop="${unarg}">${key ? itemIcon(key, 28) : `<span class="eico"></span>`}<div><div class="mute" style="font-size:12px">${s}</div>${key ? `${rname(key)}<div class="mute" style="font-size:12px">${esc(statLine(ITEM(key)))}</div>` : '<span class="mute">Empty</span>'}</div>${key ? `<button class="sm ghost" data-act="unequip" data-arg="${unarg}" aria-label="Unequip ${s}">×</button>` : ''}</div>`;
   return `<div class="card" style="margin-top:12px"><div class="spread"><b>Equipped</b><span class="mute" style="font-size:14px">Gear adds stats, attack and defense; tools add speed to their skill (50% cap).</span></div>
     <div class="egrid">${SLOTS.map(s => slot(SLOT_NAMES[s], ch.equip.slots[s], 's|' + s)).join('')}</div>
     <b style="display:block;margin-top:12px">Tool belt</b><div class="egrid">${GATHER_SKILLS.map(s => slot(SKILLS[s].tool, ch.equip.tools[s], 't|' + s)).join('')}</div></div>`;
@@ -397,6 +400,7 @@ function tabChar() {
     <div class="card" style="margin-top:12px"><div class="row" style="gap:16px;align-items:center">${heroShowcase(ch, 112, { cls: "small" })}<div style="flex:1;min-width:220px"><h3>${esc(ch.name)}</h3><div>${ch.displayTitle ? `<span class="gold">${esc(ch.displayTitle)}</span> · ` : ''}${levelLabel(ch)} ${esc(race().name)} ${esc(tierName(ch.cls, ch.adv.spec, ch.adv.tier))}</div>
       <div class="mute" style="font-size:14px">${esc(ch.gender || ch.pronouns || '')} · ${esc(ORIGINS.find(o => o.id === ch.origin).name)} from ${esc(regionName())}</div>
       <div class="mute" style="font-size:14px">${esc(race().passive)} · Class: ${esc(modsText(INNATE[ch.cls]))}</div><div class="row" style="gap:6px;margin-top:8px"><button class="sm" data-act="tab" data-arg="wardrobe">Wardrobe</button></div></div></div></div>
+    <div style="margin-top:14px">${presetCard()}</div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));margin-top:14px;align-items:start">
     <div class="card"><div class="spread"><h3>Stats</h3><span>Unspent <b class="ember">${left}</b></span></div>
       ${STATS.map(s => { const b = d1.S[s.id], nb = nextBreak(b.total); return `<div class="srow"><div><b>${s.name}</b> <span class="mute">${s.id}</span><div class="d" title="${esc(s.long)}">${esc(s.short)}</div>
@@ -470,7 +474,8 @@ function tabSettings() {
   const s = account.settings, opt = (k, v, n) => `<button class="chip ${s[k] === v ? 'on' : ''}" data-act="set" data-arg="${k}|${v}">${n}</button>`;
   return `<div class="spread"><h2>Settings</h2><span class="chip">Thousandfold <b>${GAME_VERSION}</b></span></div><div class="grid" style="margin-top:12px;max-width:760px">
     ${guideCard()}
-    <div class="card"><b>Theme</b><div class="row" style="margin-top:8px">${opt('theme', 'dark', 'Dark')}${opt('theme', 'light', 'Light')}${opt('theme', 'auto', 'Follow app')}</div></div>
+    <div class="card"><b>Theme</b><div class="row" style="margin-top:8px">${THEMES.map(([v, n]) => opt('theme', v, n)).join('')}</div></div>
+    ${automationCard()}
     <div class="card"><b>Numbers</b><div class="row" style="margin-top:8px">${opt('num', 'short', '1.2K')}${opt('num', 'sci', '1.2e3')}</div></div>
     <div class="card"><b>Comfort</b><div class="row" style="margin-top:8px">${opt('large', !s.large, s.large ? 'Larger text: on' : 'Larger text: off')}${opt('reduced', !s.reduced, s.reduced ? 'Reduced motion: on' : 'Reduced motion: off')}${opt('sound', !s.sound, s.sound ? 'Sound: on' : 'Sound: off')}${opt('discOff', !s.discOff, s.discOff ? 'Discovery pop-ups: off' : 'Discovery pop-ups: on')}</div></div>
     <div class="card"><b>Save</b><p class="mute" style="margin:4px 0 8px;font-size:14px">Auto-saves every 30 seconds and when you leave. Saves live in this browser; copy a save code (short and compressed) or save it as a file to move it.</p>
@@ -718,11 +723,17 @@ function tabArsenal() {
 }
 
 
+function storyGoBtn(rid, step) {
+  const G = STORY_GOALS[step]; if (!G) return '';
+  if (G.type === 'explore') return `<div class="row" style="margin-top:6px"><button class="sm" data-act="gostart" data-arg="x_${rid}">Go explore</button></div>`;
+  if (G.type === 'boss') { const b = ENEMIES.find(e => e.region === rid && e.role === 'boss'); return b ? `<div class="row" style="margin-top:6px"><button class="sm" data-act="gostart" data-arg="${b.id}">Go fight</button></div>` : ''; }
+  return `<div class="row" style="margin-top:6px"><button class="sm" data-act="${rid === ch.loc ? 'tab' : 'goregion'}" data-arg="${rid === ch.loc ? 'combat' : rid}">Go</button></div>`;
+}
 function questRow(q, i) {
   const have = Math.min(questHave(q), q.need), done = have >= q.need;
   return `<div class="card quest ${done ? 'cur' : ''}"><div class="spread"><b>${esc(q.label)}</b><span class="chip">${q.kind === 'weekly' ? 'Weekly' : 'Daily'} · ${esc(REGION_BY[q.region].town)}</span></div>
     <div class="spread" style="font-size:14px;margin-top:6px"><span class="mute">Progress</span><span class="num">${N(have)} / ${N(q.need)}</span></div><div class="bar"><i style="width:${(have / q.need * 100).toFixed(1)}%"></i></div>
-    <div class="row" style="margin-top:8px">${done ? `<button class="sm pri" data-act="claimq" data-arg="${i}">Claim reward</button>` : ''}<button class="sm ghost" data-act="dropq" data-arg="${i}">Drop</button></div></div>`;
+    <div class="row" style="margin-top:8px">${done ? `<button class="sm pri" data-act="claimq" data-arg="${i}">Claim reward</button>` : `<button class="sm" data-act="qgo" data-arg="${i}">Go</button>`}<button class="sm ghost" data-act="dropq" data-arg="${i}">Drop</button></div></div>`;
 }
 function tabQuests() {
   const rid = ch.loc, r = REGION_BY[rid], here = !ch.travel, offers = here && ch.quest.done ? boardOffers(rid) : null;
@@ -730,7 +741,7 @@ function tabQuests() {
   const offer = o => { const taken = ch.board.taken[o.oid]; return `<div class="card offer ${taken ? 'taken' : ''}"><div class="spread"><b>${esc(o.label)}</b><span class="chip">${o.kind === 'weekly' ? 'Weekly' : 'Daily'}</span></div><p class="mute" style="margin:4px 0 8px;font-size:14px">Reward: ${rw(o.kind)}</p>${taken ? '<span class="mute">Accepted</span>' : `<button class="sm pri" data-act="acceptq" data-arg="${o.oid}">Accept</button>`}</div>`; };
   const S = REGION_STORY[rid], st = ch.story[rid] || 0;
   const story = S && ch.visited[rid] ? [1, 2, 3].map(i => { const done = st >= i, cur = st === i - 1, g = cur ? storyGoal(rid, i - 1) : null;
-    return `<div class="qstep ${done ? 'done' : cur ? 'cur' : ''}"><span>${done ? '✓' : i}</span><div><b>${esc(S[i][0])}</b>${done || cur ? `<p style="margin:2px 0;font-size:14px">${esc(S[i][1])}</p>` : ''}${cur ? `<div class="spread" style="font-size:14px"><span>${esc(g.label)}</span><span class="mute num">${g.pctMode ? pct(g.have) + ' / ' + pct(g.need) : N(Math.min(g.have, g.need)) + ' / ' + N(g.need)}</span></div><div class="bar"><i style="width:${Math.min(100, g.have / g.need * 100).toFixed(1)}%"></i></div>` : ''}</div></div>`; }).join('') : '';
+    return `<div class="qstep ${done ? 'done' : cur ? 'cur' : ''}"><span>${done ? '✓' : i}</span><div><b>${esc(S[i][0])}</b>${done || cur ? `<p style="margin:2px 0;font-size:14px">${esc(S[i][1])}</p>` : ''}${cur ? `<div class="spread" style="font-size:14px"><span>${esc(g.label)}</span><span class="mute num">${g.pctMode ? pct(g.have) + ' / ' + pct(g.need) : N(Math.min(g.have, g.need)) + ' / ' + N(g.need)}</span></div><div class="bar"><i style="width:${Math.min(100, g.have / g.need * 100).toFixed(1)}%"></i></div>${storyGoBtn(rid, i - 1)}` : ''}</div></div>`; }).join('') : '';
   const allStories = REGIONS.filter(x => !x.secret).map(x => `<span class="chip ${(ch.story[x.id] || 0) >= 3 ? 'on' : ''}">${esc(x.name)} ${ch.visited[x.id] ? (ch.story[x.id] || 0) + '/3' : '???'}</span>`).join('');
   const act = ch.qactive.map((q, i) => q.kind === 'story' ? '' : questRow(q, i)).join('');
   return `<div class="spread"><h2>Quests</h2><span class="chip">Ember Shards <b class="gold">${N(account.shards)}</b></span></div>
@@ -747,6 +758,7 @@ function tabTraining() {
   const d = D('training');
   return `<div class="spread"><h2>Training</h2><span class="chip">Level <b data-live="slvl:training"></b></span></div>
     <p class="mute">Slow, steady and permanent. Each session adds a sliver of a stat; you can gain up to ${TRAIN_CFG.dailyCap} points per stat per day (resets at midnight). Uses 1 stamina, like any action.</p>
+    <div class="row" style="gap:6px;margin-top:8px"><button class="pri" data-act="trainall">Train all stats</button><span class="mute" style="font-size:14px">Starts every stat that isn’t done for today, as far as your stamina goes.</span></div>
     <div class="cols" style="margin-top:12px">${TRAINS.map(t => { const g = ch.trainDay.gained[t.stat] || 0, run = ch.actions.find(a => a.res === t.id), full = g >= TRAIN_CFG.dailyCap - 1e-9;
       return `<div class="card ore ${run ? 'running' : ''}"><div class="spread"><b style="font-size:18px">${esc(t.name)}</b>${tierBadge(ch.prof[t.id] || 0)}</div><div class="mute" style="font-size:14px">${esc(t.desc)}</div>
         <div class="spread" style="font-size:14px"><span>Today: +${g.toFixed(2)} ${t.stat}</span><span class="mute">cap ${TRAIN_CFG.dailyCap}</span></div><div class="bar"><i style="width:${(g / TRAIN_CFG.dailyCap * 100).toFixed(1)}%"></i></div>
@@ -766,8 +778,8 @@ function drink(key) {
   const cur = activeBuff(ch, it.cat, now);
   const strength = x => x.power || Object.values(x.fx || {}).reduce((s, v) => s + v, 0);
   if (cur && strength(ITEMS[cur.id]) > strength(it)) { toast(`A stronger ${POTION_CATS[it.cat]} buff (${esc(cur.name)}) is already active.`); return; }
-  takeItem(key, 1); ch.potions[it.cat] = { id: key, until: now + it.mins * 60000 }; ch.counters.potions++; if (it.heal) { const mh = maxHP(); ch.hp = Math.min(mh, (ch.hp == null ? mh : ch.hp) + it.heal); }
-  addLog('lucky', `${it.type === 'food' ? 'Ate' : 'Drank'} ${it.name}: ${it.desc}`); toast(`<b>${esc(it.name)}</b> active for ${it.mins} min`, 'gold'); checkProgress(); renderMain(); renderTop(); renderActions();
+  takeItem(key, 1); const stackable = qs('stackPotion') && cur && cur.id === key; ch.potions[it.cat] = { id: key, until: Math.min(now + 24 * 3600000, (stackable ? cur.until : now) + it.mins * 60000) }; ch.counters.potions++; if (it.heal) { const mh = maxHP(); ch.hp = Math.min(mh, (ch.hp == null ? mh : ch.hp) + it.heal); }
+  addLog('lucky', `${it.type === 'food' ? 'Ate' : 'Drank'} ${it.name}: ${it.desc}`); toast(`<b>${esc(it.name)}</b> active for ${fmtTime((ch.potions[it.cat].until - now) / 1000)}`, 'gold'); checkProgress(); renderMain(); renderTop(); renderActions();
 }
 function equip(key) {
   const it = ITEM(key), need = it.slot === 'tool' ? ch.skills[it.toolSkill].level : gateLevel(ch);
@@ -822,6 +834,7 @@ const HANDLERS = {
   ...PROFILE_HANDLERS,
   ...FASHION_HANDLERS,
   ...ARENA_HANDLERS,
+  ...QOL_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },
