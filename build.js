@@ -31,6 +31,7 @@ ${r('sprites.js')}
 ${r('fashion.js')}
 ${r('arena.js')}
 ${r('qol.js')}
+${r('anim.js')}
 ${r('engine.js')}
 ${r('state.js')}
 ${r('cloud.js')}

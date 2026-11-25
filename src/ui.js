@@ -128,7 +128,7 @@ function frame(t) {
     if (now - lastFlush >= BALANCE.logFlushMs) { lastFlush = now; flush(); }
     if (t - lastLive >= 1000 / BALANCE.uiHz) { lastLive = t; updateLive(); if (dirty) { dirty = false; renderMain(); renderActions(); renderTop(); } }
     if (now - lastSave >= BALANCE.autosaveMs) { lastSave = now; save(); }
-    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); qolTick(); }
+    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); qolTick(); refreshScenes(); }
     drawBars();
   }
   lastT = t; requestAnimationFrame(frame);
@@ -214,7 +214,7 @@ const NAV = [
 ];
 function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'mining'; agg = {}; rate = {};
-  $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"></section><aside class="sidepanel" id="side"></aside></div>`;
+  $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"><div id="actbody"></div><div id="actscene"></div></section><aside class="sidepanel" id="side"></aside></div>`;
   renderTop(); renderMain(); renderActions();
   checkProgress(true, []); syncAcctSecrets(); tourMaybe();
   const away = (Date.now() - ch.last) / 1000;
@@ -240,13 +240,13 @@ function renderActions() {
   if (!ch || !$('#act')) return;
   const d = D(), used = staminaUsed();
   const view = actView();
-  if (view !== 'full') { $('#act').innerHTML = actHeader(view) + (view === 'compact' ? (ch.actions.length ? actChips() : '<p class="mute" style="margin:6px 0 0;font-size:14px">Nothing running.</p>') : ''); $('#act').dataset.view = view; updateLive(); return; }
+  if (view !== 'full') { $('#actbody').innerHTML = actHeader(view) + (view === 'compact' ? (ch.actions.length ? actChips() : '<p class="mute" style="margin:6px 0 0;font-size:14px">Nothing running.</p>') : ''); $('#act').dataset.view = view; refreshScenes(); updateLive(); return; }
   $('#act').dataset.view = view;
-  $('#act').innerHTML = actHeader(view) + `
+  $('#actbody').innerHTML = actHeader(view) + `
     <div class="pips" style="margin-top:6px" aria-label="Stamina ${used} of ${d.stamina}">${Array.from({ length: d.stamina }, (_, i) => `<i class="${i < used ? 'u' : ''}"></i>`).join('')}</div>
-    ${ch.actions.length ? ch.actions.map(a => { const o = ACT(a.res); return `<div class="aslot ${a.vein > Date.now() ? 'vein' : ''}" data-res="${o.id}">${actIcon(o)}<div><div class="spread"><b>${esc(o.name)}</b>${tierBadge(ch.prof[o.id] || 0)}</div><div class="bar" style="margin:5px 0"><i></i></div><div class="meta">${SKILLS[o.skill].name} · <span data-live="time:${o.id}"></span> each${o.inputs ? ` · <span data-live="can:${o.id}"></span> left` : ` · streak <span data-live="streak:${o.id}"></span>`}${a.vein > Date.now() ? ` · <b class="gold">${NODE_BONUS[o.skill]}</b>` : ''}</div></div><button class="sm" data-act="stop" data-arg="${o.id}" aria-label="Stop ${esc(o.name)}">Stop</button></div>`; }).join('')
+    ${ch.actions.length ? ch.actions.map(a => { const o = ACT(a.res); return `<div class="aslot ${a.vein > Date.now() ? 'vein' : ''} ${sceneAction() && sceneAction().id === o.id && ch.actions.length > 1 ? 'focus' : ''}" data-res="${o.id}" data-act="scenefocus" data-arg="${o.id}" title="Show in the scene">${actIcon(o)}<div><div class="spread"><b>${esc(o.name)}</b>${tierBadge(ch.prof[o.id] || 0)}</div><div class="bar" style="margin:5px 0"><i></i></div><div class="meta">${SKILLS[o.skill].name} · <span data-live="time:${o.id}"></span> each${o.inputs ? ` · <span data-live="can:${o.id}"></span> left` : ` · streak <span data-live="streak:${o.id}"></span>`}${a.vein > Date.now() ? ` · <b class="gold">${NODE_BONUS[o.skill]}</b>` : ''}</div></div><button class="sm" data-act="stop" data-arg="${o.id}" aria-label="Stop ${esc(o.name)}">Stop</button></div>`; }).join('')
       : `<p class="mute" style="margin:10px 0 0">Nothing running. Pick something in any gathering or crafting skill; each running action occupies stamina.</p>`}`;
-  updateLive();
+  refreshScenes(); updateLive();
 }
 function renderSide() {
   if (!ch) return;
@@ -271,7 +271,7 @@ function renderMain() {
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
-  bindMain(); updateLive();
+  bindMain(); updateLive(); refreshScenes();
 }
 
 // ---------- Skill tabs ----------
@@ -397,7 +397,7 @@ function tabChar() {
   const allocTotal = Object.values(ch.alloc).reduce((s, v) => s + v, 0);
   const diffs = [...DERIVED, ['pool', 'Yield (' + SKILLS[charSkill].name + ')', v => '+' + pct(v)], ['speed', 'Speed (' + SKILLS[charSkill].name + ')', v => '+' + pct(v)]].filter(([k]) => Math.abs(d1[k] - d0[k]) > 1e-9).map(([k, n, f]) => `<span>${n}</span><span class="${d1[k] > d0[k] ? 'up' : 'down'}">${f(d0[k])} → ${f(d1[k])}</span>`).join('');
   return `<div class="spread"><h2>Character</h2><button class="chip" data-act="tab" data-arg="talents">Skill points <b>${ch.skillPts}</b></button></div>
-    <div class="card" style="margin-top:12px"><div class="row" style="gap:16px;align-items:center">${heroShowcase(ch, 112, { cls: "small" })}<div style="flex:1;min-width:220px"><h3>${esc(ch.name)}</h3><div>${ch.displayTitle ? `<span class="gold">${esc(ch.displayTitle)}</span> · ` : ''}${levelLabel(ch)} ${esc(race().name)} ${esc(tierName(ch.cls, ch.adv.spec, ch.adv.tier))}</div>
+    <div class="card" style="margin-top:12px"><div class="row" style="gap:16px;align-items:center"><div class="scene-slot charscene"></div><div style="flex:1;min-width:220px"><h3>${esc(ch.name)}</h3><div>${ch.displayTitle ? `<span class="gold">${esc(ch.displayTitle)}</span> · ` : ''}${levelLabel(ch)} ${esc(race().name)} ${esc(tierName(ch.cls, ch.adv.spec, ch.adv.tier))}</div>
       <div class="mute" style="font-size:14px">${esc(ch.gender || ch.pronouns || '')} · ${esc(ORIGINS.find(o => o.id === ch.origin).name)} from ${esc(regionName())}</div>
       <div class="mute" style="font-size:14px">${esc(race().passive)} · Class: ${esc(modsText(INNATE[ch.cls]))}</div><div class="row" style="gap:6px;margin-top:8px"><button class="sm" data-act="tab" data-arg="wardrobe">Wardrobe</button></div></div></div></div>
     <div style="margin-top:14px">${presetCard()}</div>
@@ -477,7 +477,7 @@ function tabSettings() {
     <div class="card"><b>Theme</b><div class="row" style="margin-top:8px">${THEMES.map(([v, n]) => opt('theme', v, n)).join('')}</div></div>
     ${automationCard()}
     <div class="card"><b>Numbers</b><div class="row" style="margin-top:8px">${opt('num', 'short', '1.2K')}${opt('num', 'sci', '1.2e3')}</div></div>
-    <div class="card"><b>Comfort</b><div class="row" style="margin-top:8px">${opt('large', !s.large, s.large ? 'Larger text: on' : 'Larger text: off')}${opt('reduced', !s.reduced, s.reduced ? 'Reduced motion: on' : 'Reduced motion: off')}${opt('sound', !s.sound, s.sound ? 'Sound: on' : 'Sound: off')}${opt('discOff', !s.discOff, s.discOff ? 'Discovery pop-ups: off' : 'Discovery pop-ups: on')}</div></div>
+    <div class="card"><b>Comfort</b><div class="row" style="margin-top:8px"><button class="chip ${s.anim === false ? '' : 'on'}" data-act="set" data-arg="anim|${s.anim === false}">${s.anim === false ? 'Action animations: off' : 'Action animations: on'}</button>${opt('large', !s.large, s.large ? 'Larger text: on' : 'Larger text: off')}${opt('reduced', !s.reduced, s.reduced ? 'Reduced motion: on' : 'Reduced motion: off')}${opt('sound', !s.sound, s.sound ? 'Sound: on' : 'Sound: off')}${opt('discOff', !s.discOff, s.discOff ? 'Discovery pop-ups: off' : 'Discovery pop-ups: on')}</div></div>
     <div class="card"><b>Save</b><p class="mute" style="margin:4px 0 8px;font-size:14px">Auto-saves every 30 seconds and when you leave. Saves live in this browser; copy a save code (short and compressed) or save it as a file to move it.</p>
       <div class="row"><button data-act="savenow">Save now</button><button data-act="copysave">Copy save code</button><button data-act="dlsave">Save as file</button><button data-act="importsave">Import save code</button></div><div id="savemsg" class="mute" style="font-size:14px;margin-top:6px"></div></div>
     <div class="card"><b>Character</b><div class="row" style="margin-top:8px"><button data-act="toselect">Character select</button></div></div>
@@ -573,7 +573,7 @@ function tabCombat() {
         <div class="spread" style="margin-top:10px"><label for="cfood" style="font-size:14px">Combat food (<span data-live="foodn"></span>)</label>
         <select id="cfood" style="max-width:220px"><option value="">Weakest first</option>${foods.map(k => `<option value="${k}" ${ch.combatFood === k ? 'selected' : ''}>${esc(ITEMS[k].name)} (+${ITEMS[k].heal})</option>`).join('')}</select></div>
         <p class="mute" style="font-size:13px;margin:6px 0 0">Below ${pct(BALANCE.combat.autoEatAt)} HP you eat automatically. Cook fish for combat food. HP regenerates when you are not fighting.</p></div>
-      <div class="card"><b>${e ? 'Fighting ' + esc(e.name) : ch.travel ? 'On the road' : 'No fight running'}</b>
+      <div class="card"><b>${e ? 'Fighting ' + esc(e.name) : ch.travel ? 'On the road' : 'No fight running'}</b>${e ? '<div class="scene-slot"></div>' : ''}
         ${e ? `<div class="spread" style="font-size:14px;margin-top:6px"><span>${esc(cls().res)}</span></div><div class="bar cres"><i style="width:${((run.streak % 3) / 3 * 100).toFixed(0)}%"></i></div><div class="spread" style="font-size:14px;margin-top:6px"><span>${esc(e.name)}</span><span class="mute">Lv ${e.level}</span></div><div class="bar ehp"><i id="ehp" style="width:100%"></i></div>` : ''}
         <div class="log clog" id="clog" style="margin-top:8px;max-height:180px"></div></div></div>
     ${ch.travel ? '<p class="mute">You are travelling. Fights resume when you arrive.</p>' : groups.map(([n, es]) => `<h3 style="margin:18px 0 8px">${esc(n)}</h3><div class="cols">${es.map(x => enemyCard(x, d)).join('')}</div>`).join('')}
@@ -835,6 +835,7 @@ const HANDLERS = {
   ...FASHION_HANDLERS,
   ...ARENA_HANDLERS,
   ...QOL_HANDLERS,
+  ...ANIM_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },

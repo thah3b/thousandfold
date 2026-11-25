@@ -2,8 +2,16 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v1.4';
+const GAME_VERSION = 'v1.5';
 const PATCH_NOTES = [
+  { v: 'v1.5', date: '2026-11-25', title: 'Action animations', notes: [
+    'Your hero now acts out what you\u2019re doing in a little pixel scene: swinging a pickaxe at a rock, chopping a tree, hoeing crops, casting a line into a pond, cutting herbs, skinning on a drying rack, hammering at the anvil, stirring a cauldron or a cooking pot, weaving at a loom, enchanting at a glowing pedestal, cutting gems, lifting weights, exploring with a map and walking the road when you travel.',
+    'Fights show your hero trading blows with the actual monster, with hits, sparks and damage numbers.',
+    'Every completed action pops out the item you made or found. Your active pet tags along, and flying pets hover.',
+    'The scene lives in the Active actions panel (Full view), on the Character tab and on the Combat tab. With several actions running, click one to show it in the scene.',
+    'The scenery matches the region you\u2019re in, and crafting happens indoors.',
+    'Don\u2019t want it? Settings \u2192 Comfort \u2192 Action animations. Reduced motion also keeps scenes still.',
+  ] },
   { v: 'v1.4', date: '2026-11-25', title: 'Quality of life', notes: [
     'Active actions panel: switch between Full, Compact (a slim row of chips with progress bars) and Hidden. On phones it starts compact, so it no longer pushes everything down. New Stop all button.',
     'Auto mode: fills any free stamina with gathering in your lowest skills. Switch it on from the Active actions panel or Settings.',
