@@ -218,7 +218,6 @@ function step() {
     ch.prof[a.res] = (ch.prof[a.res] || 0) + n; ch.totals[sk] += n; a.streak += n;
     ch.counters.lucky += r.lucky; ch.counters.triple += r.triple;
     g.xp += r.xp; g.lucky += r.lucky; g.triple += r.triple; g.n += n;
-    if (r.triple) flash();
     addXp(sk, r.xp);
     const k1 = tierOf(ch.prof[a.res]); if (k1 > k0) { tierUp(act, k1); checkProgress(); }
   }

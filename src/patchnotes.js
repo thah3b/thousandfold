@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.11d';
+const GAME_VERSION = 'v0.11e';
 const PATCH_NOTES = [
+  { v: 'v0.11e', date: '2026-11-24', title: 'No more Lucky Strike flash', notes: [
+    'Triple Lucky Strikes no longer flash the whole screen. They still show in the event log and count toward achievements.',
+  ] },
   { v: 'v0.11d', date: '2026-11-24', title: 'Account button', notes: [
     'The button on the character screen now says Account login when you are signed out, and shows your email address when you are signed in.',
   ] },

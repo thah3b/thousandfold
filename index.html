@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thousandfold v0.11d</title>
+<title>Thousandfold v0.11e</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <style>
@@ -258,8 +258,11 @@ main{grid-area:main;padding:18px max(16px,1.6vw) 40px}
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.11d';
+const GAME_VERSION = 'v0.11e';
 const PATCH_NOTES = [
+  { v: 'v0.11e', date: '2026-11-24', title: 'No more Lucky Strike flash', notes: [
+    'Triple Lucky Strikes no longer flash the whole screen. They still show in the event log and count toward achievements.',
+  ] },
   { v: 'v0.11d', date: '2026-11-24', title: 'Account button', notes: [
     'The button on the character screen now says Account login when you are signed out, and shows your email address when you are signed in.',
   ] },
@@ -2349,7 +2352,6 @@ function step() {
     ch.prof[a.res] = (ch.prof[a.res] || 0) + n; ch.totals[sk] += n; a.streak += n;
     ch.counters.lucky += r.lucky; ch.counters.triple += r.triple;
     g.xp += r.xp; g.lucky += r.lucky; g.triple += r.triple; g.n += n;
-    if (r.triple) flash();
     addXp(sk, r.xp);
     const k1 = tierOf(ch.prof[a.res]); if (k1 > k0) { tierUp(act, k1); checkProgress(); }
   }
