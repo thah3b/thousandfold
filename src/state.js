@@ -93,7 +93,7 @@ function toast(html, kind) {
   $('#toasts').appendChild(el); setTimeout(() => el.remove(), 4200);
   while ($('#toasts').children.length > 4) $('#toasts').firstChild.remove();
 }
-function modal(html) { closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div class="card" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(m); const f = m.querySelector('button.pri,input,button'); if (f) f.focus(); }
+function modal(html, cls) { closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div class="card ${cls || ''}" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(m); const f = m.querySelector('button.pri,input,button'); if (f) f.focus(); }
 function closeModal() { const m = $('#modal'); if (m) m.remove(); }
 function addLog(k, s) { ch.log.unshift({ t: Date.now(), k, s }); if (ch.log.length > 150) ch.log.length = 150; if (typeof renderLog === 'function') renderLog(); }
 let actx = null;

@@ -835,6 +835,7 @@ const HANDLERS = {
   ...GUILD_HANDLERS,
   ...PRESTIGE_HANDLERS,
   ...LORE_HANDLERS,
+  ...PROFILE_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },
@@ -961,7 +962,7 @@ function start(data) {
   applySettings();
   if (account.activeSlot != null && account.slots[account.activeSlot]) enterGame(account.activeSlot); else renderSelect();
   requestAnimationFrame(frame);
-  setTimeout(() => cloudInit().catch(() => { }), 0); setInterval(() => { try { cloudTick(); } catch (e) { } }, 30000);
+  setTimeout(() => cloudInit().catch(() => { }).then(() => profileFromUrl()), 0); setInterval(() => { try { cloudTick(); } catch (e) { } }, 30000);
 }
 try { window.claude && window.claude.hot && window.claude.hot.snapshot(() => { if (ch) ch.last = Date.now(); return { account }; }); } catch (e) { }
 if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(start); else start((window.claude && window.claude.hot && window.claude.hot.data) || {});

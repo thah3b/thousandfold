@@ -2,8 +2,14 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.14';
+const GAME_VERSION = 'v0.15';
 const PATCH_NOTES = [
+  { v: 'v0.15', date: '2026-11-25', title: 'Player profiles', notes: [
+    'Every signed-in player now has a public profile showing their characters: class, level and Ascension, title, achievements, collection, pets, companion, sentient weapons, top skills and more.',
+    'Click a player\u2019s name in chat, your friends list or the leaderboards to see their profile, and add them as a friend from there.',
+    'Share your profile: Account tab \u2192 Your public profile \u2192 Copy link. Anyone can open the link, even without an account.',
+    'Prefer privacy? Hide your characters with one click. Others then only see your player name, guild and friend code. Your email and save are never shown.',
+  ] },
   { v: 'v0.14', date: '2026-11-25', title: 'Guilds, perks, events and lore', notes: [
     'Guilds (Social \u2192 Guild): found or join a guild of up to 30, with leader, officer and member ranks, guild chat, a shared gold bank, and a weekly guild goal. Every gathering action, craft and won fight counts, and each goal reached (Bronze, Silver, Gold) mails every member a reward. Plus a guild leaderboard. Needs an account.',
     'Ascension perks (Class tab): every Ascension now gives a perk point, including the ones you already have. Spend them on more XP, yield, attack, luck, offline time, stamina or inventory space. Reset for 10 Ember Shards.',

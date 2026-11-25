@@ -264,7 +264,7 @@ function tabAccount() {
         <p class="mute" style="font-size:12px;margin:4px 0 0">Anything goes: letters from any language, numbers, symbols, emoji, ( \u0361\u00b0 \u035c\u0296 \u0361\u00b0). Up to ${NAME_MAX} characters.</p>
         <div class="mute" style="font-size:14px;margin-top:10px">Gender</div><div class="row" style="gap:6px;margin-top:4px">${['Male', 'Female'].map(g => `<button class="chip ${ch.gender === g ? 'on' : ''}" data-act="acgender" data-arg="${g}">${g}</button>`).join('')}</div></div>
       <div class="card"><h3>Player name</h3>${prof}</div>
-    </div>
+    </div>${myProfileCard()}
     <h3 style="margin:18px 0 8px">Sign-in and cloud save</h3>${cloudPanel()}`;
 }
 let lbCat = 'prog';
@@ -274,7 +274,7 @@ function tabLeaders() {
   const rows = cloud.lb || [];
   const table = cloud.state !== 'ready' ? `<p class="mute">${cloud.state === 'signedout' ? 'Sign in on the Cloud save tab to see the leaderboards.' : cloud.state === 'starting' ? 'Connecting…' : 'Leaderboards need the online game link or a Thousandfold server.'}</p>`
     : cloud.lbErr ? `<p class="bad">${esc(cloud.lbErr)}</p>` : !cloud.lb ? '<p class="mute">Loading…</p>' : !rows.length ? '<p class="mute">Nobody has posted yet. Save to the cloud to be first.</p>'
-    : `<div class="lbtable" role="table">${rows.map((e, i) => `<div class="lbrow ${e.mine ? 'mine' : ''} ${e.flagged || e.banned ? 'flag' : ''}" role="row"><span class="num lbrank">${i + 1}</span><span class="lbname"><b>${esc(e.name)}</b><span class="mute" style="font-size:12px"> ${esc((CLASSES.find(c => c.id === e.cls) || {}).name || '')}${e.mine ? ' · you' : ''}${e.flagged ? ' · failed checks' : ''}${e.banned ? ' · hidden' : ''}</span></span><span class="mute hide-s" style="font-size:13px">${cat[0] === 'prog' ? '' : `A${+e.asc || 0} · Lv ${+e.level || 1}`}</span><span class="num gold">${esc(cat[2](e))}</span>${cloud.isOwner && cloud.provider === 'claude' && !e.mine ? `<button class="sm ghost" data-act="lbban" data-arg="${esc(e.user_id)}">${e.banned ? 'Unhide' : 'Hide'}</button>` : ''}</div>`).join('')}</div>`;
+    : `<div class="lbtable" role="table">${rows.map((e, i) => `<div class="lbrow ${e.mine ? 'mine' : ''} ${e.flagged || e.banned ? 'flag' : ''}" role="row"><span class="num lbrank">${i + 1}</span><span class="lbname">${e.user_id ? `<button class="linkbtn" data-act="profuser" data-arg="${esc(e.user_id)}"><b>${esc(e.name)}</b></button>` : `<b>${esc(e.name)}</b>`}<span class="mute" style="font-size:12px"> ${esc((CLASSES.find(c => c.id === e.cls) || {}).name || '')}${e.mine ? ' · you' : ''}${e.flagged ? ' · failed checks' : ''}${e.banned ? ' · hidden' : ''}</span></span><span class="mute hide-s" style="font-size:13px">${cat[0] === 'prog' ? '' : `A${+e.asc || 0} · Lv ${+e.level || 1}`}</span><span class="num gold">${esc(cat[2](e))}</span>${cloud.isOwner && cloud.provider === 'claude' && !e.mine ? `<button class="sm ghost" data-act="lbban" data-arg="${esc(e.user_id)}">${e.banned ? 'Unhide' : 'Hide'}</button>` : ''}</div>`).join('')}</div>`;
   return `<div class="spread"><h2>Leaderboards</h2><button class="sm" data-act="lbrefresh" ${cloud.state === 'ready' ? '' : 'disabled'}>Refresh</button></div>
     <p class="mute">Top 100 characters. Ascension counts here: A0 means not yet ascended. Your characters are posted each time you save to the cloud.</p>
     <div class="row" style="margin:10px 0">${CLOUD.lbCats.map(([k, n]) => `<button class="chip ${lbCat === k ? 'on' : ''}" data-act="lbcat" data-arg="${k}">${n}</button>`).join('')}</div>${table}`;

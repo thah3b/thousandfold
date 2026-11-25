@@ -19,6 +19,7 @@ async function socRefresh() {
   soc.lastTick = Date.now();
   if (soc.trades || Object.keys(account.escrow || {}).length) await tradeSync();
   if (soc.me && typeof guildLoad === 'function') { if (soc.guild === undefined) await guildLoad(true); else guildContribute(); }
+  if (soc.me && typeof profilePublish === 'function') profilePublish();
   socPaint();
 }
 function socPaint() {
@@ -68,7 +69,7 @@ const errBox = () => soc.err ? `<p class="bad" style="font-size:14px">${esc(soc.
 function tabFriends() {
   const g = socGate(); if (g) return `<h2>Friends</h2>${g}`;
   const inc = soc.friends.filter(f => f.status === 'incoming'), out = soc.friends.filter(f => f.status === 'outgoing'), fr = friendsOnly();
-  const row = f => `<div class="prow"><span><span class="odot ${f.online ? 'on' : ''}" title="${f.online ? 'Online' : 'Offline'}"></span> <b>${esc(f.name)}</b> <span class="mute" style="font-size:12px">${esc(f.code)} · ${f.online ? 'online' : 'seen ' + ago(f.last_seen)}</span></span>
+  const row = f => `<div class="prow"><span><span class="odot ${f.online ? 'on' : ''}" title="${f.online ? 'Online' : 'Offline'}"></span> <button class="linkbtn" data-act="profuser" data-arg="${esc(f.id)}"><b>${esc(f.name)}</b></button> <span class="mute" style="font-size:12px">${esc(f.code)} · ${f.online ? 'online' : 'seen ' + ago(f.last_seen)}</span></span>
     <span class="row" style="gap:4px"><button class="sm" data-act="socdm" data-arg="${f.id}">Chat</button><button class="sm" data-act="socgift" data-arg="${f.id}">Gift</button><button class="sm" data-act="soctrade" data-arg="${f.id}">Trade</button><button class="sm ghost" data-act="socmore" data-arg="${f.id}">⋯</button></span></div>`;
   return `<div class="spread"><h2>Friends</h2><button class="sm" data-act="socrefresh">Refresh</button></div>${errBox()}
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));margin-top:12px;align-items:start">
@@ -226,7 +227,7 @@ const SOCIAL_HANDLERS = {
   socunblock: async id => { try { await rpc('tf_block', { p_other: id, p_on: false }); await socRefresh(); renderMain(); } catch (e) { toast(esc(e.message)); } },
   socblock: async id => { try { await rpc('tf_block', { p_other: id, p_on: true }); closeModal(); soc.msgs = {}; await socRefresh(); renderMain(); toast('Blocked. You won’t see their messages.'); } catch (e) { toast(esc(e.message)); } },
   socmore: id => { const f = soc.friends.find(x => x.id === id); modal(`<h3>${esc(f.name)}</h3><p class="mute">${esc(f.code)}</p><div class="row" style="margin-top:12px"><button data-act="socremove" data-arg="${id}">Remove friend</button><button data-act="socblock" data-arg="${id}">Block</button><button class="ghost" data-act="close">Close</button></div>`); },
-  socwho: a => { const [id, name] = a.split('|'); const fr = soc.friends.find(f => f.id === id); modal(`<h3>${esc(name)}</h3><div class="row" style="margin-top:12px">${fr ? '' : `<button class="pri" data-act="socaddname" data-arg="${esc(name)}">Add friend</button>`}<button data-act="socblock" data-arg="${esc(id)}">Block</button><button class="ghost" data-act="close">Close</button></div>`); },
+  socwho: a => { const [id, name] = a.split('|'); const fr = soc.friends.find(f => f.id === id); modal(`<h3>${esc(name)}</h3><div class="row" style="margin-top:12px"><button data-act="profuser" data-arg="${esc(id)}">View profile</button>${fr ? '' : `<button class="pri" data-act="socaddname" data-arg="${esc(name)}">Add friend</button>`}<button data-act="socblock" data-arg="${esc(id)}">Block</button><button class="ghost" data-act="close">Close</button></div>`); },
   socaddname: async n => { try { const r = await rpc('tf_friend_add', { p_target: n }); closeModal(); toast(r === 'accepted' ? 'You’re now friends!' : 'Friend request sent.', 'verd'); socRefresh(); } catch (e) { toast(esc(e.message)); } },
   socdm: id => { soc.chan = 'dm:' + id; HANDLERS.tab('chat'); },
   socchan: k => { soc.chan = k; soc.err = ''; renderMain(); chatLoop(); },

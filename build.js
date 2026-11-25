@@ -33,6 +33,7 @@ ${r('cloud.js')}
 ${r('social.js')}
 ${r('auction.js')}
 ${r('guild.js')}
+${r('profile.js')}
 ${r('ui.js')}
 </script></body></html>`;
 fs.writeFileSync('index.html',html);fs.mkdirSync('releases',{recursive:true});fs.writeFileSync('releases/Thousandfold_'+VER+'.html',html);console.log(VER, html.length);
