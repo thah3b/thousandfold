@@ -12,16 +12,7 @@ function oreIcon(color, size, glow) {
 <path d="M17 22 20 14 23.5 21.5Z" fill="${color}"/><path d="M20 14 23.5 21.5 21.4 22Z" fill="#000" opacity=".28"/><path d="M17 22 20 14 19.2 21.6Z" fill="#fff" opacity=".35"/><path d="M14.5 24 16 19.5 18 24Z" fill="${color}" opacity=".9"/>`, size);
 }
 function resIcon(r, size) {
-  const c = r.color, glow = tierOf(ch ? ch.prof[r.id] || 0 : 0) >= 9 ? `<circle cx="16" cy="16" r="15" fill="${c}" opacity=".22"/>` : '';
-  switch (r.skill) {
-    case 'mining': return oreIcon(c, size, !!glow);
-    case 'woodcutting': return svg(`${glow}<rect x="4" y="11" width="20" height="12" rx="2" fill="#6b4a32"/><path d="M4 13h20M4 17h20M4 21h20" stroke="#000" opacity=".2"/><ellipse cx="24" cy="17" rx="5" ry="6" fill="${c}"/><ellipse cx="24" cy="17" rx="3" ry="3.8" fill="none" stroke="#000" opacity=".25"/><ellipse cx="24" cy="17" rx="1.2" ry="1.6" fill="#000" opacity=".3"/>`, size);
-    case 'farming': return svg(`${glow}<path d="M16 29V14" stroke="#4f8a3a" stroke-width="2.4"/><path d="M16 18c-6 0-9-4-9-8 5 0 9 3 9 8Z" fill="#62a84a"/><path d="M16 15c5 0 8-4 8-7-5 0-8 3-8 7Z" fill="#7cc45a"/><circle cx="16" cy="9" r="5.5" fill="${c}"/><circle cx="14.4" cy="7.4" r="1.6" fill="#fff" opacity=".4"/><path d="M8 29h16" stroke="#6b4a32" stroke-width="3"/>`, size);
-    case 'fishing': return svg(`${glow}<path d="M4 16c5-7 14-8 20 0-6 8-15 7-20 0Z" fill="${c}"/><path d="M24 16l6-6v12Z" fill="${c}"/><path d="M4 16c5 6 14 7 20 0" fill="#000" opacity=".2"/><circle cx="9" cy="14.5" r="1.4" fill="#111"/><path d="M14 11c1 3 1 7 0 10" stroke="#fff" opacity=".35" fill="none"/>`, size);
-    case 'herbalism': return svg(`${glow}<path d="M16 30C16 20 18 10 24 3" stroke="#4f7a3a" stroke-width="2" fill="none"/><path d="M17 20c-7 1-11-3-12-8 6-1 11 2 12 8Z" fill="${c}"/><path d="M19 13c5-1 8-5 8-9-5 0-8 4-8 9Z" fill="${c}"/><path d="M17 20c-6-2-9-5-12-8" stroke="#000" opacity=".25" fill="none"/>`, size);
-    case 'skinning': return svg(`${glow}<path d="M8 6c3 2 13 2 16 0l3 6-3 3 2 12c-4 2-16 2-20 0l2-12-3-3Z" fill="${c}"/><path d="M8 27c4 2 16 2 20 0l-1-6c-5 2-13 2-18 0Z" fill="#000" opacity=".2"/><path d="M12 10c2 1 6 1 8 0" stroke="#fff" opacity=".35" fill="none"/>`, size);
-  }
-  return oreIcon(c, size);
+  return pxRes(r, size || 34, tierOf(ch ? ch.prof[r.id] || 0 : 0) >= 9);
 }
 const SLOT_GLYPH = {
   weapon: c => `<path d="M24 4 27 7 12 22 9 20Z" fill="${c}"/><path d="M24 4 27 7 25 9 22 6Z" fill="#fff" opacity=".4"/><path d="M7 19l6 6-2 2-6-6Z" fill="#8a6b4f"/><path d="M5 25l2 2-2 2-2-2Z" fill="#c9a36a"/>`,
@@ -37,24 +28,13 @@ const SLOT_GLYPH = {
 };
 function itemIcon(key, size) {
   if (RES_BY[key]) return resIcon(RES_BY[key], size);
-  const it = ITEM(key), c = RARITIES[it.rarity].color;
-  if (it.gear) return svg((SLOT_GLYPH[it.slot] || SLOT_GLYPH.tool)(c) + (it.plus ? `<text x="30" y="31" text-anchor="end" font-size="11" font-weight="700" fill="#ffd86b" stroke="#000" stroke-width="2" paint-order="stroke">+${it.plus}</text>` : ''), size);
-  if (it.type === 'potion') return svg(`<path d="M13 4h6v6l6 10a6 6 0 0 1-5 9h-8a6 6 0 0 1-5-9l6-10Z" fill="#3a2d27"/><path d="M9 19h14l2 3a5 5 0 0 1-4.5 6h-9A5 5 0 0 1 7 22Z" fill="${c}"/><rect x="12" y="2" width="8" height="3" rx="1" fill="#8a6b4f"/><path d="M11 20h3l-2 6" stroke="#fff" opacity=".35" fill="none"/>`, size);
-  if (it.type === 'food') return svg(`<path d="M3 15h26c0 8-6 13-13 13S3 23 3 15Z" fill="#8a5a36"/><path d="M3 15h26" stroke="#000" opacity=".3"/><path d="M7 15c0-5 4-8 9-8s9 3 9 8Z" fill="${c}"/><path d="M11 10c2-2 4-2 6-2" stroke="#fff" opacity=".4" fill="none" stroke-width="2"/>`, size);
-  if (it.type === 'stone') return svg(`<path d="M16 3 27 10 24 27H8L5 10Z" fill="#4a4a5a"/><path d="M16 3 27 10 16 13 5 10Z" fill="#6a6a7a"/><path d="M13 16l3-4 3 4-3 7Z" fill="${c}"/>`, size);
-  if (it.type === 'material') return /Bar$/.test(it.name) ? svg(`<path d="M4 22 10 12h16l2 10Z" fill="${c}"/><path d="M10 12h16l2 10H20Z" fill="#000" opacity=".2"/><path d="M4 22h24v4H4Z" fill="#000" opacity=".35"/><path d="M12 14h8" stroke="#fff" opacity=".5" stroke-width="2"/>`, size)
-    : svg(`<rect x="4" y="9" width="24" height="15" rx="7" fill="${c}"/><path d="M11 9v15M18 9v15" stroke="#000" opacity=".18" stroke-width="2"/><circle cx="25" cy="16.5" r="4" fill="#000" opacity=".2"/>`, size);
-  if (it.type === 'supply' || it.type === 'upgrade') return svg(`<rect x="6" y="9" width="20" height="18" rx="3" fill="#8a6b4f"/><path d="M6 13h20" stroke="#000" opacity=".3" stroke-width="2"/><rect x="12" y="5" width="8" height="5" rx="1" fill="${c}"/>`, size);
-  return svg(`<circle cx="16" cy="16" r="10" fill="${c}"/><circle cx="16" cy="16" r="6" fill="none" stroke="#000" opacity=".25" stroke-width="2"/><path d="M10 12a8 8 0 0 1 6-4" stroke="#fff" opacity=".5" fill="none" stroke-width="2"/>`, size);
+  const it = ITEM(key), img = pxItem(it, (RARITIES[it.rarity] || RARITIES[0]).color, size || 34);
+  return it.gear && it.plus ? `<span class="pxw">${img}<b class="pxplus">+${it.plus}</b></span>` : img;
 }
 const actIcon = (a, size) => a.inputs ? itemIcon(a.gearOut ? gkey(a.out) : a.out, size) : resIcon(a, size);
 function portrait(c, size) {
-  const r = RACES.find(x => x.id === c.race) || RACES[0];
-  const ini = Array.from((c.name || '?').trim().split(/\s+/).map(w => Array.from(w)[0] || '').join('')).slice(0, 2).join('').toUpperCase() || '?';
-  const mark = { 'Old scar': '<path d="M38 22 46 34" stroke="#fff" stroke-width="2" opacity=".6"/>', 'Runic tattoo': '<path d="M14 24h6l-3 6 3 6h-6" stroke="#fff" stroke-width="1.6" fill="none" opacity=".55"/>', 'Warpaint': '<path d="M12 30h40" stroke="#000" stroke-width="5" opacity=".25"/>', 'Freckles': '<g fill="#000" opacity=".25"><circle cx="20" cy="40" r="1.4"/><circle cx="24" cy="42" r="1.4"/><circle cx="40" cy="42" r="1.4"/><circle cx="44" cy="40" r="1.4"/></g>', 'Birthmark': '<circle cx="44" cy="44" r="3" fill="#000" opacity=".22"/>' }[c.look && c.look.markings] || '';
-  return `<svg class="portrait" style="width:${size || 64}px;height:${(size || 64) * 1.125}px" viewBox="0 0 64 72" aria-hidden="true"><defs><linearGradient id="pg${r.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${r.color}"/><stop offset="1" stop-color="#2a1d17"/></linearGradient></defs>
-<path d="M4 4h56v34c0 16-14 26-28 32C18 64 4 54 4 38Z" fill="url(#pg${r.id})" stroke="${c.adv && TIER_FRAME[c.adv.tier] ? TIER_FRAME[c.adv.tier] : '#000'}" stroke-opacity="${c.adv && TIER_FRAME[c.adv.tier] ? 1 : .3}" stroke-width="${c.adv && TIER_FRAME[c.adv.tier] ? 3.5 : 1}"/><path d="M8 8h48v4H8Z" fill="#fff" opacity=".15"/>${mark}
-<text x="32" y="44" text-anchor="middle" font-family="IM Fell English SC,Georgia,serif" font-size="24" fill="#fff">${esc(ini)}</text></svg>`;
+  const r = RACES.find(x => x.id === c.race) || RACES[0], S = size || 64, fr = c.adv && TIER_FRAME[c.adv.tier];
+  return pxChibi(pxLookOf(c), S, { cls: 'portrait', h: Math.round(S * 1.125), style: `width:${S}px;height:${Math.round(S * 1.125)}px;object-fit:contain;background:linear-gradient(${r.color},#2a1d17);border:${fr ? 3 : 1}px solid ${fr || 'rgba(0,0,0,.35)'};border-radius:10px;box-sizing:border-box;padding:3px 2px 0` });
 }
 function tierBadge(count) { const k = tierOf(count); return `<span class="tier ${k >= 9 ? 't10' : k >= 6 ? 't7' : ''}">${BALANCE.tierNames[k]}</span>`; }
 const rcol = r => r === 0 ? 'var(--ink)' : `color-mix(in srgb, ${RARITIES[r].color} 72%, var(--ink))`;
@@ -166,7 +146,7 @@ function heroArt() {
   let s = 7; const rnd = () => (s = s * 16807 % 2147483647) / 2147483647, cols = RES.map(o => o.color);
   let gems = '';
   for (let i = 0; i < 60; i++) { const x = rnd() * 1200, y = 60 + rnd() * 260, sc = 0.5 + rnd() * 1.3, c = cols[Math.floor(rnd() * cols.length)];
-    gems += `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) scale(${sc.toFixed(2)})"><path d="M0 14 4 0 9 13Z" fill="${c}"/><path d="M4 0 9 13 6 14Z" fill="#000" opacity=".3"/><path d="M0 14 4 0 3 13Z" fill="#fff" opacity=".35"/></g>`; }
+    gems += `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) scale(${(sc * 3).toFixed(2)})" shape-rendering="crispEdges"><rect x="1" y="0" width="2" height="1" fill="#fff" opacity=".7"/><rect x="0" y="1" width="4" height="2" fill="${c}"/><rect x="2" y="1" width="2" height="2" fill="#000" opacity=".28"/><rect x="1" y="3" width="2" height="1" fill="${c}"/><rect x="1" y="1" width="1" height="1" fill="#fff" opacity=".45"/></g>`; }
   let sparks = ''; for (let i = 0; i < 26; i++) sparks += `<circle cx="${(820 + rnd() * 300).toFixed(0)}" cy="${(40 + rnd() * 200).toFixed(0)}" r="${(1 + rnd() * 2).toFixed(1)}" fill="#ffad87" opacity="${(.3 + rnd() * .6).toFixed(2)}"/>`;
   return `<svg viewBox="0 0 1200 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><radialGradient id="lamp" cx=".8" cy=".35" r=".55"><stop offset="0" stop-color="#ff7a45" stop-opacity=".55"/><stop offset="1" stop-color="#ff7a45" stop-opacity="0"/></radialGradient><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset=".35" stop-color="#120d0b" stop-opacity="0"/><stop offset="1" stop-color="#120d0b" stop-opacity=".95"/></linearGradient></defs>
 <rect width="1200" height="360" fill="#1d1512"/><path d="M0 70 C200 40 380 100 600 70 S1000 40 1200 80 V140 C980 110 820 160 600 130 S180 120 0 150Z" fill="#2a1f1a"/>
@@ -181,7 +161,7 @@ function renderSelect() {
       <div class="mute" style="font-size:14px">${esc(START_REGIONS.find(r => r.id === c.region).name)} · last played ${new Date(c.last).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</div>
       <div class="row"><button class="pri" data-act="play" data-arg="${i}">Play</button><button class="ghost" data-act="delete" data-arg="${i}">Delete</button><button class="ghost sm" disabled title="Rename tokens come in a later phase">Rename</button></div></div>`
     : `<button class="card slot empty" data-act="new" data-arg="${i}"><span class="fell" style="font-size:26px">New character</span><span class="mute">Slot ${i + 1} is empty</span></button>`).join('');
-  $('#root').innerHTML = `<div class="screen"><div class="hero">${heroArt()}<div class="txt"><h1>${heroTitle()}</h1><p>Every swing counts. Ten thousand of them, and the mountain gives up its next secret.</p></div></div>
+  $('#root').innerHTML = `<div class="screen"><div class="hero">${heroArt()}<div class="txt">${gameIcon(72)}<h1>${heroTitle()}</h1><p>Every swing counts. Ten thousand of them, and the mountain gives up its next secret.</p></div></div>
     <div class="spread" style="margin-top:22px"><h2>Choose your character</h2><span class="row" style="gap:6px">${cloudChip()}<span class="chip">Ember Shards <b class="gold">${N(account.shards)}</b></span></span></div>
     <div class="slots">${slots}${account.slot4 ? '' : `<div class="card slot empty" style="opacity:.6"><span class="fell" style="font-size:22px">Fourth slot</span><span class="mute">Find ${SECRET_CFG.slot4At} secrets to open it</span></div>`}</div>
     <p class="bottomline">Thousandfold ${GAME_VERSION} · prototype. Saves stay in this browser and, when you are signed in, in the cloud.</p></div>`;
@@ -199,7 +179,7 @@ function nameError(n) {
 function wizardPreview() {
   const r = RACES.find(x => x.id === wz.race), c = CLASSES.find(x => x.id === wz.cls), o = ORIGINS.find(x => x.id === wz.origin), g = START_REGIONS.find(x => x.id === wz.region);
   const stats = STAT_IDS.map(id => { const v = 10 + (r.stat === id ? 1 : 0) + (o.stat === id ? 1 : 0); return `<span>${id}</span><span class="${v > 10 ? 'verd' : ''}">${v}</span>`; }).join('');
-  return `<div class="card preview"><div class="row">${portrait({ name: wz.name || '?', race: wz.race }, 72)}<div><h3>${esc(wz.name || 'Unnamed')}</h3><div class="mute">${wz.gender} ${esc(r.name)}</div></div></div>
+  return `<div class="card preview"><div class="row">${portrait({ name: wz.name || '?', race: wz.race, gender: wz.gender, cls: wz.cls }, 72)}<div><h3>${esc(wz.name || 'Unnamed')}</h3><div class="mute">${wz.gender} ${esc(r.name)}</div></div></div>
     <p style="margin:10px 0 10px">${esc(c.name)} · ${esc(o.name)}</p>
     <div class="kv">${stats}<span>Stamina</span><span>2</span></div><p class="mute" style="font-size:14px;margin:10px 0 0">Starts in ${esc(g.name)}</p></div>`;
 }
@@ -245,7 +225,7 @@ function enterGame(i) {
 function renderTop() {
   if (!ch) return; const now = Date.now();
   const pots = Object.entries(ch.potions).filter(([, p]) => p.until > now).map(([cat, p]) => `<span class="chip" title="${esc(ITEMS[p.id].name + ': ' + ITEMS[p.id].desc)}">${POTION_CATS[cat]} <b data-live="pot:${cat}"></b></span>`).join('');
-  $('#top').innerHTML = `<span class="brand">Thousandfold</span>
+  $('#top').innerHTML = `<span class="brand">${gameIcon(22)} Thousandfold</span>
     <div class="cur"><span class="num">Gold <b class="gold" data-live="gold"></b></span><span class="num">Shards <b data-live="shards"></b></span><span>${ch.travel ? 'Travelling to ' : ''}<b data-live="travel"></b></span><span class="mute" data-live="clock"></span>${pots}
     ${mailChip()}${(() => { const e = worldEvent(); return `<button class="chip evchip" data-act="tab" data-arg="events" title="${esc(e.text)}">${e.holiday ? '\u2744 ' : '\u2605 '}${esc(e.name)}</button>`; })()}</div>
     <div class="milestone" title="Closest upcoming milestone">Next: <b data-live="ms"></b></div>`;
@@ -564,7 +544,7 @@ function lootHtml(e) {
 function enemyCard(e, d) {
   const f = fightInfo(ch, e, d), run = ch.actions.find(a => a.res === e.id), c = ch.prof[e.id] || 0, k = tierOf(c);
   const tone = f.win >= 0.9 ? 'verd' : f.win >= 0.6 ? 'gold' : 'bad', why = cantStart(e);
-  return `<div class="card enemy ${run ? 'running' : ''} ${e.boss ? 'boss' : ''}"><div class="spread"><div><b style="font-size:18px">${esc(e.name)}</b> <span class="mute">Lv ${e.level}${e.boss ? ' · Boss' : e.role === 'hidden' ? ' · Rare' : ''}</span></div>${tierBadge(c)}</div>
+  return `<div class="card enemy ${run ? 'running' : ''} ${e.boss ? 'boss' : ''}"><div class="spread"><div class="row" style="gap:10px;flex-wrap:nowrap">${monsterIcon(e, e.boss ? 60 : 48)}<div><b style="font-size:18px">${esc(e.name)}</b> <span class="mute">Lv ${e.level}${e.boss ? ' · Boss' : e.role === 'hidden' ? ' · Rare' : ''}</span></div></div>${tierBadge(c)}</div>
     <p class="mute" style="margin:2px 0 8px;font-size:14px">${esc(e.flavor)}</p>
     <div class="kv"><span>Recommended power</span><span class="${tone}">${N(Math.round(f.rec))} (yours ${N(Math.round(f.cp))})</span><span>Win chance</span><span class="${tone}">${pct(f.win)}</span><span>Fight time</span><span>${fmtTime(f.time)}${!f.over ? ' <span class="mute">(no speed bonus below recommended)</span>' : ''}</span><span>Rewards</span><span>${N(e.xp * (1 + BALANCE.tierYieldBonus[k]))} XP · ${N(e.gold[0])}–${N(e.gold[1])}g</span><span>Wins</span><span data-live="next:${e.id}"></span></div>
     ${e.mech ? `<p style="margin:8px 0 0;font-size:14px"><b>${esc(e.mech.name)}.</b> ${esc(e.mech.text)} ${f.mech ? '<span class="verd">Countered</span>' : '<span class="bad">Not countered</span>'}</p>` : ''}
@@ -599,7 +579,7 @@ function tutorialHtml() {
   const t = TUTORIALS[ch.region], npc = START_REGIONS.find(r => r.id === ch.region).npc;
   if (!t) return '';
   return `<div class="spread"><h3>Tutorial</h3><span class="chip">${ch.quest.done ? 'Tutorial complete' : `${ch.quest.step} of 10 done`}</span></div>
-    <p class="mute">${esc(npc)} of ${esc(START_REGIONS.find(r => r.id === ch.region).name)} has work for you. ${ch.quest.done ? 'All done; the world map is open.' : 'Finish these to open the world map. Each one grants a permanent stat point.'}</p>
+    <div class="row" style="gap:12px;flex-wrap:nowrap;margin-top:6px">${npcSprite(npc, 52)}<p class="mute" style="margin:0">${esc(npc)} of ${esc(START_REGIONS.find(r => r.id === ch.region).name)} has work for you. ${ch.quest.done ? 'All done; the world map is open.' : 'Finish these to open the world map. Each one grants a permanent stat point.'}</p></div>
     <div class="grid" style="margin-top:12px">${TUTORIAL_TITLES.map((title, i) => { const done = i < ch.quest.step || ch.quest.done, cur = i === ch.quest.step && !ch.quest.done, g = cur ? questGoal(i) : null;
       return `<div class="card quest ${done ? 'done' : cur ? 'cur' : 'todo'}"><div class="spread"><b>${i + 1}. ${esc(title)}</b><span class="${done ? 'verd' : 'mute'}">${done ? 'Done' : `+1 ${QUEST_STATS[i]}${i === 9 ? ' (+2), gear, 200g' : ''}`}</span></div>
         ${done || cur ? `<p style="margin:6px 0 0;font-size:15px">${esc(t.lines[i])}</p>` : ''}
@@ -680,7 +660,10 @@ function tabTalents() {
 }
 
 // ---------- Companions ----------
-function compPortrait(name, size) { const ini = name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true" style="flex:none"><circle cx="32" cy="32" r="30" fill="var(--panel2)" stroke="var(--gold)" stroke-width="3"/><text x="32" y="40" text-anchor="middle" font-family="IM Fell English SC,Georgia,serif" font-size="24" fill="var(--ink)">${esc(ini)}</text></svg>`; }
+function compPortrait(name, size) {
+  const cls = Object.keys(COMPANIONS).find(k => COMPANIONS[k][0] === name);
+  return npcSprite(name, size, cls, true);
+}
 function tabCompanions() {
   const def = COMPANIONS[ch.comp ? ch.comp.cls : ch.cls];
   if (!ch.comp) return `<h2>Companions</h2><div class="card" style="margin-top:12px"><div class="row">${compPortrait(def[0], 64)}<div style="flex:1"><h3>${esc(def[0])} <span class="mute">${esc(def[1])}</span></h3><p style="margin:4px 0">${esc(def[2])}</p><p class="mute" style="margin:0;font-size:14px">At full strength: ${esc(modsText(def[3]))}. Starts at a quarter of that and grows with level, bond and gear.</p></div></div>
@@ -971,16 +954,9 @@ if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude
 // ---------- Pets (Phase 8) ----------
 let petSel = null, breedSel = [null, null], collTab = 'pets';
 function petGlyph(sp, size, p) {
-  const S = SP(sp), c = PET_TAG_COLOR[S.tags[0]], c2 = PET_TAG_COLOR[S.tags[1] || S.tags[0]], r = 10 + S.size * 3.5, fly = S.tags.includes('Flying'), aura = p && p.aura && PET_AURAS.find(a => a[0] === p.aura);
-  const hat = p && p.hat ? { party_hat: `<path d="M${32 - 6} ${32 - r + 2}L32 ${32 - r - 12}L${32 + 6} ${32 - r + 2}Z" fill="#e8572e" stroke="#ffe08a" stroke-width="1.5"/>`, wizard_hat: `<path d="M${32 - 9} ${32 - r + 3}L${32 + 3} ${32 - r - 16}L${32 + 9} ${32 - r + 3}Z" fill="#4b3a8f"/><circle cx="${32 + 1}" cy="${32 - r - 4}" r="1.6" fill="#ffe08a"/>`, flower_crown: [-8, -3, 3, 8].map(x => `<circle cx="${32 + x}" cy="${32 - r + 2}" r="2.6" fill="${x % 2 ? '#f28cb1' : '#ffe08a'}"/>`).join(''), pirate_hat: `<path d="M${32 - 11} ${32 - r + 3}Q32 ${32 - r - 12} ${32 + 11} ${32 - r + 3}Z" fill="#222"/><circle cx="32" cy="${32 - r - 2}" r="1.8" fill="#eee"/>`, tiny_crown: `<path d="M${32 - 7} ${32 - r + 2}L${32 - 7} ${32 - r - 6}L${32 - 3} ${32 - r - 2}L32 ${32 - r - 8}L${32 + 3} ${32 - r - 2}L${32 + 7} ${32 - r - 6}L${32 + 7} ${32 - r + 2}Z" fill="#ffd34d"/>` }[p.hat] : '';
-  return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true" style="flex:none">${aura ? `<circle cx="32" cy="34" r="${r + 9}" fill="${aura[3]}" opacity=".22"/>` : ''}
-    ${fly ? `<path d="M${32 - r + 2} 34Q${32 - r - 12} ${22} ${32 - r - 4} 44Z M${32 + r - 2} 34Q${32 + r + 12} 22 ${32 + r + 4} 44Z" fill="${c2}" opacity=".8"/>` : ''}
-    <ellipse cx="32" cy="${36}" rx="${r}" ry="${r * 0.9}" fill="${c}" stroke="${c2}" stroke-width="2.5"/>
-    ${S.tags.includes('Beast') ? `<path d="M${32 - r * 0.7} ${36 - r * 0.6}l-3 -8l8 4Z M${32 + r * 0.7} ${36 - r * 0.6}l3 -8l-8 4Z" fill="${c}"/>` : ''}
-    <circle cx="${32 - r * 0.35}" cy="34" r="${1.6 + S.size * 0.3}" fill="#1a1410"/><circle cx="${32 + r * 0.35}" cy="34" r="${1.6 + S.size * 0.3}" fill="#1a1410"/>
-    ${S.rarity >= 3 ? `<circle cx="32" cy="${36 + r * 0.45}" r="2" fill="#ffe08a"/>` : ''}${hat}</svg>`;
+  return pxPet(sp, size, p);
 }
-const eggGlyph = (key, size) => { const it = ITEM(key), col = RARITIES[it.rarity] ? RARITIES[it.rarity].color : '#ccc'; return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true" style="flex:none"><ellipse cx="32" cy="36" rx="17" ry="22" fill="var(--panel2)" stroke="${col || 'var(--gold)'}" stroke-width="3"/><path d="M20 36q6-5 12 0t12 0" fill="none" stroke="${col || 'var(--gold)'}" stroke-width="2"/></svg>`; };
+const eggGlyph = (key, size) => pxEgg(key, size);
 const tagChips = S => S.tags.map(t => `<span class="chip" style="font-size:12px;border-color:${PET_TAG_COLOR[t]}">${t}</span>`).join(' ');
 function petCard(p, slot) {
   const S = SP(p.sp), sel = petSel === p.uid, away = ch.daycare.some(d => d.uid === p.uid), cost = petCost(p.lvl);

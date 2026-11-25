@@ -48,8 +48,8 @@ const profNum = n => N(+n || 0);
 function profileHtml(d) {
   if (!d) return `<div class="profpage"><h2>Player not found</h2><p class="mute">That link or code doesn’t match a player.</p><div class="row"><button data-act="close">Close</button></div></div>`;
   const C = d.card, chars = (C && C.chars) || [];
-  const head = `<div class="profhead"><div><h2 style="margin:0">${esc(d.name)} ${d.guild ? `<span class="chip" title="${esc(d.guild.name)}">${esc(d.guild.tag)}</span>` : ''}</h2>
-      <div class="mute" style="font-size:14px">${d.online ? '<span class="odot on"></span> online · ' : ''}${d.guild ? `${esc(G_RANK[d.guild.rank] || '')} of ${esc(d.guild.name)} · ` : ''}playing since ${new Date(d.joined).toLocaleDateString([], { month: 'short', year: 'numeric' })} · friend code <b>${esc(d.code)}</b></div></div>
+  const head = `<div class="profhead"><div class="row" style="gap:12px;flex-wrap:nowrap;align-items:flex-start">${gameIcon(40)}<div><h2 style="margin:0">${esc(d.name)} ${d.guild ? `<span class="chip" title="${esc(d.guild.name)}">${esc(d.guild.tag)}</span>` : ''}</h2>
+      <div class="mute" style="font-size:14px">${d.online ? '<span class="odot on"></span> online · ' : ''}${d.guild ? `${esc(G_RANK[d.guild.rank] || '')} of ${esc(d.guild.name)} · ` : ''}playing since ${new Date(d.joined).toLocaleDateString([], { month: 'short', year: 'numeric' })} · friend code <b>${esc(d.code)}</b></div></div></div>
       <div class="row" style="gap:6px">${d.me ? '' : socOn() && soc.me && !soc.friends.some(f => f.id === d.id) ? `<button class="sm pri" data-act="socaddname" data-arg="${esc(d.code)}">Add friend</button>` : ''}<button class="sm" data-act="profcopy" data-arg="${esc(d.code)}">Copy link</button></div></div>`;
   if (!C) return `<div class="profpage">${head}<p class="mute" style="margin-top:12px">${d.hidden ? 'This player keeps their characters private.' : 'This player hasn’t shared their characters yet.'}</p><div class="row"><button data-act="close">Close</button></div></div>`;
   const cards = chars.map(c => {

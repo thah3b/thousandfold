@@ -1,9 +1,17 @@
 // ============================================================
 // VERSION & PATCH NOTES
-// Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
+// Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v1.0';
+const GAME_VERSION = 'v1.1';
 const PATCH_NOTES = [
+  { v: 'v1.1', date: '2026-11-25', title: 'The pixel art update', notes: [
+    'Thousandfold has a new look: everything is now pixel art. Every ore, log, crop, fish, herb and hide, every piece of gear and every tool, potions, meals, materials, eggs, monster trophies and the odd bits of junk you find along the way.',
+    'Your characters are now little pixel heroes. Race, gender and class change how they look, from elf ears and dwarf beards to the mage\u2019s hat and the farmer\u2019s straw hat, and your Ascension tier still frames the portrait.',
+    'Every pet species has its own pixel chibi, and pet hats and auras show up on them.',
+    'Every monster has a pixel sprite on the Combat tab, and bosses wear a crown.',
+    'Tutorial guides and companions now have faces too.',
+    'Thousandfold has an icon: you\u2019ll see it in your browser tab, on the title screen, in the top bar, on player profiles, and on your home screen if you add the game to it.',
+  ] },
   { v: 'v1.0', date: '2026-11-25', title: 'Thousandfold 1.0: the alpha begins', notes: [
     'The beta is over! Thousandfold is now in alpha. Thank you to everyone who played the beta. From here, updates count up from v1.1, with a new major version every fifth update.',
     'New Game Guide in Settings: a readable explanation of every system, with a few hints from the locals for those who look closely.',
