@@ -2,8 +2,14 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.0';
+const GAME_VERSION = 'v2.0a';
 const PATCH_NOTES = [
+  { v: 'v2.0a', date: '2026-11-25', title: 'Wardrobe fixes', notes: [
+    'Try before you buy: tap any piece to see it on your hero straight away. Pieces you own go on at once; for the rest, the preview stays up with a Buy & wear button (or how to earn it), and you can stop trying on any time.',
+    'Hair dye previews now hide your hat so you can actually see the colour.',
+    'Capes are easier to see: they now drape over the shoulders and flare out wider behind you.',
+    'Bigger previews, and a tidier layout on phones.',
+  ] },
   { v: 'v2.0', date: '2026-11-25', title: 'Thousandfold 2.0: gear, dungeons and loot', notes: [
     'Gear grades: Common, Rare, Epic, Legendary and Mythic. Higher grades have stronger base stats and 1 to 4 random bonuses: stats, attack, max HP, defence, crit, dodge, life steal, XP, yield, gold, rare drops, Lucky Strike, regeneration or fight speed. Each item gets a name to match, like \u201cEpic Iron Helm of the Owl\u201d.',
     'Where graded gear comes from: crafting (better quality, better odds), rare monster drops (bosses more often), dungeons, loot chests and treasure maps. You choose which crafted grades to keep on the Dungeons tab; lower grades stack as plain items. New \u201cSell Common gear\u201d button in the inventory.',

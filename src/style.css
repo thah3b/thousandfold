@@ -476,3 +476,17 @@ img.px{image-rendering:pixelated}
 .dgdiff{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:4px}
 .dgdiff.locked{opacity:.65}
 .dgdiff button{justify-self:start}
+/* v2.0a wardrobe */
+.wdgrid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
+.wdcell.trying{outline:2px dashed var(--ember);outline-offset:-2px}
+.wdcell.buy .mute{color:var(--gold)}
+.wdtry{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-top:10px;padding:8px;border:1px dashed var(--ember);border-radius:10px;width:100%}
+.wdstage .hsc{width:100%}
+@media (max-width:720px){
+ .wdstage{position:static;padding:8px}
+ .wdstage .hsc{min-height:150px;min-width:0}
+ .wdstage .hsc-hero{width:110px;height:auto}
+ .wdstage .hsc-pet img{width:48px;height:auto}
+ .wdgrid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+ .wdcell .wdimg{width:64px;height:auto}
+}

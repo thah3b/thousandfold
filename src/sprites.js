@@ -298,7 +298,7 @@ function pxChibiGrid(look) {
   const female = L.gender === 'Female', boot = pxPal('#7a4e2c'), eyeC = PX_RACE_EYE[L.race] || L.eye || PX_EYES[0];
   const hat = L.hat === undefined ? cl[3] : L.hat, prop = L.prop === undefined ? cl[2] : L.prop, sparkles = [];
   if (L.race === 'sylph') g.layer(t => { for (const x of [4, 28]) { t.ell(x, 26, 4, 6.5, '#cfeefa'); t.ell(x, 26, 2.2, 4.5, '#eefaff'); } });
-  if (cape) g.layer(t => { const P = pxPal(cape); t.poly([[10, 24], [22, 24], [27, 34.5], [5, 34.5]], P.a); t.poly([[17, 24], [22, 24], [27, 34.5], [19, 34.5]], P.b); t.rect(6, 33, 21, 1, P.d); });
+  if (cape) g.layer(t => { const P = pxPal(cape); t.poly([[9, 23], [23, 23], [29, 35], [3, 35]], P.a); t.poly([[17, 23], [23, 23], [29, 35], [19, 35]], P.b); t.rect(4, 33, 25, 2, P.d); });
   if (female) g.layer(t => t.ell(16, 19, 12.6, 12.5, null, H, (x, y) => y >= 12 && y <= 31));
   if (prop && PX_PROPS[prop]) g.layer(t => PX_PROPS[prop](t, C));
   if (/staff/.test(prop || '')) sparkles.push([1, 1], [9, 2], [0, 7], [10, 6]);
@@ -314,6 +314,7 @@ function pxChibiGrid(look) {
   // arms and hands (pose: idle, wave, wink, cast, cheer)
   const pose = L.pose || 'idle', upR = pose === 'wave' || pose === 'cheer';
   g.layer(t => { t.rect(8, 24, 3, 5, O.a).rect(8, 24, 1, 5, O.c).rect(8, 28, 3, 1, A.a); t.ell(9.5, 30, 1.9, 1.7, S.a); if (!upR) { t.rect(21, 24, 3, 5, O.b).rect(21, 28, 3, 1, A.b); t.ell(22.5, 30, 1.9, 1.7, S.b); } });
+  if (cape) g.layer(t => { const P = pxPal(cape); t.rect(8, 22, 4, 3, P.a).rect(20, 22, 4, 3, P.b).rect(8, 22, 16, 1, P.c); t.rect(15, 23, 2, 2, PXC.gold); });
   // head and face
   g.layer(t => {
     if (L.race === 'elf') { t.poly([[7, 13], [0, 8], [7, 18]], S.a).poly([[25, 13], [32, 8], [25, 18]], S.b); t.line(5, 13, 2, 10, S.b).line(27, 13, 30, 10, S.d); }

@@ -98,28 +98,39 @@ function heroShowcase(c, size, opt) {
 }
 
 // ---------- Wardrobe tab ----------
-let wdSlot = 'hat';
+let wdSlot = 'hat', wdTry = null;
+// The look a single piece gives for its slot (id '' = class default).
+function pieceLook(slot, id) {
+  if (!id) return pickSlot(pxLookOf({ ...ch, fashion: {} }), slot);
+  const f = FASHION_BY[id]; return pickSlot(fashionLook({ fashion: { [slot]: id } }), slot, f);
+}
 function tabWardrobe() {
   ch.fashion = ch.fashion || {}; ch.wardrobe = ch.wardrobe || {};
   const owned = fashionCount(ch); ch.counters.fashions = owned;
-  const base = { ...pxLookOf({ ...ch, fashion: {} }) }, cur = pxLookOf(ch);
-  const items = FASHIONS.filter(f => f.slot === wdSlot), worn = fashionWorn(ch, wdSlot);
-  const cell = (id, name, look, state, act, arg, note) => `<button class="card wdcell ${state}" data-act="${act}" data-arg="${arg}" ${state === 'locked' ? 'aria-disabled="true"' : ''}>
-      ${pxChibi(look, 64, { cls: 'wdimg' })}<b>${esc(name)}</b><span class="mute">${note}</span></button>`;
-  const clsCell = cell('cls', 'Class look', { ...cur, ...pickSlot(base, wdSlot) }, worn ? 'own' : 'on', 'wdwear', wdSlot + '|', worn ? 'Your class default' : 'Wearing');
-  const cells = items.map(f => {
-    const req = fashionReq(ch, f), on = worn === f.id, look = { ...cur, ...pickSlot(fashionLook({ fashion: { [wdSlot]: f.id } }), wdSlot, f) };
-    if (!req) return cell(f.id, f.name, look, on ? 'on' : 'own', 'wdwear', `${wdSlot}|${f.id}`, on ? 'Wearing' : 'Owned');
-    if (f.src.gold) return cell(f.id, f.name, look, 'buy', 'wdbuy', f.id, `Buy · ${req}`);
-    return cell(f.id, f.name, look, 'locked', 'noop', '', `🔒 ${esc(req)}`);
-  });
+  const cur = pxLookOf(ch), worn = fashionWorn(ch, wdSlot), showHair = wdSlot === 'hair' ? { hat: null } : {};
+  if (wdTry && wdTry.slot !== wdSlot) wdTry = null;
+  const tf = wdTry && FASHION_BY[wdTry.id], stageLook = { ...cur, ...(wdTry ? pieceLook(wdTry.slot, wdTry.id) : {}), ...showHair };
+  const cell = (id, name, state, note) => `<button class="card wdcell ${state} ${wdTry && wdTry.id === id ? 'trying' : ''}" data-act="wdpick" data-arg="${wdSlot}|${id}" title="${esc(name)}">
+      ${pxChibi({ ...cur, ...pieceLook(wdSlot, id), ...showHair }, 80, { cls: 'wdimg' })}<b>${esc(name)}</b><span class="mute">${note}</span></button>`;
+  const items = FASHIONS.filter(f => f.slot === wdSlot);
+  const cells = [wdSlot === 'pose' || wdSlot === 'hair' ? '' : cell('', 'Class look', worn ? 'own' : 'on', worn ? 'Your class default' : 'Wearing'),
+    ...items.map(f => { const req = fashionReq(ch, f), on = worn === f.id; return !req ? cell(f.id, f.name, on ? 'on' : 'own', on ? 'Wearing' : 'Owned') : f.src.gold ? cell(f.id, f.name, 'buy', `${req}`) : cell(f.id, f.name, 'locked', `🔒 ${esc(req)}`); })];
+  let tryBar = '';
+  if (tf) {
+    const req = fashionReq(ch, tf), cost = tf.src.gold ? fashionPrice(ch, tf) : 0;
+    tryBar = `<div class="wdtry"><div><span class="mute" style="font-size:12px">Trying on</span><br><b>${esc(tf.name)}</b></div>
+      ${!req ? '' : tf.src.gold ? `<button class="pri" data-act="wdbuy" data-arg="${tf.id}" ${ch.gold >= cost ? '' : 'disabled'}>Buy & wear · ${N(cost)} gold</button>${ch.gold >= cost ? '' : `<span class="bad" style="font-size:13px">You have ${N(ch.gold)} gold</span>`}` : `<span class="mute" style="font-size:13px">🔒 ${esc(req)}</span>`}
+      <button class="sm ghost" data-act="wdtryoff">Stop trying on</button></div>`;
+  }
   return `<div class="spread"><h2>Wardrobe</h2><span class="chip">${owned} of ${FASHIONS.length} owned</span></div>
-    <p class="mute" style="margin:4px 0 12px">Change how ${esc(ch.name)} looks. Everything here is cosmetic: stats never change. Pieces you haven’t earned show how to get them.</p>
-    <div class="wardrobe"><div class="card wdstage">${heroShowcase(ch, 176)}
+    <p class="mute" style="margin:4px 0 12px">Tap anything to try it on. Pieces you own go on straight away; others you can preview first, then buy or see how to earn them. Everything is cosmetic: stats never change.</p>
+    <div class="wardrobe"><div class="card wdstage">${heroShowcase(ch, 176, { look: stageLook, cls: 'wdhero' })}
+      ${tryBar}
+      ${wdSlot === 'hair' ? '<div class="mute" style="font-size:12px;margin-top:6px">Hat hidden so you can see the hair.</div>' : ''}
       <div class="mute" style="font-size:13px;margin-top:8px">${esc(ch.name)} · ${esc(race().name)} ${esc(CLASSES.find(k => k.id === ch.cls).name)}${ch.petActive ? '' : ' · <a href="#" data-act="tab" data-arg="pets">Set an active pet</a> to have it join you here'}</div>
-      <div class="row" style="gap:6px;margin-top:8px"><button class="sm ghost" data-act="wdreset">Reset to class look</button></div></div>
-      <div><div class="row" style="gap:6px;margin-bottom:10px">${FASHION_SLOTS.map(([id, n]) => `<button class="chip ${wdSlot === id ? 'on' : ''}" data-act="wdslot" data-arg="${id}">${n}</button>`).join('')}</div>
-      <div class="wdgrid">${wdSlot === 'pose' || wdSlot === 'hair' ? '' : clsCell}${cells.join('')}</div></div></div>`;
+      <div class="row" style="gap:6px;margin-top:8px;justify-content:center"><button class="sm ghost" data-act="wdreset">Reset to class look</button></div></div>
+      <div><div class="row wdtabs" style="gap:6px;margin-bottom:10px">${FASHION_SLOTS.map(([id, n]) => `<button class="chip ${wdSlot === id ? 'on' : ''}" data-act="wdslot" data-arg="${id}">${n}</button>`).join('')}</div>
+      <div class="wdgrid">${cells.join('')}</div></div></div>`;
 }
 // Only the part of a look that a slot changes.
 function pickSlot(look, slot, f) {
@@ -129,7 +140,14 @@ function pickSlot(look, slot, f) {
   return { [slot]: look[slot] };
 }
 const FASHION_HANDLERS = {
-  wdslot: s => { wdSlot = s; renderMain(); },
+  wdslot: s => { wdSlot = s; wdTry = null; renderMain(); },
+  wdpick: a => {
+    const [slot, id] = a.split('|'), f = id && FASHION_BY[id];
+    if (!id || (f && fashionOwned(ch, f))) { wdTry = null; FASHION_HANDLERS.wdwear(a); return; }
+    wdTry = { slot, id }; renderMain();
+    const st = document.querySelector('.wdstage'); if (st && window.innerWidth <= 720) st.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  },
+  wdtryoff: () => { wdTry = null; renderMain(); },
   wdwear: a => {
     const [slot, id] = a.split('|'); ch.fashion = ch.fashion || {};
     if (id) { const f = FASHION_BY[id]; if (!f || !fashionOwned(ch, f)) return; ch.fashion[slot] = id; } else delete ch.fashion[slot];
@@ -141,7 +159,7 @@ const FASHION_HANDLERS = {
     const cost = fashionPrice(ch, f); if (ch.gold < cost) { toast(`You need ${N(cost)} gold for the ${esc(f.name)}.`); return; }
     ch.gold -= cost; ch.wardrobe = ch.wardrobe || {}; ch.wardrobe[id] = Date.now(); ch.fashion = ch.fashion || {}; ch.fashion[f.slot] = id;
     ch.counters.dressed = (ch.counters.dressed || 0) + 1; ch.counters.fashions = fashionCount(ch);
-    addLog('sys', `Bought and put on: ${f.name} (${N(cost)} gold).`); toast(`<b>${esc(f.name)}</b> is yours.`, 'gold');
+    wdTry = null; addLog('sys', `Bought and put on: ${f.name} (${N(cost)} gold).`); toast(`<b>${esc(f.name)}</b> is yours.`, 'gold');
     dirty = true; save(); checkProgress(); renderTop(); renderMain(); renderSide();
   },
   wdreset: () => { ch.fashion = {}; dirty = true; save(); renderMain(); renderSide(); },
