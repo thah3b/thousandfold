@@ -215,114 +215,140 @@ function pxItem(it, color, size) {
 // ============================================================
 // CHIBI CHARACTERS (18×20) — players, NPCs and companions
 // ============================================================
-const PX_SKIN = { human: '#f1c27d', elf: '#f5d6b8', dwarf: '#e0a878', orc: '#8fb35a', halfling: '#f0c08a', beastfolk: '#c98a5e', dragonkin: '#e07a5a', undead: '#b7bfd6', sylph: '#d6eef8', starborn: '#cdbdf5', hollowkin: '#8a9a94' };
-const PX_HAIR = ['#3a2a20', '#6b4426', '#b5762e', '#e0c068', '#d9d4c8', '#9e3b2a', '#2b2f44', '#5a3a6a', '#e8a0b8', '#4a6a3a'];
+const PX_SKIN = { human: '#f6cfa0', elf: '#fbe0c6', dwarf: '#eab088', orc: '#9cc06a', halfling: '#f6c896', beastfolk: '#d89a6c', dragonkin: '#ec8a68', undead: '#c4cbe0', sylph: '#e2f2fa', starborn: '#d8c9f8', hollowkin: '#98a8a2' };
+const PX_HAIR = ['#3a2a20', '#6b4426', '#b5762e', '#e8c870', '#f2eee6', '#a83e2c', '#2b2f44', '#6a4a8a', '#ee9ab8', '#4a7a3a'];
+const PX_EYES = ['#6b3a1f', '#2f5aa8', '#3f7a32', '#a8722a', '#6a3a9a', '#3a3a4a'];
+const PX_RACE_EYE = { undead: '#5fd8f0', hollowkin: '#e8fff6', starborn: '#b08aff', dragonkin: '#e8a020' };
+// [outfit, accent, prop, hat, cape, robe]
 const PX_CLASS = {
-  warrior: ['#b8463a', '#c8ccd4', 'sword', 'helm'], archer: ['#4f8a3a', '#c9a36a', 'bow', 'feather'], mage: ['#4a5ab8', '#e8c15a', 'staff', 'wizard'],
-  rogue: ['#3a3a4a', '#8a3a3a', 'dagger', 'bandana'], necromancer: ['#3a2a4a', '#8fe0a0', 'skullstaff', 'hood'], healer: ['#e8e4d8', '#e8c15a', 'staff', 'circlet'],
-  farmer: ['#7a8a3a', '#c9a36a', 'scythe', 'straw'], merchant: ['#8a4a8a', '#e8c15a', 'bag', 'cap'], beastmaster: ['#8a5a36', '#4f8a3a', 'whip', 'fur'],
-  alchemist: ['#3a7a6a', '#e0573a', 'flask', 'goggles'], bard: ['#c0574a', '#e8c15a', 'lute', 'feathercap'], monk: ['#e08a3a', '#3a2a20', null, 'headband'],
-  summoner: ['#5a4ab0', '#9fe2f2', 'orbstaff', 'circlet'], runesmith: ['#6a6a7a', '#6fd0e8', 'hammer', 'helm'], tidecaller: ['#2f6fa8', '#9fe2f2', 'trident', 'circlet'], wayfinder: ['#8a6a3a', '#e8c15a', 'map', 'hat'],
+  warrior: ['#b8463a', '#e8c15a', 'sword', 'helm', '#7a2a24', false], archer: ['#4f8a3a', '#c9a36a', 'bow', 'feather', '#3a5a2a', false],
+  mage: ['#f2ece0', '#e8c15a', 'staff', 'wizard', '#6a4ab0', true], rogue: ['#3a3a4a', '#a8463a', 'dagger', 'bandana', '#26262e', false],
+  necromancer: ['#3a2a4a', '#8fe0a0', 'skullstaff', 'hood', '#1f1a2a', true], healer: ['#f2ece0', '#6fd0e8', 'orbstaff', 'circlet', '#d9a84a', true],
+  farmer: ['#7a8a3a', '#c9a36a', 'scythe', 'straw', null, false], merchant: ['#8a4a8a', '#e8c15a', 'bag', 'cap', '#5a2a5a', false],
+  beastmaster: ['#8a5a36', '#6aa84a', 'whip', 'fur', null, false], alchemist: ['#3a7a6a', '#e0573a', 'flask', 'goggles', null, true],
+  bard: ['#c0574a', '#e8c15a', 'lute', 'feathercap', '#3a5ab0', false], monk: ['#e08a3a', '#5a3a20', null, 'headband', null, false],
+  summoner: ['#5a4ab0', '#9fe2f2', 'orbstaff', 'circlet', '#2a2a6a', true], runesmith: ['#6a6a7a', '#6fd0e8', 'hammer', 'helm', '#3a4a5a', false],
+  tidecaller: ['#2f6fa8', '#9fe2f2', 'trident', 'circlet', '#1f4a6a', true], wayfinder: ['#8a6a3a', '#e8c15a', 'map', 'hat', '#5a3a22', false],
 };
+PxGrid.prototype.layer = function (fn) { const t = new PxGrid(this.w, this.h); fn(t); t.outline(); t.p.forEach((c, i) => { if (c) this.p[i] = c; }); return this; };
 const PX_HATS = {
-  helm: (g, C) => { g.ell(9, 6.5, 6, 4.5, C.m, null, (x, y) => y <= 6); g.rect(3, 6, 12, 1, C.md); g.set(9, 1, C.a).set(9, 0, C.a); },
-  wizard: (g, C) => { g.poly([[3, 6], [15, 6], [11, 3], [12, -1], [8, 2]], C.o); g.rect(3, 5, 12, 2, C.od); g.set(10, 2, C.a); },
-  hood: (g, C) => { const inHead = (x, y) => ((x + 0.5 - 9) / 5.6) ** 2 + ((y + 0.5 - 8) / 5.1) ** 2 <= 1; g.ell(9, 8, 7, 6.6, C.o, null, (x, y) => y <= 12 && (y <= 5 || !inHead(x, y))); g.rect(4, 5, 10, 1, C.od); },
-  bandana: (g, C) => { g.rect(4, 5, 11, 2, C.a); g.set(15, 6, C.a).set(16, 7, C.a); },
-  circlet: (g, C) => { g.rect(4, 5, 11, 1, PXC.gold); g.set(9, 4, C.a).set(9, 5, C.a); },
-  straw: (g, C) => { g.ell(9, 5.5, 8.5, 1.6, '#e0c068').ell(9, 3.8, 4.5, 2.6, '#e0c068', null, (x, y) => y <= 4); g.rect(5, 4, 9, 1, '#b8463a'); },
-  cap: (g, C) => { g.ell(9, 4.5, 6, 3, C.o, null, (x, y) => y <= 5); g.rect(9, 5, 7, 1, C.od); },
-  fur: (g, C) => { g.ell(9, 5.5, 6.5, 3.5, '#b08a60', null, (x, y) => y <= 6); for (let x = 3; x <= 15; x += 2) g.set(x, 6, '#e8dcc0'); },
-  goggles: (g, C) => { g.rect(4, 5, 11, 1, '#5e3b22'); g.ell(7, 5, 1.6, 1.6, '#9fe2f2').ell(11, 5, 1.6, 1.6, '#9fe2f2'); },
-  feathercap: (g, C) => { g.ell(9, 4.5, 6, 3, C.o, null, (x, y) => y <= 5); g.line(13, 4, 16, 0, C.a).line(14, 4, 17, 1, C.a); },
-  feather: (g, C) => { g.line(14, 5, 16, 1, '#e8dcc0').set(15, 2, '#c0574a'); },
-  headband: (g, C) => { g.rect(4, 5, 11, 1, '#c0574a'); g.set(15, 6, '#c0574a').set(16, 7, '#c0574a'); },
-  hat: (g, C) => { g.ell(9, 5.5, 8, 1.5, '#6b4a32').ell(9, 3.8, 4.5, 2.6, '#6b4a32', null, (x, y) => y <= 4); g.rect(5, 4, 9, 1, C.a); },
-  lamp: (g, C) => { g.ell(9, 6.5, 6, 4.5, '#e0c068', null, (x, y) => y <= 6); g.rect(3, 6, 12, 1, '#a8822e'); g.ell(9, 3.5, 1.5, 1.5, '#fff6a0'); },
-  turban: (g, C) => { g.ell(9, 4.5, 6.5, 3.5, '#e8dcc0', null, (x, y) => y <= 6); g.line(4, 6, 13, 2, '#c9b890'); g.set(9, 3, '#3b82c4'); },
-  wide: (g, C) => { g.ell(9, 5.5, 8.5, 1.8, '#4a4038').ell(9, 3.5, 4, 2.6, '#4a4038', null, (x, y) => y <= 4); },
-  crown: (g, C) => { g.rect(5, 3, 9, 3, PXC.gold); for (const x of [5, 9, 13]) g.set(x, 2, PXC.gold).set(x, 1, PXC.gold); g.set(9, 4, '#e0573a'); },
+  wizard: (g, C) => { const P = pxPal(C.o); g.poly([[9, 9], [23, 9], [20, 3], [27, 1], [18, 0.5], [13, 3]], P.a); g.poly([[17, 9], [23, 9], [20, 3], [27, 1], [22, 2.2]], P.b); g.ell(16, 10.4, 14, 2.5, null, P); g.rect(9, 7, 14, 2, PXC.gold).rect(9, 8, 14, 1, PXC.goldD); for (const x of [11, 20]) g.set(x, 7, '#fff3b0'); g.poly([[16, 5], [18.6, 8], [16, 11], [13.4, 8]], '#3b82e4'); g.set(15, 7, '#cfeaff').set(16, 9, '#2a5aa8'); },
+  helm: (g, C) => { const M = pxPal(PXC.metal); g.ell(16, 11.5, 12, 8.4, null, M, (x, y) => y <= 12); g.rect(4, 10, 3, 9, M.b).rect(25, 10, 3, 9, M.b).rect(4, 10, 1, 9, M.c); g.rect(4, 12, 24, 1, M.d); g.rect(15, 4, 2, 8, C.a).set(15, 5, '#fff3b0'); g.ell(18, 2.4, 4, 2, null, pxPal(C.a)); },
+  hood: (g, C) => { const P = pxPal(C.o), inHead = (x, y) => pxInHead(x, y, -0.6); g.ell(16, 14.5, 13.4, 12.8, null, P, (x, y) => y <= 26 && (y <= 9 || !inHead(x, y))); for (let x = 6; x < 27; x++) if (inHead(x, 10)) g.set(x, 10, P.d); g.set(16, 3, P.c).set(14, 4, P.c); },
+  bandana: (g, C) => { const P = pxPal(C.a); g.rect(5, 9, 23, 3, P.a).rect(5, 11, 23, 1, P.b); g.poly([[25, 10], [30, 13], [28, 15]], P.b).poly([[25, 10], [29, 9], [30, 12]], P.a); },
+  circlet: (g, C) => { g.rect(5, 9, 23, 1, PXC.gold).rect(5, 10, 23, 1, PXC.goldD); g.poly([[16, 7], [18, 9.5], [16, 12], [14, 9.5]], C.a); g.set(15, 9, '#ffffff'); },
+  straw: (g, C) => { const W = pxPal('#e8c878'); g.ell(16, 10.6, 15.5, 2.6, null, W); g.ell(16, 7, 7.5, 4.6, null, W, (x, y) => y <= 9); g.rect(9, 8, 15, 2, '#b8463a'); for (let x = 3; x < 30; x += 3) g.set(x, 11, W.b); },
+  cap: (g, C) => { const P = pxPal(C.o); g.ell(16, 9.8, 11.6, 7, null, P, (x, y) => y <= 10); g.poly([[16, 9], [29, 10], [28, 12.5], [16, 11.5]], P.b); g.set(16, 3, C.a).set(17, 3, C.a); },
+  fur: (g, C) => { const P = pxPal('#9a7250'); g.ell(16, 9.5, 12.6, 7.4, null, P, (x, y) => y <= 11); for (let x = 4; x <= 28; x += 2) g.ell(x, 11.5, 1.4, 1.4, '#efe4c8'); g.set(10, 5, P.d).set(20, 4, P.d); },
+  goggles: (g, C) => { g.rect(4, 9, 25, 2, '#5e3b22'); for (const x of [11, 21]) { g.ell(x, 9.6, 3.2, 2.8, '#8a6a40'); g.ell(x, 9.6, 2.1, 1.8, '#9fe2f2'); g.set(x - 1, 9, '#ffffff'); } },
+  feathercap: (g, C) => { PX_HATS.cap(g, C); g.poly([[21, 6], [29, 0], [31, 1], [23, 8]], C.a); g.line(22, 7, 30, 1, pxTone(C.a, -0.3)); },
+  feather: (g, C) => { g.poly([[22, 10], [27, 1], [30, 2], [25, 11]], '#f2ece0'); g.line(23, 10, 28, 2, '#c0574a'); },
+  headband: (g, C) => { g.rect(5, 9, 23, 2, '#c0574a').rect(5, 10, 23, 1, '#8a3a30'); g.poly([[25, 10], [30, 14], [28, 16]], '#a8463a').poly([[25, 10], [31, 11], [30, 13]], '#c0574a'); },
+  hat: (g, C) => { const P = pxPal('#6b4a32'); g.ell(16, 10.4, 15, 2.4, null, P); g.ell(16, 7, 7, 4.6, null, P, (x, y) => y <= 9); g.rect(9, 8, 15, 1, C.a); g.poly([[21, 8], [27, 3], [28, 4], [23, 9]], '#c0574a'); },
+  lamp: (g, C) => { const P = pxPal('#e0c068'); g.ell(16, 10.5, 12, 7.6, null, P, (x, y) => y <= 11); g.rect(4, 11, 24, 1, '#a8822e'); g.rect(13, 7, 6, 3, '#5a5a6a'); g.ell(16, 6, 2.4, 2.4, '#fff6a0'); g.set(15, 5, '#ffffff'); },
+  turban: (g, C) => { const P = pxPal('#e8dcc0'); g.ell(16, 9, 12.5, 7.6, null, P, (x, y) => y <= 11); g.line(6, 10, 24, 3, '#c9b890').line(8, 11, 26, 5, '#c9b890'); g.ell(16, 6.5, 1.8, 1.8, '#3b82c4'); g.set(15, 6, '#cfeaff'); },
+  wide: (g, C) => { const P = pxPal('#4a4038'); g.ell(16, 10.4, 15.5, 2.4, null, P); g.ell(16, 7.4, 6.5, 4.2, null, P, (x, y) => y <= 9); },
+  crown: (g, C) => { g.rect(9, 5, 15, 4, PXC.gold).rect(9, 8, 15, 1, PXC.goldD); for (const x of [9, 13.5, 18.5, 23]) g.poly([[x - 1, 5], [x + 0.5, 1], [x + 2, 5]], PXC.gold); g.set(12, 6, '#e0573a').set(16, 6, '#3b82c4').set(20, 6, '#e0573a'); },
 };
 const PX_PROPS = {
-  sword: (g, C) => { g.line(15, 16, 15, 7, PXC.metal).line(16, 16, 16, 8, PXC.metalD); g.rect(13, 16, 5, 1, C.a); g.set(15, 17, PXC.wood).set(15, 18, PXC.wood); },
-  dagger: (g, C) => { g.line(15, 16, 15, 12, PXC.metal); g.rect(14, 16, 3, 1, C.a); g.set(15, 17, PXC.wood); },
-  hammer: (g, C) => { g.line(15, 18, 15, 10, PXC.wood); g.rect(13, 8, 5, 3, PXC.metalD).rect(13, 8, 5, 1, PXC.metal); g.set(15, 9, C.a); },
-  bow: (g, C) => { for (let y = 8; y <= 18; y++) g.set(y < 10 || y > 16 ? 15 : 16, y, PXC.wood); g.line(14, 8, 14, 18, PXC.white); },
-  staff: (g, C) => { g.line(15, 19, 15, 7, PXC.wood); g.ell(15.5, 6, 1.8, 1.8, C.a); g.set(15, 5, PXC.white); },
-  orbstaff: (g, C) => { g.line(15, 19, 15, 8, PXC.wood); g.ell(15.5, 6, 2, 2, C.a); g.set(15, 5, PXC.white); },
-  skullstaff: (g, C) => { g.line(15, 19, 15, 8, '#4a3a4a'); g.ell(15.5, 6.5, 2, 2, PXC.bone); g.set(15, 6, PXC.eye).set(16, 6, PXC.eye); },
-  trident: (g, C) => { g.line(15, 19, 15, 7, PXC.metalD); g.rect(13, 7, 5, 1, PXC.metal); for (const x of [13, 15, 17]) g.set(x, 6, PXC.metal).set(x, 5, PXC.metal); },
-  scythe: (g, C) => { g.line(15, 19, 15, 5, PXC.wood); g.line(15, 5, 11, 4, PXC.metal).line(15, 6, 12, 5, PXC.metalD); },
-  bag: (g, C) => { g.ell(15, 16, 2.5, 2.5, '#a87a4e'); g.set(15, 13, C.a).set(15, 16, PXC.gold); },
-  whip: (g, C) => { g.line(14, 16, 16, 12, PXC.wood); g.line(16, 12, 17, 17, '#6b4a32'); },
-  flask: (g, C) => { g.ell(15.5, 16, 2, 2, PXC.glass); g.rect(15, 13, 1, 2, PXC.glass); g.set(15, 16, C.a).set(16, 16, C.a).set(15, 17, C.a); },
-  lute: (g, C) => { g.ell(15, 16, 2.4, 2.4, '#c08850'); g.line(15, 14, 17, 9, PXC.woodD); g.set(15, 16, PXC.woodD); },
-  map: (g, C) => { g.rect(13, 14, 5, 4, '#ecd9a8'); g.set(14, 15, '#c0574a').set(16, 16, '#3b82c4'); },
+  staff: (g, C) => { g.line(10, 35, 5, 9, PXC.wood, PXC.woodD); g.rect(3, 8, 5, 2, PXC.gold); g.ell(5, 4.5, 3.4, 3.4, null, pxPal(C.a === PXC.gold ? '#7fe8d8' : C.a)); g.set(4, 3, '#ffffff').set(3, 4, '#ffffff'); },
+  orbstaff: (g, C) => { g.line(10, 35, 5, 9, '#e8dcc0', '#b9ab8e'); g.poly([[2, 9], [5, 7], [8, 9], [5, 11]], PXC.gold); g.ell(5, 4.5, 3.6, 3.6, null, pxPal(C.a)); g.set(4, 3, '#ffffff').set(3, 4, '#ffffff'); },
+  skullstaff: (g, C) => { g.line(10, 35, 5, 9, '#4a3a4a', '#2a2030'); g.ell(5, 5, 3.6, 3.2, null, pxPal(PXC.bone)); g.rect(3, 5, 2, 2, PXC.dark).rect(6, 5, 2, 2, PXC.dark); g.set(3, 5, C.a).set(6, 5, C.a); g.rect(4, 8, 3, 1, PXC.boneD); },
+  sword: (g, C) => { const M = pxPal(PXC.metal); g.line(8, 25, 2, 6, M.a, M.b); g.line(7, 24, 2, 8, M.c); g.line(4, 28, 11, 24, C.a, pxTone(C.a, -0.3)); g.line(9, 28, 11, 32, PXC.woodD); g.set(11, 32, C.a); },
+  dagger: (g, C) => { const M = pxPal(PXC.metal); g.line(8, 26, 4, 17, M.a, M.b); g.line(6, 28, 11, 26, C.a); g.line(9, 29, 10, 31, PXC.woodD); },
+  hammer: (g, C) => { const M = pxPal('#9aa0ac'); g.line(10, 34, 6, 12, PXC.wood, PXC.woodD); g.rect(1, 6, 11, 7, M.a).rect(1, 6, 11, 1, M.c).rect(1, 12, 11, 1, M.d).rect(9, 7, 3, 5, M.b); g.rect(5, 8, 2, 3, C.a); },
+  bow: (g, C) => { for (let y = 10; y <= 34; y++) { const x = Math.round(8 - 6 * Math.sin(Math.PI * (y - 10) / 24)); g.set(x, y, PXC.wood).set(x + 1, y, PXC.woodD); } g.line(8, 10, 8, 34, '#f2ece0'); g.rect(1, 21, 3, 3, C.a); },
+  trident: (g, C) => { const M = pxPal(PXC.metal); g.line(10, 35, 6, 8, M.b, M.d); g.rect(1, 7, 10, 2, M.a); for (const x of [1, 5, 9]) g.rect(x, 1, 2, 6, M.a).set(x, 1, M.c); g.ell(6, 10, 1.6, 1.6, C.a); },
+  scythe: (g, C) => { g.line(10, 35, 6, 3, PXC.wood, PXC.woodD); g.poly([[7, 2], [1, 2], [0, 9], [3, 5], [8, 5]], PXC.metal); g.line(1, 3, 6, 3, '#ffffff'); },
+  bag: (g, C) => { g.ell(5, 29.5, 4.6, 4.2, null, pxPal('#b08454')); g.rect(3, 24, 5, 2, '#b08454').rect(3, 25, 5, 1, '#6b4426'); g.rect(4, 29, 2, 2, PXC.gold); },
+  whip: (g, C) => { g.line(10, 30, 7, 25, PXC.wood, PXC.woodD); g.line(7, 25, 3, 18, '#6b4426').line(3, 18, 1, 26, '#6b4426').line(1, 26, 4, 33, '#6b4426'); },
+  flask: (g, C) => { g.rect(4, 20, 3, 4, PXC.glass).rect(4, 18, 3, 2, PXC.cork); g.ell(5.5, 27.5, 4.2, 4.2, PXC.glass); g.ell(5.5, 27.5, 4.2, 4.2, null, pxPal(C.a), (x, y) => y >= 27); g.set(3, 25, '#ffffff').set(3, 26, '#ffffff'); },
+  lute: (g, C) => { g.line(5, 23, 2, 10, PXC.woodD, '#3a2414'); g.rect(1, 9, 3, 2, PXC.woodD); g.ell(5.5, 28.5, 4.6, 5, null, pxPal('#c89058')); g.ell(5.5, 27.5, 1.4, 1.4, '#4a2a14'); g.rect(3, 31, 5, 1, '#6b4426'); },
+  map: (g, C) => { g.rect(1, 24, 9, 7, '#ecd9a8').rect(1, 24, 1, 7, '#c9b07a').rect(9, 24, 1, 7, '#c9b07a'); g.set(3, 26, '#a8463a').set(4, 27, '#a8463a').set(6, 28, '#a8463a').set(7, 27, '#c0574a').set(8, 26, '#c0574a').set(7, 25, '#c0574a').set(8, 28, '#c0574a'); },
 };
-// look = { race, gender, cls, hair, outfit, accent, hat, prop, mark, beard, elder, eyes }
+// look = { race, gender, cls, hair, eye, outfit, accent, hat, prop, cape, mark, beard, elder }
+const PX_HEAD = [16, 14.8, 10.6, 9.4];
+const pxInHead = (x, y, pad) => ((x + 0.5 - PX_HEAD[0]) / (PX_HEAD[2] + (pad || 0))) ** 2 + ((y + 0.5 - PX_HEAD[1]) / (PX_HEAD[3] + (pad || 0))) ** 2 <= 1;
 function pxChibiGrid(look) {
-  const g = new PxGrid(18, 20), L = look, sk = PX_SKIN[L.race] || PX_SKIN.human, cl = PX_CLASS[L.cls] || PX_CLASS.warrior;
-  const o = L.outfit || cl[0], ac = L.accent || cl[1], hair = L.hair || '#3a2a20';
-  const C = { o, od: pxTone(o, -0.35), a: ac, m: PXC.metal, md: PXC.metalD }, S = pxPal(sk), H = pxPal(hair);
-  const female = L.gender === 'Female';
-  // wings behind (sylph)
-  if (L.race === 'sylph') { g.ell(4, 14, 2.2, 3, '#bfe7f7').ell(14, 14, 2.2, 3, '#bfe7f7'); }
-  // long hair behind
-  if (female) { g.rect(3, 6, 3, 8, H.b).rect(12, 6, 3, 8, H.b); }
-  // body
-  g.rect(6, 13, 6, 4, o).rect(6, 16, 6, 1, C.od);
-  g.rect(5, 13, 1, 3, o).rect(12, 13, 1, 3, o).set(5, 16, sk).set(12, 16, sk);
-  g.rect(6, 15, 6, 1, ac);
-  g.rect(7, 13, 4, 1, pxTone(o, 0.25));
-  g.rect(6, 17, 2, 2, C.od).rect(10, 17, 2, 2, C.od).rect(6, 18, 2, 1, PXC.dark).rect(10, 18, 2, 1, PXC.dark);
-  // head
-  g.ell(9, 8, 5.6, 5.1, null, S);
-  // ears
-  if (L.race === 'elf') { g.set(3, 8, sk).set(2, 7, sk).set(14, 8, sk).set(15, 7, sk); }
-  else g.set(3, 9, S.b).set(14, 9, S.b);
-  // hair top + fringe
-  g.ell(9, 6.2, 6, 3.8, null, H, (x, y) => y <= 5);
-  for (let x = 4; x <= 13; x++) if ((x * 7 + 3) % 4 !== 0) g.set(x, 6, H.a);
-  g.set(4, 7, H.b).set(13, 7, H.b);
-  if (L.race === 'beastfolk') { g.poly([[3, 5], [5, 0], [7, 4]], H.a).poly([[11, 4], [13, 0], [15, 5]], H.a); g.set(5, 3, S.c).set(13, 3, S.c); }
-  if (L.race === 'dragonkin') { g.line(5, 3, 3, 0, PXC.bone).line(13, 3, 15, 0, PXC.bone); g.set(5, 10, S.b).set(13, 10, S.b); }
-  // face
-  const eye = L.race === 'undead' ? '#6fe0f0' : L.race === 'hollowkin' ? '#e8fff6' : PXC.eye;
-  g.rect(6, 8, 1, 2, eye).rect(11, 8, 1, 2, eye);
-  if (L.race !== 'hollowkin') g.set(6, 8, eye === PXC.eye ? '#4a3a6a' : eye);
-  if (!['undead', 'hollowkin', 'orc'].includes(L.race)) g.set(5, 10, PXC.blush).set(12, 10, PXC.blush);
-  g.set(8, 11, S.d).set(9, 11, S.d);
-  if (L.race === 'orc') g.set(7, 11, PXC.white).set(10, 11, PXC.white);
-  if (L.race === 'undead') g.set(13, 9, '#5a5a7a').set(13, 10, '#5a5a7a');
-  if (L.race === 'starborn') g.set(12, 4, '#ffe08a').set(12, 3, '#fff6c0');
-  // marks
-  if (L.mark === 'Old scar') g.set(11, 10, '#c86a6a').set(12, 11, '#c86a6a');
-  if (L.mark === 'Warpaint') g.rect(5, 9, 2, 1, '#b8463a').rect(11, 9, 2, 1, '#b8463a');
-  if (L.mark === 'Freckles') g.set(7, 10, S.d).set(10, 10, S.d).set(8, 10, S.b);
-  if (L.mark === 'Runic tattoo') g.set(13, 8, '#6fd0e8').set(4, 8, '#6fd0e8');
-  if (L.mark === 'Birthmark') g.set(11, 11, S.d);
-  // beard
-  if (L.beard || L.race === 'dwarf' && !female) { const bc = L.elder ? '#e8e4d8' : hair; g.ell(9, 11.5, 4.5, 2.6, bc, null, (x, y) => y >= 10); g.set(8, 11, S.d).set(9, 11, S.d); }
-  // hat and prop
-  const hat = L.hat === undefined ? cl[3] : L.hat, prop = L.prop === undefined ? cl[2] : L.prop;
-  if (hat && PX_HATS[hat]) PX_HATS[hat](g, C);
-  if (prop && PX_PROPS[prop]) PX_PROPS[prop](g, C);
-  return g.outline();
+  const g = new PxGrid(32, 36), L = look, sk = PX_SKIN[L.race] || PX_SKIN.human, cl = PX_CLASS[L.cls] || PX_CLASS.warrior;
+  const o = L.outfit || cl[0], ac = L.accent || cl[1], hair = L.hair || '#3a2a20', robe = L.robe !== undefined ? L.robe : cl[5];
+  const cape = L.cape !== undefined ? L.cape : cl[4], C = { o, a: ac }, S = pxPal(sk), H = pxPal(hair), O = pxPal(o), A = pxPal(ac);
+  const female = L.gender === 'Female', boot = pxPal('#7a4e2c'), eyeC = PX_RACE_EYE[L.race] || L.eye || PX_EYES[0];
+  const hat = L.hat === undefined ? cl[3] : L.hat, prop = L.prop === undefined ? cl[2] : L.prop, sparkles = [];
+  if (L.race === 'sylph') g.layer(t => { for (const x of [4, 28]) { t.ell(x, 26, 4, 6.5, '#cfeefa'); t.ell(x, 26, 2.2, 4.5, '#eefaff'); } });
+  if (cape) g.layer(t => { const P = pxPal(cape); t.poly([[10, 24], [22, 24], [27, 34.5], [5, 34.5]], P.a); t.poly([[17, 24], [22, 24], [27, 34.5], [19, 34.5]], P.b); t.rect(6, 33, 21, 1, P.d); });
+  if (female) g.layer(t => t.ell(16, 19, 12.6, 12.5, null, H, (x, y) => y >= 12 && y <= 31));
+  if (prop && PX_PROPS[prop]) g.layer(t => PX_PROPS[prop](t, C));
+  if (/staff/.test(prop || '')) sparkles.push([1, 1], [9, 2], [0, 7], [10, 6]);
+  // legs and torso
+  g.layer(t => {
+    if (robe) { t.poly([[10.5, 29], [21.5, 29], [24, 33.5], [8, 33.5]], O.a); t.poly([[16, 29], [21.5, 29], [24, 33.5], [18, 33.5]], O.b); t.rect(8, 32, 16, 2, A.a).rect(8, 33, 16, 1, A.b); t.rect(15, 29, 2, 3, A.a); t.rect(10, 34, 4, 1, boot.a).rect(18, 34, 4, 1, boot.b); }
+    else { const pn = pxPal(pxTone(o, -0.45)); t.rect(12, 29, 3, 3, pn.a).rect(17, 29, 3, 3, pn.b); t.rect(11, 31, 4, 4, boot.a).rect(17, 31, 4, 4, boot.b).rect(11, 31, 4, 1, boot.c).rect(17, 31, 4, 1, boot.c).rect(11, 34, 4, 1, boot.d).rect(17, 34, 4, 1, boot.d); }
+    t.rect(11, 23, 10, 7, O.a).rect(18, 23, 3, 7, O.b).rect(11, 24, 10, 1, O.c);
+    t.poly([[12.5, 23], [19.5, 23], [16, 27.5]], A.a); t.poly([[14, 23], [18, 23], [16, 25.6]], S.b);
+    if (robe) { t.rect(15, 26, 2, 2, '#4fa8e8'); t.set(15, 26, '#cfeaff'); }
+    t.rect(11, 28, 10, 2, '#6b4426').rect(11, 29, 10, 1, '#4a2e18'); t.rect(15, 28, 2, 2, PXC.gold);
+  });
+  // arms and hands
+  g.layer(t => { t.rect(8, 24, 3, 5, O.a).rect(8, 24, 1, 5, O.c).rect(8, 28, 3, 1, A.a); t.rect(21, 24, 3, 5, O.b).rect(21, 28, 3, 1, A.b); t.ell(9.5, 30, 1.9, 1.7, S.a); t.ell(22.5, 30, 1.9, 1.7, S.b); });
+  // head and face
+  g.layer(t => {
+    if (L.race === 'elf') { t.poly([[7, 13], [0, 8], [7, 18]], S.a).poly([[25, 13], [32, 8], [25, 18]], S.b); t.line(5, 13, 2, 10, S.b).line(27, 13, 30, 10, S.d); }
+    else { t.ell(5.5, 16.5, 1.6, 2.2, S.b); t.ell(26.5, 16.5, 1.6, 2.2, S.b); }
+    t.ell(PX_HEAD[0], PX_HEAD[1], PX_HEAD[2], PX_HEAD[3], S.a);
+    for (let y = 5; y < 25; y++) for (let x = 5; x < 28; x++) { if (!pxInHead(x, y)) continue; const nx = (x + 0.5 - 16) / 10.6, ny = (y + 0.5 - 14.8) / 9.4; if (!pxInHead(x, y, -1.2) && (nx > 0.35 || ny > 0.6)) t.set(x, y, S.b); else if (nx < -0.45 && ny < -0.2) t.set(x, y, S.c); }
+    const lt = pxTone(eyeC, 0.4), dk = pxTone(eyeC, -0.45);
+    for (const x0 of [10, 19]) {
+      t.rect(x0, 14, 4, 1, PX.out); if (female) t.set(x0 === 10 ? 9 : 23, 13, PX.out).set(x0 === 10 ? 9 : 23, 14, PX.out);
+      t.rect(x0, 15, 4, 3, eyeC).rect(x0 + 3, 15, 1, 2, dk).rect(x0, 18, 4, 1, lt);
+      t.set(x0, 15, '#ffffff').set(x0 + 1, 15, '#ffffff').set(x0, 16, '#ffffff').set(x0 + 2, 17, lt);
+      if (L.race === 'hollowkin') { t.rect(x0, 15, 4, 4, '#26302c'); t.rect(x0 + 1, 16, 2, 2, eyeC); }
+      if (L.race === 'undead') t.set(x0, 15, eyeC).set(x0 + 1, 15, '#ffffff');
+    }
+    if (!['undead', 'hollowkin'].includes(L.race)) { t.rect(7, 19, 3, 1, '#f39696'); t.rect(22, 19, 3, 1, '#f39696'); }
+    t.set(15, 20, '#a8503a').set(16, 20, '#a8503a').set(14, 19, S.b).set(17, 19, S.b);
+    if (L.race === 'orc') { t.rect(13, 19, 1, 2, PXC.white); t.rect(18, 19, 1, 2, PXC.white); }
+    if (L.race === 'undead') { t.line(22, 20, 25, 21, '#6a6a8a'); t.set(23, 19, '#6a6a8a').set(24, 22, '#6a6a8a'); }
+    if (L.race === 'dragonkin') { for (const [x, y] of [[7, 17], [8, 18], [6, 18], [24, 17], [23, 18], [25, 18]]) t.set(x, y, S.d); }
+    const mk = L.mark;
+    if (mk === 'Old scar') t.line(22, 15, 24, 20, '#c45a5a');
+    if (mk === 'Warpaint') { t.rect(7, 19, 4, 1, '#b8463a').rect(21, 19, 4, 1, '#b8463a'); }
+    if (mk === 'Freckles') { for (const [x, y] of [[8, 20], [10, 20], [9, 21], [22, 20], [24, 20], [23, 21]]) t.set(x, y, S.d); }
+    if (mk === 'Runic tattoo') { t.set(25, 14, '#6fd0e8').set(25, 16, '#6fd0e8').set(24, 15, '#6fd0e8'); }
+    if (mk === 'Birthmark') t.set(21, 21, S.d);
+  });
+  if (L.beard || (L.race === 'dwarf' && !female)) g.layer(t => { const B = pxPal(L.elder ? '#f2eee6' : hair); t.ell(16, 22, 8, 5.5, null, B, (x, y) => y >= 19); t.rect(11, 19, 10, 1, B.a); t.set(15, 22, B.b).set(17, 23, B.b).set(13, 21, B.c); });
+  // hair: a rounded cap and chunky bangs
+  g.layer(t => {
+    t.ell(16, 11.6, 11.5, 8.2, null, H, (x, y) => y <= 12);
+    t.rect(6, 10, 21, 2, H.a);
+    const side = female ? 24 : 19;
+    const locks = [[5, 9.5, 6, side], [8, 13, 10.5, 14], [12, 17, 15, 15.5], [15.5, 20, 17.5, 14], [19, 24, 21.5, 14], [22.5, 27, 26, side]];
+    for (const [x0, x1, tx, ty] of locks) t.poly([[x0, 11], [x1, 11], [tx, ty]], tx > 16 ? H.b : H.a);
+    t.rect(5, 12, 3, side - 15, H.a).rect(5, 12, 1, side - 15, H.c).rect(25, 12, 3, side - 15, H.b);
+    t.set(10, 6, H.c).set(11, 5, H.c).set(12, 5, H.c).set(9, 7, H.c);
+    if (L.race === 'beastfolk') { t.poly([[6, 9], [7, 0], [12, 5]], H.a).poly([[20, 5], [25, 0], [26, 9]], H.b); t.poly([[7.6, 7], [8, 2.5], [10.6, 5]], '#f3a8a8').poly([[21.4, 5], [24, 2.5], [24.4, 7]], '#f3a8a8'); }
+    if (L.race === 'dragonkin') { t.line(9, 5, 6, 0, PXC.bone, PXC.boneD); t.line(22, 5, 25, 0, PXC.bone, PXC.boneD); }
+  });
+  if (hat && PX_HATS[hat]) g.layer(t => PX_HATS[hat](t, C));
+  if (L.race === 'starborn') sparkles.push([26, 5], [25, 4], [27, 4], [26, 3]);
+  for (const [x, y] of sparkles) g.set(x, y, L.race === 'starborn' && y < 6 && x > 20 ? '#ffe89a' : pxTone(ac === PXC.gold ? '#7fe8d8' : ac, 0.4));
+  return g;
 }
 function pxChibi(look, size, opt) {
-  const k = 'c:' + [look.race, look.gender, look.cls, look.hair, look.outfit, look.accent, look.hat, look.prop, look.mark, look.beard, look.elder].join('|');
-  const o = opt || {}; return pxImg(k, size, () => pxChibiGrid(look), { ...o, h: o.h || Math.round(size * 20 / 18) });
+  const k = 'c2:' + [look.race, look.gender, look.cls, look.hair, look.eye, look.outfit, look.accent, look.hat, look.prop, look.cape, look.robe, look.mark, look.beard, look.elder].join('|');
+  const o = opt || {}; return pxImg(k, size, () => pxChibiGrid(look), { ...o, h: o.h || Math.round(size * 36 / 32) });
 }
 // A player character's look.
 function pxLookOf(c) {
   const h = pxHash(c.name || '?');
-  return { race: c.race || 'human', gender: c.gender || 'Male', cls: c.cls || 'warrior', hair: c.race === 'undead' ? '#d9d4c8' : PX_HAIR[h % PX_HAIR.length], mark: c.mark };
+  return { race: c.race || 'human', gender: c.gender || 'Male', cls: c.cls || 'warrior', hair: c.race === 'undead' ? '#d9d4c8' : PX_HAIR[h % PX_HAIR.length], eye: PX_EYES[(h >>> 5) % PX_EYES.length], mark: c.mark };
 }
 // NPCs: a stable look from the name, with a few role hats.
 const PX_NPC_ROLES = [[/Elder/, { hat: null, beard: true, elder: true, hair: '#e8e4d8', outfit: '#8a3a2a', prop: 'staff' }], [/Warden/, { hat: 'hood', outfit: '#3f6a32', prop: 'bow' }], [/Foreman/, { hat: 'lamp', outfit: '#6a5a4a', prop: 'hammer' }], [/Ferryman/, { hat: 'wide', outfit: '#4a5a5a', prop: 'staff' }], [/Caravaneer/, { hat: 'turban', outfit: '#c08850', prop: 'bag' }], [/Huntress|Hunter/, { hat: 'fur', outfit: '#6b4a32', prop: 'bow' }], [/Ser |Sir |Knight|Paladin/, { hat: 'helm', prop: 'sword' }], [/King|Queen|Jarl/, { hat: 'crown' }], [/Brother|Sister|Mother|Father/, { hat: 'hood' }]];
 function pxNpcLook(name, cls) {
   const h = pxHash(name), races = RACES.filter(r => !r.secret).map(r => r.id);
-  const base = { race: races[h % races.length], gender: (h >>> 4) % 2 ? 'Female' : 'Male', cls: cls || CLASSES[(h >>> 6) % CLASSES.length].id, hair: PX_HAIR[(h >>> 9) % PX_HAIR.length] };
+  const base = { race: races[h % races.length], gender: (h >>> 4) % 2 ? 'Female' : 'Male', cls: cls || CLASSES[(h >>> 6) % CLASSES.length].id, hair: PX_HAIR[(h >>> 9) % PX_HAIR.length], eye: PX_EYES[(h >>> 12) % PX_EYES.length] };
   if (/Ilsabet|Dagna|Saffi|Velka|Wren|Mira|Lyra|Nell|Ada|ess$|a$/.test(name.split(/\s/).pop())) base.gender = 'Female';
   if (/Brannoch|Orrin|Aldren|Pip/.test(name)) base.gender = 'Male';
   const role = PX_NPC_ROLES.find(([re]) => re.test(name));

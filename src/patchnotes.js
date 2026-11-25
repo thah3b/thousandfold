@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v1.1';
+const GAME_VERSION = 'v1.1a';
 const PATCH_NOTES = [
+  { v: 'v1.1a', date: '2026-11-25', title: 'Better-looking heroes', notes: [
+    'Hero portraits, companions and townsfolk have been redrawn at twice the detail: bigger heads, big shiny eyes, shaded faces and hair, capes and robes, and much fancier hats and weapons. The wizard hat now has a jewelled band, and staffs glow.',
+    'Your look still comes from your race, gender and class, so existing characters update automatically.',
+  ] },
   { v: 'v1.1', date: '2026-11-25', title: 'The pixel art update', notes: [
     'Thousandfold has a new look: everything is now pixel art. Every ore, log, crop, fish, herb and hide, every piece of gear and every tool, potions, meals, materials, eggs, monster trophies and the odd bits of junk you find along the way.',
     'Your characters are now little pixel heroes. Race, gender and class change how they look, from elf ears and dwarf beards to the mage\u2019s hat and the farmer\u2019s straw hat, and your Ascension tier still frames the portrait.',
