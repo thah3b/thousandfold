@@ -44,6 +44,7 @@ function statLine(it) {
   if (it.attack) parts.push(`${it.attack} attack`); if (it.defense) parts.push(`${it.defense} defense`);
   for (const [s, v] of Object.entries(it.stats || {})) parts.push(`+${v} ${s}`);
   if (it.speed) parts.push(`+${pct(it.speed, 1)} ${SKILLS[it.toolSkill].name} speed`);
+  if (it.mods && Object.keys(it.mods).length) parts.push(modsText(it.mods));
   return parts.join(' · ');
 }
 
@@ -128,7 +129,7 @@ function frame(t) {
     if (now - lastFlush >= BALANCE.logFlushMs) { lastFlush = now; flush(); }
     if (t - lastLive >= 1000 / BALANCE.uiHz) { lastLive = t; updateLive(); if (dirty) { dirty = false; renderMain(); renderActions(); renderTop(); } }
     if (now - lastSave >= BALANCE.autosaveMs) { lastSave = now; save(); }
-    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); qolTick(); refreshScenes(); }
+    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); dungeonTick(); qolTick(); refreshScenes(); }
     drawBars();
   }
   lastT = t; requestAnimationFrame(frame);
@@ -207,7 +208,7 @@ function renderWizard() {
 const NAV = [
   ['Gathering', GATHER_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
-  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['arena', 'Arena'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['events', 'Events'], ['leaders', 'Leaderboards']]],
+  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['arena', 'Arena'], ['dungeons', 'Dungeons'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['events', 'Events'], ['leaders', 'Leaderboards']]],
   ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['wardrobe', 'Wardrobe'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades'], ['guild', 'Guild']]],
   ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
@@ -216,7 +217,7 @@ function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'mining'; agg = {}; rate = {};
   $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"><div id="actbody"></div><div id="actscene"></div></section><aside class="sidepanel" id="side"></aside></div>`;
   renderTop(); renderMain(); renderActions();
-  checkProgress(true, []); syncAcctSecrets(); tourMaybe();
+  checkProgress(true, []); syncAcctSecrets(); markFounder(); tourMaybe();
   const away = (Date.now() - ch.last) / 1000;
   if (away >= 8 * 3600 && ch.cls === 'monk') setTimeout(() => unlockSecret('cls_monk'), 500);
   if (away > 60) runOffline(away, true);
@@ -267,7 +268,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { wardrobe: tabWardrobe, arena: tabArena, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { wardrobe: tabWardrobe, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -348,7 +349,7 @@ function tabInv() {
     ${equipPanel()}
     <div class="row" style="margin:14px 0 8px"><input id="invq" placeholder="Search items" value="${esc(invQ)}" style="flex:1;min-width:160px" aria-label="Search items">
       <select id="invsort" aria-label="Sort">${[['rarity', 'Rarity'], ['value', 'Stack value'], ['qty', 'Quantity'], ['name', 'Name']].map(([v, n]) => `<option value="${v}" ${invSort === v ? 'selected' : ''}>${n}</option>`).join('')}</select>
-      <button class="chip ${account.settings.invGrid ? 'on' : ''}" data-act="invgrid">${account.settings.invGrid ? 'Grid view' : 'List view'}</button><button data-act="selljunk">Sell all junk</button><button class="chip ${ch.autoSellJunk ? 'on' : ''}" data-act="autojunk">Auto-sell junk: ${ch.autoSellJunk ? 'on' : 'off'}</button></div>
+      <button class="chip ${account.settings.invGrid ? 'on' : ''}" data-act="invgrid">${account.settings.invGrid ? 'Grid view' : 'List view'}</button><button data-act="selljunk">Sell all junk</button><button data-act="sellgrade" data-arg="0" title="Sells unequipped Common gear (not tools, uniques or special weapons)">Sell Common gear</button><button class="chip ${ch.autoSellJunk ? 'on' : ''}" data-act="autojunk">Auto-sell junk: ${ch.autoSellJunk ? 'on' : 'off'}</button></div>
     <div class="row" style="margin-bottom:10px">${INV_FILTERS.map(([v, n]) => `<button class="chip ${invF === v ? 'on' : ''}" data-act="invf" data-arg="${v}">${n}</button>`).join('')}</div>
     <div class="${account.settings.invGrid ? 'igrid' : 'inv'}">${keys.length ? keys.map(account.settings.invGrid ? invTile : invRow).join('') : `<p class="mute">${invQ || invF !== 'all' ? 'Nothing matches.' : 'Empty. Gathered resources land here.'}</p>`}</div>`;
 }
@@ -359,8 +360,10 @@ function invRow(key) {
   if (it.gear) acts = `<button class="sm pri" data-act="equip" data-arg="${esc(key)}">Equip</button>${it.plus < 10 ? `<button class="sm" data-act="upgrade" data-arg="${esc(key)}">Upgrade</button>` : ''}`;
   if (it.type === 'upgrade') acts = `<button class="sm pri" data-act="use" data-arg="${key}">Use</button>`;
   if (it.type === 'egg') acts = `<button class="sm pri" data-act="incubate" data-arg="${key}" ${ch.incub.length < ch.incubSlots ? '' : 'disabled'}>Incubate</button>`;
+  if (it.type === 'chest') acts = `<button class="sm pri" data-act="chest" data-arg="${key}">Open</button>`;
+  if (it.type === 'map') acts = `<button class="sm pri" data-act="dig">Dig here</button>`;
   if (it.type === 'elixir') acts = `<button class="sm pri" data-act="elixir" data-arg="${key}">Drink (+${elixirGain(it.stat, it.pts).toFixed(2)} ${it.stat})</button>`;
-  const sub = it.gear ? `${esc(statLine(it))}<br>${compareHtml(it)}${it.lvl > (it.slot === 'tool' ? ch.skills[it.toolSkill].level : gateLevel(ch)) ? ` · <span class="bad">needs ${it.slot === 'tool' ? SKILLS[it.toolSkill].name + ' ' : ''}level ${it.lvl}</span>` : ''}` : `${rc.name} · ${esc(it.desc || '')}`;
+  const sub = it.gear ? `${it.grade ? gradeChip(it.grade) + ' ' : ''}${esc(statLine(it))}<br>${compareHtml(it)}${it.lvl > (it.slot === 'tool' ? ch.skills[it.toolSkill].level : gateLevel(ch)) ? ` · <span class="bad">needs ${it.slot === 'tool' ? SKILLS[it.toolSkill].name + ' ' : ''}level ${it.lvl}</span>` : ''}` : `${rc.name} · ${esc(it.desc || '')}`;
   return `<div class="irow">${itemIcon(key)}<div>${rname(key)} ${it.bind ? '<span class="chip" style="font-size:12px">Bound</span>' : ''}${ch.autoSell[key] != null ? `<span class="chip" style="font-size:12px">Auto-sell${ch.autoSell[key] ? ' above ' + N(ch.autoSell[key]) : ''}</span>` : ''}<div class="mute" style="font-size:13px">${sub}</div></div>
     <span class="num" data-live="inv:${esc(key)}"></span><span class="num hide-s gold" title="Sell price each${m < 0.95 ? ' (market flooded, recovers over time)' : ''}"><span data-live="price:${esc(key)}"></span>${m < 0.95 ? ' <span class="down">↓</span>' : m > 1.03 ? ' <span class="up">↑</span>' : ''}</span>
     <div class="row" style="gap:6px">${acts}<button class="sm" data-act="sell" data-arg="${esc(key)}|1">Sell 1</button><button class="sm" data-act="sell" data-arg="${esc(key)}|all">Sell all</button><button class="sm ghost" data-act="deposit" data-arg="${esc(key)}">Bank</button></div></div>`;
@@ -464,6 +467,7 @@ function tabShop() {
     <div class="card" style="margin-top:12px"><div class="spread"><h3>Ember Shard exchange</h3><span>Shards <b class="gold">${N(account.shards)}</b></span></div><p class="mute" style="margin:4px 0 8px;font-size:14px">Shards are earned only: board quests, weeklies and Ascension. Prices never change.</p>
       <div class="inv">${SHARD_SHOP.map((o, i) => `<div class="irow">${itemIcon(o.key)}<div>${rname(o.key)}<div class="mute" style="font-size:13px">${esc(ITEM(o.key).desc || '')}</div></div><span class="num gold">${o.price} shards</span><span class="hide-s"></span><button class="sm ${account.shards >= o.price ? 'pri' : ''}" data-act="buyshard" data-arg="${i}" ${account.shards >= o.price ? '' : 'disabled'}>Exchange</button></div>`).join('')}</div></div>
     <h3 style="margin:18px 0 8px">Supplies</h3><div class="inv">${SHOP.supplies.map(k => row(k, true)).join('')}</div>
+    <h3 style="margin:18px 0 8px">Loot chests</h3><p class="mute" style="margin:0 0 8px;font-size:14px">Gold only. Open them from your inventory; the odds are listed inside.</p><div class="inv">${SHOP.chests.map(k => row(k, false)).join('')}</div>
     <h3 style="margin:18px 0 8px">Pet eggs</h3><div class="inv">${SHOP.eggs.map(k => row(k, true)).join('')}</div>
     <h3 style="margin:18px 0 8px">Tools</h3><div class="inv">${SHOP.tools.map(k => row(gkey(k))).join('')}</div>
     <h3 style="margin:18px 0 4px">Potions</h3><p class="mute" style="margin:0 0 8px;font-size:14px">No level or stat requirements: if you have the gold, you can buy it. One potion per category is active at a time; a stronger one replaces a weaker one.</p>${SHOP.potions.map(([g, ks]) => `<h4 class="shopgrp">${g}</h4><div class="inv">${ks.map(k => row(k, true)).join('')}</div>`).join('')}
@@ -793,7 +797,7 @@ function equip(key) {
 }
 function upgradeModal(key) {
   const it = ITEM(key), E = BALANCE.enchant, lvl = it.plus, stone = E.stoneFor[lvl], gold = enchantGold(it), d = D();
-  const chance = Math.min(1, E.success[lvl] + d.wisAbove * E.wisBonus + (d.M.enchant || 0)), next = ITEM(gkey(it.base, it.q, lvl + 1)), have = ch.inv[stone] || 0;
+  const chance = Math.min(1, E.success[lvl] + d.wisAbove * E.wisBonus + (d.M.enchant || 0)), next = ITEM(withPlus(key, lvl + 1)), have = ch.inv[stone] || 0;
   modal(`<h3>Upgrade ${esc(it.name)}</h3><p class="mute">${esc(statLine(it))}<br>→ <span class="up">${esc(statLine(next))}</span></p>
     <div class="kv" style="font-size:16px"><span>Success chance</span><span><b>${pct(chance)}</b></span><span>Cost</span><span>1 ${esc(ITEMS[stone].name)} (have ${have}) + ${N(gold)}g</span><span>On failure</span><span>${lvl >= E.dropFrom ? '<span class="bad">drops to +' + (lvl - 1) + '</span>' : 'materials lost, item safe'}</span></div>
     <p class="mute" style="font-size:14px">Enchant stones come from Enchanting. Wisdom improves the odds.</p>
@@ -804,8 +808,8 @@ function doUpgrade(key) {
   if (!ch.inv[key] || !ch.inv[stone] || ch.gold < gold) return;
   takeItem(stone, 1); ch.gold -= gold;
   const chance = Math.min(1, E.success[lvl] + D().wisAbove * E.wisBonus + (D().M.enchant || 0));
-  if (rng() < chance) { takeItem(key, 1); const nk = gkey(it.base, it.q, lvl + 1); addItem(nk, 1, true); ch.counters.upgrades++; ch.counters.maxPlus = Math.max(ch.counters.maxPlus, lvl + 1); addLog('lucky', `Upgrade succeeded: ${ITEM(nk).name}`); toast(`<b>Success!</b> ${esc(ITEM(nk).name)}`, 'gold'); chime(784, 1175); closeModal(); if (lvl + 1 < 10) upgradeModal(nk); }
-  else if (lvl >= E.dropFrom) { takeItem(key, 1); const nk = gkey(it.base, it.q, lvl - 1); addItem(nk, 1, true); addLog('sys', `Upgrade failed: ${it.name} dropped to +${lvl - 1}.`); toast(`Upgrade failed. ${esc(it.name)} dropped to +${lvl - 1}.`); closeModal(); }
+  if (rng() < chance) { takeItem(key, 1); const nk = withPlus(key, lvl + 1); addItem(nk, 1, true); ch.counters.upgrades++; ch.counters.maxPlus = Math.max(ch.counters.maxPlus, lvl + 1); addLog('lucky', `Upgrade succeeded: ${ITEM(nk).name}`); toast(`<b>Success!</b> ${esc(ITEM(nk).name)}`, 'gold'); chime(784, 1175); closeModal(); if (lvl + 1 < 10) upgradeModal(nk); }
+  else if (lvl >= E.dropFrom) { takeItem(key, 1); const nk = withPlus(key, lvl - 1); addItem(nk, 1, true); addLog('sys', `Upgrade failed: ${it.name} dropped to +${lvl - 1}.`); toast(`Upgrade failed. ${esc(it.name)} dropped to +${lvl - 1}.`); closeModal(); }
   else { addLog('sys', `Upgrade failed: ${it.name} is unharmed.`); toast(`Upgrade failed. The stone crumbles; ${esc(it.name)} is fine.`); upgradeModal(key); }
   checkProgress(); renderMain();
 }
@@ -836,6 +840,7 @@ const HANDLERS = {
   ...ARENA_HANDLERS,
   ...QOL_HANDLERS,
   ...ANIM_HANDLERS,
+  ...LOOT_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },

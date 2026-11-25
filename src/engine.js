@@ -16,20 +16,30 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 // --- Items ---
 const gkey = (base, q, plus) => `g:${base}:${q == null ? 1 : q}:${plus || 0}`;
-function parseG(key) { const [, base, q, plus] = key.split(':'); return { base, q: +q, plus: +plus }; }
+function parseG(key) { const [, base, q, plus, grade, aff] = key.split(':'); return { base, q: +q, plus: +plus, grade: +(grade || 0), aff: aff || '' }; }
+// v2.0 gear grades and random affixes. Graded keys: g:base:quality:plus:grade:affixes (affixes "SSTR12-Mcrit15": S = stat points, M = modifier in thousandths).
+const GRADES = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'], GRADE_RAR = [0, 2, 3, 4, 5], GRADE_MULT = [1, 1.08, 1.18, 1.32, 1.5], GRADE_VAL = [1, 1.6, 2.5, 4, 7];
+const AFFIX_SUFFIX = { STR: 'of the Bear', DEX: 'of the Fox', INT: 'of the Owl', VIT: 'of the Ox', AGI: 'of the Hare', LUCK: 'of Fortune', PER: 'of the Hawk', WIS: 'of the Sage', CHARM: 'of the Bard',
+  atk: 'of Might', hp: 'of Vigor', def: 'of the Bulwark', crit: 'of Precision', critDmg: 'of Ruin', dodge: 'of Evasion', lifesteal: 'of the Leech', xp: 'of Learning', gyield: 'of Plenty', cyield: 'of the Artisan',
+  gold: 'of Greed', loot: 'of Finding', luckStrike: 'of Luck', regen: 'of Mending', fightSpeed: 'of Haste' };
+const parseAff = s => !s ? [] : s.split('-').map(t => { const m = /^([SM])([A-Za-z]+)(\d+)$/.exec(t); return m ? { t: m[1], id: m[2], v: +m[3] } : null; }).filter(Boolean);
+const gkeyX = (base, q, plus, grade, aff) => grade ? `g:${base}:${q == null ? 1 : q}:${plus || 0}:${grade}:${aff || ''}` : gkey(base, q, plus);
+const withPlus = (key, plus) => { const p = parseG(key); return gkeyX(p.base, p.q, plus, p.grade, p.aff); };
 function ITEM(key) {
   if (RES_BY[key]) { const r = RES_BY[key]; return { name: r.name, type: 'resource', rarity: r.rarity, value: r.value, color: r.color, desc: r.flavor, skill: r.skill }; }
   if (key.startsWith('g:')) {
-    const { base, q, plus } = parseG(key), g = GEAR[base]; if (!g) return { name: 'Unknown', type: 'junk', rarity: 0, value: 0, desc: '' };
-    const qm = BALANCE.craft.qualityMult[q], m = qm * (1 + plus * BALANCE.enchant.perPlus);
+    const { base, q, plus, grade, aff } = parseG(key), g = GEAR[base]; if (!g) return { name: 'Unknown', type: 'junk', rarity: 0, value: 0, desc: '' };
+    const qm = BALANCE.craft.qualityMult[q], m = qm * (1 + plus * BALANCE.enchant.perPlus) * (GRADE_MULT[grade] || 1), affs = parseAff(aff), mods = {};
     const stats = {}; for (const [s, v] of Object.entries(g.stats || {})) stats[s] = Math.round(v * m);
+    for (const a of affs) { if (a.t === 'S') stats[a.id] = (stats[a.id] || 0) + a.v; else mods[a.id] = (mods[a.id] || 0) + a.v / 1000; }
     const qn = BALANCE.craft.qualityNames[q], cc = typeof ch !== 'undefined' ? ch : null;
     let gname = g.name, gatk = g.attack || 0;
     if (g.growth && cc && cc.growth) { gname = growthName(cc.growth); gatk = Math.round(GROWTH.attackBase + GROWTH.attackPerLevel * cc.growth.lvl); }
     if (g.ego && cc && cc.egos && cc.egos[g.ego] && cc.egos[g.ego].bond >= EGO_BOND.awaken) gname = g.name + ' (Awakened)';
-    return { name: (q !== 1 ? qn + ' ' : '') + gname + (plus ? ' +' + plus : ''), type: g.slot === 'tool' ? 'tool' : 'gear', gear: true, base, q, plus,
-      slot: g.slot, toolSkill: g.toolSkill, rarity: g.rarity, lvl: g.lvl || 1, desc: g.desc,
-      value: Math.max(1, Math.round((g.value || 1) * qm * (1 + plus * 0.25))),
+    const nm = grade ? `${GRADES[grade]} ${gname}${plus ? ' +' + plus : ''}${affs.length ? ' ' + (AFFIX_SUFFIX[affs[0].id] || '') : ''}`.trim() : (q !== 1 ? qn + ' ' : '') + gname + (plus ? ' +' + plus : '');
+    return { name: nm, type: g.slot === 'tool' ? 'tool' : 'gear', gear: true, base, q, plus, grade, mods, affixes: affs, qualityName: qn,
+      slot: g.slot, toolSkill: g.toolSkill, rarity: grade ? Math.max(g.rarity, GRADE_RAR[grade]) : g.rarity, lvl: g.lvl || 1, desc: g.desc,
+      value: Math.max(1, Math.round((g.value || 1) * qm * (1 + plus * 0.25) * (GRADE_VAL[grade] || 1))),
       attack: Math.round(gatk * m), defense: Math.round((g.defense || 0) * m), stats,
       speed: g.speed ? Math.round((g.speed * qm + plus * 0.005) * 1000) / 1000 : 0 };
   }
@@ -399,6 +409,7 @@ function classMods(ch) {
   if (typeof petMods === 'function') petMods(ch, M);
   if (typeof perkMods === 'function') perkMods(ch, M);
   if (typeof worldEventMods === 'function') worldEventMods(ch, M);
+  if (typeof gearAffixMods === 'function') gearAffixMods(ch, M);
   return M;
 }
 function modsText(m, k) {

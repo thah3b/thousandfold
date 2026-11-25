@@ -51,7 +51,10 @@ const animOn = () => account.settings.anim !== false && !account.settings.reduce
 
 // What the scene shows: the chosen running action, else a fight, else the newest one.
 function sceneAction() {
-  if (!ch || !ch.actions.length) return null;
+  if (!ch) return null;
+  const dgf = typeof dgSceneFoe === 'function' ? dgSceneFoe() : null;
+  if (dgf && !(ch.sceneFocus && ch.actions.find(a => a.res === ch.sceneFocus))) return dgf;
+  if (!ch.actions.length) return null;
   const f = ch.sceneFocus && ch.actions.find(a => a.res === ch.sceneFocus);
   return ACT((f || ch.actions.find(a => ACT(a.res).kind === 'combat') || ch.actions[ch.actions.length - 1]).res);
 }

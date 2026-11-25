@@ -262,6 +262,7 @@ const PX_HATS = {
   chef: (g, C) => { const P = pxPal('#f6f2ea'); g.ell(12, 4.5, 4, 4, null, P).ell(20, 4.5, 4, 4, null, P).ell(16, 3, 4.5, 3.5, null, P); g.rect(7, 6, 19, 5, P.a).rect(7, 10, 19, 1, P.b); },
   gladiator: (g, C) => { const M = pxPal('#b8a07a'); g.ell(16, 11.5, 12, 8.4, null, M, (x, y) => y <= 12); g.rect(4, 10, 3, 9, M.b).rect(25, 10, 3, 9, M.b); g.rect(4, 12, 24, 1, M.d); g.poly([[9, 4], [16, -1], [23, 4], [16, 2]], '#c0302a'); g.rect(13, 0, 6, 4, '#c0302a').rect(13, 0, 6, 1, '#e8584a'); },
   laurel: (g, C) => { for (let i = 0; i < 7; i++) { const x = 6 + i * 1.6, y = 10 - i * 0.9; g.ell(x, y, 1.3, 0.9, '#6aa84a'); g.ell(32 - x, y, 1.3, 0.9, '#4f8a3a'); } g.set(16, 4, PXC.gold).set(15, 4, PXC.gold); },
+  mimic: (g, C) => { const P = pxPal('#a8744a'); g.rect(6, 2, 21, 9, P.a).rect(6, 2, 21, 1, P.c).rect(6, 9, 21, 2, P.b); for (const x of [8, 12, 16, 20, 24]) g.poly([[x, 11], [x + 2, 11], [x + 1, 13]], '#f6f2ea'); g.rect(10, 2, 2, 9, '#5e3b22').rect(21, 2, 2, 9, '#5e3b22'); g.set(14, 5, '#ffd36b').set(18, 5, '#ffd36b'); },
   crown: (g, C) => { g.rect(9, 5, 15, 4, PXC.gold).rect(9, 8, 15, 1, PXC.goldD); for (const x of [9, 13.5, 18.5, 23]) g.poly([[x - 1, 5], [x + 0.5, 1], [x + 2, 5]], PXC.gold); g.set(12, 6, '#e0573a').set(16, 6, '#3b82c4').set(20, 6, '#e0573a'); },
 };
 const PX_PROPS = {
@@ -284,6 +285,7 @@ const PX_PROPS = {
   balloon: (g, C) => { g.line(9, 29, 5, 12, '#e8e4d8'); g.ell(5, 7, 4.5, 5.5, null, pxPal(C.a)); g.set(3, 4, '#ffffff').set(3, 5, '#ffffff'); g.set(5, 13, pxTone(C.a, -0.3)); },
   banner: (g, C) => { g.line(10, 35, 7, 2, PXC.wood, PXC.woodD); g.rect(0, 2, 7, 11, C.a).rect(0, 2, 7, 1, pxTone(C.a, 0.3)); g.poly([[0, 13], [7, 13], [3.5, 16]], C.a); g.ell(3.5, 7, 1.8, 1.8, PXC.gold); },
   champblade: (g, C) => { const M = pxPal('#bfefff'); g.line(8, 25, 2, 4, M.a, M.b); g.line(7, 24, 2, 6, '#ffffff'); g.line(4, 28, 11, 24, PXC.gold, PXC.goldD); g.line(9, 28, 11, 32, '#3a2a4a'); g.set(11, 32, '#7ec8f0'); },
+  goldkey: (g, C) => { g.line(9, 30, 4, 14, PXC.gold, PXC.goldD); g.ell(4, 10, 3.5, 3.5, PXC.gold); g.ell(4, 10, 1.5, 1.5, 0); g.rect(6, 22, 4, 2, PXC.gold).rect(6, 26, 3, 2, PXC.gold); },
   map: (g, C) => { g.rect(1, 24, 9, 7, '#ecd9a8').rect(1, 24, 1, 7, '#c9b07a').rect(9, 24, 1, 7, '#c9b07a'); g.set(3, 26, '#a8463a').set(4, 27, '#a8463a').set(6, 28, '#a8463a').set(7, 27, '#c0574a').set(8, 26, '#c0574a').set(7, 25, '#c0574a').set(8, 28, '#c0574a'); },
 };
 // look = { race, gender, cls, hair, eye, outfit, accent, hat, prop, cape, mark, beard, elder }

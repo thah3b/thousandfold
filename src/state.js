@@ -85,7 +85,7 @@ function addItem(key, n, force) {
   ch.inv[key] = (ch.inv[key] || 0) + n; ch.seen[key] = 1; return true;
 }
 function takeItem(key, n) { ch.inv[key] = (ch.inv[key] || 0) - n; if (ch.inv[key] <= 0) delete ch.inv[key]; }
-function staminaUsed() { return ch.actions.reduce((s, a) => s + ACT(a.res).stamina, 0); }
+function staminaUsed() { return ch.actions.reduce((s, a) => s + ACT(a.res).stamina, 0) + (ch.dungeon && !ch.dungeon.done ? 2 : 0); }
 function sellPrice(key, now) { return ITEM(key).value * D().sell * priceMult(ch, key, now || Date.now()); }
 
 // ---------- Toasts, modal, log, sound ----------
@@ -217,7 +217,7 @@ function step() {
       if (n <= 0) { stopAction(a.res, `Out of materials: stopped ${act.name}.`); continue; }
       for (const [i, q] of Object.entries(act.inputs)) takeItem(i, q * n);
       r = resolveCraft(ch, act, n, d, rng);
-      for (const [k, q] of Object.entries(r.out)) { addItem(k, q, true); g.outs[k] = (g.outs[k] || 0) + q; g.units += q; }
+      for (const [k, q] of Object.entries(r.out)) { addCraftOut(k, q); g.outs[k] = (g.outs[k] || 0) + q; g.units += q; }
       ch.counters.crafted += n; if (r.best >= 2) ch.counters.fine = 1; if (r.best >= 4) { ch.counters.masterwork = 1; ch.counters.masterworks++; addLog('lucky', `Masterwork ${GEAR[act.out].name}!`); toast(`<b>Masterwork!</b> ${esc(GEAR[act.out].name)}`, 'gold'); chime(988, 1480); }
       if (act.gearOut && GEAR[act.out].slot === 'tool') ch.counters.toolsBought = Math.max(1, ch.counters.toolsBought);
     }
@@ -278,7 +278,7 @@ function runOffline(sec, show) {
       if (act.inputs) {
         for (const [k, q] of Object.entries(act.inputs)) takeItem(k, q * seg.done);
         const o = offlineCraftOut(act, seg.chunks, d); xp = o.xp;
-        for (const [k, q] of Object.entries(o.out)) { const u = probRound(q, rng); addItem(k, u, true); s.units += u; }
+        for (const [k, q] of Object.entries(o.out)) { const u = probRound(q, rng); addCraftOut(k, u, true, notes); s.units += u; }
         ch.counters.crafted += seg.done;
         if (craftable(ch, act) < 1) { stopped.push(act.name); ch.actions = ch.actions.filter(x => x !== a); }
       } else {
@@ -339,6 +339,7 @@ function cantStart(a) {
   if (a.kind === 'gather' && !availableHere(a)) return ch.travel ? `You can't start new gathering while travelling.` : `${a.name} is only found in ${REGIONS[a.band].name}.`;
   if (a.kind === 'combat') {
     if (ch.travel) return `You are on the road.`;
+    if (ch.dungeon && !ch.dungeon.done) return `You are inside a dungeon.`;
     if (a.region !== ch.loc) return `${a.name} lives in ${REGION_BY[a.region].name}.`;
     if (!areaOpen(ch, a, D('slaying'))) return `Explore ${REGION_BY[a.region].name} further to find ${a.name}.`;
   }
@@ -379,6 +380,7 @@ function resolveFight(e, d, rng) {
   if (e.boss && e.role === 'boss' && !ch.bossKilled[e.id]) { ch.bossKilled[e.id] = Date.now(); ch.counters.bossKinds = Object.keys(ch.bossKilled).length; }
   ch.gold += out.gold; ch.counters.goldEarned += out.gold;
   for (const [k, q] of Object.entries(out.loot)) { addItem(k, q, true); if (ITEM(k).gear && GEAR[parseG(k).base].unique) ch.counters.uniques++; }
+  if (typeof killGearDrop === 'function') killGearDrop(e, 1, false, null);
   addXp('slaying', out.xp);
   return out;
 }
@@ -429,7 +431,8 @@ function findChest(rid, quiet, notes) {
   const pool = RES.filter(x => x.band === r.band), res = pick(pool), q = 3 + Math.floor(rng() * 10);
   ch.gold += gold; ch.counters.goldEarned += gold; addItem(res.id, q, true);
   const msg = `Found a cache in ${r.name}: ${N(gold)} gold and ${q} ${res.name}.`;
-  if (quiet) notes.push(msg); else { addLog('lucky', msg); toast(esc(msg), 'gold'); }
+  if (rng() < 0.15) { addItem('treasure_map', 1, true); if (quiet) notes.push(`Found a Treasure Map in ${r.name}.`); else { addLog('lucky', `Found a Treasure Map in ${r.name}! Dig it up from your inventory.`); toast('<b>Treasure Map!</b> Dig it up from your inventory.', 'gold'); } }
+  if (quiet) notes.push(msg); else addLog('lucky', msg); // v2.0: log only, no pop-up
 }
 // Hidden pieces (v1.0): each attempt has a tiny chance, and the 5,000th attempt always succeeds.
 const PITY = { chance: 0.000005, at: 5000 };
@@ -448,6 +451,7 @@ function startTravel(to, fast) {
   const r = REGION_BY[to], d = D();
   if (!ch.quest.done) { toast(`Finish your tasks in ${regionName()} before you leave.`); return; }
   if (ch.travel || ch.loc === to) return;
+  if (ch.dungeon && !ch.dungeon.done) { toast('Finish or leave your dungeon first.'); return; }
   if (gateLevel(ch) < r.lvl) { toast(`${r.name} needs character level ${r.lvl}.`); return; }
   for (const a of [...ch.actions]) { const k = ACT(a.res).kind; if (k === 'combat' || k === 'explore') stopAction(a.res); }
   if (fast) { const c = fastTravelCost(to, ch); if (ch.gold < c) { toast('Not enough gold.'); return; } ch.gold -= c; addLog('sys', `Paid ${N(c)} gold for a fast carriage.`); arrive(to); return; }
@@ -553,6 +557,7 @@ function offlineCombat(a, e, sec, d, sum, notes) {
     if (w === 0) break;
   }
   ch.totals.slaying += wins; ch.counters.kills += wins; ch.gold += gold; ch.counters.goldEarned += gold;
+  if (wins && typeof killGearDrop === 'function') killGearDrop(e, wins, true, notes);
   if (ch.growth && growthEquipped(ch)) growthXp(wins * e.level * GROWTH.killXp, true, notes);
   for (const [k, q] of Object.entries(loot)) { const eg = GEAR[parseG(k).base] && k.startsWith('g:') && GEAR[parseG(k).base].ego; if (eg) { if (!ch.egos[eg] && rng() < Math.min(1, q)) grantEgo(eg, true, notes); continue; } const u = probRound(q, rng); if (u) { addItem(k, u, true); s.units += u; if (ITEM(k).gear && GEAR[parseG(k).base].unique) ch.counters.uniques++; } }
   if (wins && e.role === 'boss' && !ch.bossKilled[e.id]) { ch.bossKilled[e.id] = Date.now(); ch.counters.bossKinds = Object.keys(ch.bossKilled).length; }

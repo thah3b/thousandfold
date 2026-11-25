@@ -2,8 +2,17 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v1.5';
+const GAME_VERSION = 'v2.0';
 const PATCH_NOTES = [
+  { v: 'v2.0', date: '2026-11-25', title: 'Thousandfold 2.0: gear, dungeons and loot', notes: [
+    'Gear grades: Common, Rare, Epic, Legendary and Mythic. Higher grades have stronger base stats and 1 to 4 random bonuses: stats, attack, max HP, defence, crit, dodge, life steal, XP, yield, gold, rare drops, Lucky Strike, regeneration or fight speed. Each item gets a name to match, like \u201cEpic Iron Helm of the Owl\u201d.',
+    'Where graded gear comes from: crafting (better quality, better odds), rare monster drops (bosses more often), dungeons, loot chests and treasure maps. You choose which crafted grades to keep on the Dungeons tab; lower grades stack as plain items. New \u201cSell Common gear\u201d button in the inventory.',
+    'Dungeons (Adventure \u2192 Dungeons): every main region has one, with 4 floors and a boss, in Normal, Heroic (3 a day) and Mythic (1 a day). Beat the region\u2019s boss to open it. You get rewards for every floor you clear, and bosses always drop gear and a chest. Watch the fight in the action scene while you\u2019re inside.',
+    'Loot chests: Wooden, Iron, Gilded and Mythic, with an opening animation. Each chest lists its odds, and a pity counter guarantees a Legendary or better within a set number of opens. Chests can hold chest-only Wardrobe pieces (duplicates turn into Ember Shards). Buy Wooden and Iron chests with gold in the shop, Gilded ones with Ember Shards, or earn them.',
+    'Treasure maps: sometimes found in exploration caches. Dig one up from your inventory for a chest and gold.',
+    'Seven new achievements. Exploration caches no longer pop up a message (they\u2019re still in the event log).',
+    'Everyone who played before 2.0 is marked as a Founder, for the Founder\u2019s frame coming with the profile showcase.',
+  ] },
   { v: 'v1.5', date: '2026-11-25', title: 'Action animations', notes: [
     'Your hero now acts out what you\u2019re doing in a little pixel scene: swinging a pickaxe at a rock, chopping a tree, hoeing crops, casting a line into a pond, cutting herbs, skinning on a drying rack, hammering at the anvil, stirring a cauldron or a cooking pot, weaving at a loom, enchanting at a glowing pedestal, cutting gems, lifting weights, exploring with a map and walking the road when you travel.',
     'Fights show your hero trading blows with the actual monster, with hits, sparks and damage numbers.',
