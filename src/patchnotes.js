@@ -2,8 +2,17 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.13';
+const GAME_VERSION = 'v0.14';
 const PATCH_NOTES = [
+  { v: 'v0.14', date: '2026-11-25', title: 'Guilds, perks, events and lore', notes: [
+    'Guilds (Social \u2192 Guild): found or join a guild of up to 30, with leader, officer and member ranks, guild chat, a shared gold bank, and a weekly guild goal. Every gathering action, craft and won fight counts, and each goal reached (Bronze, Silver, Gold) mails every member a reward. Plus a guild leaderboard. Needs an account.',
+    'Ascension perks (Class tab): every Ascension now gives a perk point, including the ones you already have. Spend them on more XP, yield, attack, luck, offline time, stamina or inventory space. Reset for 10 Ember Shards.',
+    'World events (Adventure \u2192 Events): every week brings an event that all players share, like a Fishing Derby or a Blood Moon. Holidays bring their own. Do 1,000 actions during an event to take part.',
+    'Daily rewards: log in every day to build a streak. Day 7 brings a Rare Egg and Ember Shards, and gold rewards grow each week you keep it up.',
+    'Lore Journal (Adventure \u2192 Lore): 30 pages to find by travelling, beating old foes and growing. Some of them know more than they let on.',
+    'New achievements for guilds, perks, events, streaks and lore.',
+    'Tidier menu: the "Later phases" section is gone. Everything is here now.',
+  ] },
   { v: 'v0.13', date: '2026-11-25', title: 'Secrets', notes: [
     'New Secrets tab (Adventure). Track every secret you have found, with hints for the regions you have visited.',
     'The rumours from the starting regions are true. Each of the eight main regions now hides a secret, found by being in the right place at the right time, doing the right thing.',

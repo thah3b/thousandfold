@@ -69,8 +69,6 @@ const CLASSES = [
 // Content tables (chains, recipes, gear, items, titles, achievements) live in content.js.
 
 const LATER = [
-  ['guild','Guild',13,'Shared banks, guild quests and raids.'],
-  ['lore','Lore',13,'Your Lore Journal and its cryptic clues.'],
 ];
 
 const PROFANITY = ['fuck','shit','cunt','bitch','nigg','fag','rape','whore','slut','dick','cock','pussy','nazi','retard','twat','wank'];

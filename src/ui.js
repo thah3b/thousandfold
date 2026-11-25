@@ -148,7 +148,7 @@ function frame(t) {
     if (now - lastFlush >= BALANCE.logFlushMs) { lastFlush = now; flush(); }
     if (t - lastLive >= 1000 / BALANCE.uiHz) { lastLive = t; updateLive(); if (dirty) { dirty = false; renderMain(); renderActions(); renderTop(); } }
     if (now - lastSave >= BALANCE.autosaveMs) { lastSave = now; save(); }
-    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); }
+    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); }
     drawBars();
   }
   lastT = t; requestAnimationFrame(frame);
@@ -227,9 +227,9 @@ function renderWizard() {
 const NAV = [
   ['Gathering', GATHER_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
-  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['leaders', 'Leaderboards']]],
+  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['events', 'Events'], ['leaders', 'Leaderboards']]],
   ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
-  ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades']]],
+  ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades'], ['guild', 'Guild']]],
   ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
 ];
 function enterGame(i) {
@@ -247,14 +247,14 @@ function renderTop() {
   const pots = Object.entries(ch.potions).filter(([, p]) => p.until > now).map(([cat, p]) => `<span class="chip" title="${esc(ITEMS[p.id].name + ': ' + ITEMS[p.id].desc)}">${POTION_CATS[cat]} <b data-live="pot:${cat}"></b></span>`).join('');
   $('#top').innerHTML = `<span class="brand">Thousandfold</span>
     <div class="cur"><span class="num">Gold <b class="gold" data-live="gold"></b></span><span class="num">Shards <b data-live="shards"></b></span><span>${ch.travel ? 'Travelling to ' : ''}<b data-live="travel"></b></span><span class="mute" data-live="clock"></span>${pots}
-    ${mailChip()}</div>
+    ${mailChip()}${(() => { const e = worldEvent(); return `<button class="chip evchip" data-act="tab" data-arg="events" title="${esc(e.text)}">${e.holiday ? '\u2744 ' : '\u2605 '}${esc(e.name)}</button>`; })()}</div>
     <div class="milestone" title="Closest upcoming milestone">Next: <b data-live="ms"></b></div>`;
   updateLive();
 }
 function renderNav() {
   const running = new Set(ch.actions.map(a => ACT(a.res).skill));
-  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')).join('')
-    + `<div class="sep">Later phases</div>` + LATER.map(([id, n]) => `<button class="later ${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}</button>`).join('');
+  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'events' && ch.daily && !ch.daily.claimed ? ' <span class="dot" aria-label="reward ready"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')).join('')
+    + (LATER.length ? `<div class="sep">Later phases</div>` : '') + LATER.map(([id, n]) => `<button class="later ${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}</button>`).join('');
 }
 function renderActions() {
   if (!ch || !$('#act')) return;
@@ -284,7 +284,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -832,6 +832,9 @@ const HANDLERS = {
   ...SOCIAL_HANDLERS,
   ...AUCTION_HANDLERS,
   ...SECRET_HANDLERS,
+  ...GUILD_HANDLERS,
+  ...PRESTIGE_HANDLERS,
+  ...LORE_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },

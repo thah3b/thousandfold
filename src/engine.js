@@ -396,6 +396,8 @@ function classMods(ch) {
   for (const [id, r] of Object.entries(ch.talents || {})) { const n = NODES[id]; if (n && r > 0 && treeActive(ch, n.tree)) addMods(M, n.mods, r); }
   if (typeof weaponMods === 'function') weaponMods(ch, M);
   if (typeof petMods === 'function') petMods(ch, M);
+  if (typeof perkMods === 'function') perkMods(ch, M);
+  if (typeof worldEventMods === 'function') worldEventMods(ch, M);
   return M;
 }
 function modsText(m, k) {

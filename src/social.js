@@ -18,6 +18,7 @@ async function socRefresh() {
   } catch (e) { soc.err = e.message || String(e); }
   soc.lastTick = Date.now();
   if (soc.trades || Object.keys(account.escrow || {}).length) await tradeSync();
+  if (soc.me && typeof guildLoad === 'function') { if (soc.guild === undefined) await guildLoad(true); else guildContribute(); }
   socPaint();
 }
 function socPaint() {
@@ -88,11 +89,11 @@ function ago(t) { const s = (Date.now() - Date.parse(t)) / 1000; return s < 3600
 function tabChat() {
   const g = socGate(); if (g) return `<h2>Chat</h2>${g}`;
   setTimeout(chatLoop, 0);
-  const seen = account.chatSeen || {}, chans = [['global', 'World']].concat(friendsOnly().map(f => ['dm:' + f.id, f.name, f]));
+  const seen = account.chatSeen || {}, chans = [['global', 'World']].concat(soc.guild ? [['guild', soc.guild.name + ' (guild)']] : [], friendsOnly().map(f => ['dm:' + f.id, f.name, f]));
   return `<div class="spread"><h2>Chat</h2><span class="mute" style="font-size:13px">Be kind. Messages are checked for bad words.</span></div>
     <div class="row" style="margin:10px 0;gap:6px">${chans.map(([k, n, f]) => `<button class="chip ${soc.chan === k ? 'on' : ''}" data-act="socchan" data-arg="${esc(k)}">${f ? `<span class="odot ${f.online ? 'on' : ''}"></span> ` : ''}${esc(n)}${f && f.last_dm && !f.last_dm_mine && f.last_dm > (seen[k] || 0) && soc.chan !== k ? ' <span class="dot"></span>' : ''}</button>`).join('')}</div>
     <div class="card chatbox"><div id="chatlog" class="chatlog" aria-live="polite">${chatHtml()}</div>
-      <div class="row" style="gap:6px;margin-top:8px"><input id="chatin" maxlength="200" autocomplete="off" placeholder="${soc.chan === 'global' ? 'Say something to everyone' : 'Message ' + esc(friendName(soc.chan.slice(3)))}" aria-label="Message" style="flex:1"><button class="pri" data-act="chatsend">Send</button></div><div class="err" id="chaterr">${esc(soc.err || '')}</div></div>`;
+      <div class="row" style="gap:6px;margin-top:8px"><input id="chatin" maxlength="200" autocomplete="off" placeholder="${soc.chan === 'global' ? 'Say something to everyone' : soc.chan === 'guild' ? 'Message your guild' : 'Message ' + esc(friendName(soc.chan.slice(3)))}" aria-label="Message" style="flex:1"><button class="pri" data-act="chatsend">Send</button></div><div class="err" id="chaterr">${esc(soc.err || '')}</div></div>`;
 }
 function chatHtml() {
   const list = soc.msgs[soc.chan] || [];
