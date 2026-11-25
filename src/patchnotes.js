@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.11c';
+const GAME_VERSION = 'v0.11d';
 const PATCH_NOTES = [
+  { v: 'v0.11d', date: '2026-11-24', title: 'Account button', notes: [
+    'The button on the character screen now says Account login when you are signed out, and shows your email address when you are signed in.',
+  ] },
   { v: 'v0.11c', date: '2026-11-24', title: 'Sign in with Google', notes: [
     'Sign in with Google on the Account tab: no password and no confirmation email. Email and password accounts still work.',
     'The Account tab shows which email you are signed in with.',

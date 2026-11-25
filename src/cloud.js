@@ -193,8 +193,13 @@ function cloudTick() {
 }
 function cloudRefreshUi() { if (screen === 'game' && (tab === 'account' || tab === 'leaders')) renderMain(); if (screen === 'select') { const el = document.getElementById('cloudchip'); if (el) el.outerHTML = cloudChip(); } }
 function cloudChip() {
-  const t = cloud.sbBlocked && cloud.state !== 'ready' ? 'Cloud: not on this link' : cloud.state === 'ready' ? (cloud.canWrite === false ? 'Cloud: read-only' : `Cloud: on${cloud.meta ? ' · saved ' + new Date(cloud.meta.savedAt).toLocaleTimeString([], { timeStyle: 'short' }) : ''}`) : cloud.state === 'signedout' ? 'Cloud: signed out' : cloud.state === 'starting' ? 'Cloud: connecting…' : 'Cloud: offline';
-  return `<button class="chip" id="cloudchip" data-act="cloudopen">${esc(t)}</button>`;
+  const ss = cloud.provider === 'supabase' && cloud.state === 'ready' ? sbSession() : null, email = ss && ss.user && ss.user.email;
+  const t = cloud.sbBlocked && cloud.state !== 'ready' ? 'Accounts: on the website'
+    : cloud.state === 'ready' ? (email || 'Signed in')
+    : cloud.state === 'signedout' ? 'Account login'
+    : cloud.state === 'starting' ? 'Connecting\u2026' : 'Account: offline';
+  const tip = cloud.state === 'ready' && cloud.meta ? `Cloud save ${new Date(cloud.meta.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : 'Account and cloud save';
+  return `<button class="chip acctchip ${cloud.state === 'signedout' ? 'pri' : ''}" id="cloudchip" data-act="cloudopen" title="${esc(tip)}">${cloud.state === 'ready' ? '<span class="odot on"></span> ' : ''}${esc(t)}</button>`;
 }
 
 // ---------- UI ----------
