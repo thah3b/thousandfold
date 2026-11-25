@@ -54,6 +54,7 @@ const BALANCE = {
     winAt: 0.0526, winK: 4,          // win chance = 1 / (1 + winAt * (rec/CP)^winK); 95% at CP = rec
     recNormal: 0.85, recHidden: 1.0, recBoss: 1.15, recTutorialBoss: 0.75, // enemy recommended power vs. a typical build of its level
     baseTime: 6, bossBase: 10, bossMinSec: 5,
+    crushAt: 1.5,                    // v1.3: CP this far above the enemy's → fights take the 0.1 s floor (not bosses)
     dpsFrac: 0.02,                   // enemy damage per second, as a share of a typical player's HP at that level
     dmgExp: 1.5, lossDmgMult: 2,
     regenFight: 0.01, regenIdle: 0.02, regenVitBonus: 0.002, // per second, share of max HP

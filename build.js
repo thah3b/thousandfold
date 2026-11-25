@@ -29,6 +29,7 @@ ${r('quests.js')}
 ${r('pets.js')}
 ${r('sprites.js')}
 ${r('fashion.js')}
+${r('arena.js')}
 ${r('engine.js')}
 ${r('state.js')}
 ${r('cloud.js')}

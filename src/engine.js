@@ -326,10 +326,11 @@ function fightInfo(ch, e, D) {
   const cp = combatPower(D), m = mechActive(e, D) ? e.mech : {}, rec = e.rec * (m.rec || 1), over = cp >= rec;
   const count = ch.prof[e.id] || 0;
   let t = actionSec(e, count, 0); if (!over) t = e.baseTime; else t = Math.max(BALANCE.minActionSec, t * (1 - Math.min(BALANCE.speedBonusCap, D.speed)));
+  const crush = !e.boss && cp >= rec * BALANCE.combat.crushAt; if (crush) t = BALANCE.minActionSec; // v1.3: 50%+ stronger → 0.1 s fights
   t *= (m.time || 1); if (e.boss) t = Math.max(BALANCE.combat.bossMinSec, t);
   const M = D.M || {}, ratio = rec / Math.max(1, cp), dmg = e.dps * t * Math.pow(ratio, BALANCE.combat.dmgExp) * (m.dmg || 1) * Math.max(0.2, 1 + (M.dmgTaken || 0)) * (1 - Math.min(0.5, (M.lifesteal || 0) * 3));
   const regen = BALANCE.combat.regenFight * D.maxHP * t * (1 + above(D.S.VIT.total) * BALANCE.combat.regenVitBonus) * (1 + (M.regen || 0));
-  return { cp, rec, over, time: t, win: winChance(cp, rec), dmg, regen, mech: e.mech ? !mechActive(e, D) : null };
+  return { cp, rec, over, crush, time: t, win: winChance(cp, rec), dmg, regen, mech: e.mech ? !mechActive(e, D) : null };
 }
 function travelMinutes(from, to) {
   const dist = { [from]: 0 }, done = new Set();

@@ -67,6 +67,7 @@ function fashionReq(c, f) {
   if (s.species) return Object.keys(c.petDex || {}).length >= s.species ? null : `Collect ${s.species} pet species`;
   if (s.events) return (K.eventsJoined || 0) >= s.events ? null : `Take part in ${s.events} world event${s.events > 1 ? 's' : ''}`;
   if (s.bosses) return (K.bossWins || 0) >= s.bosses ? null : `Win ${s.bosses} boss fights`;
+  if (s.pvp) return (account.pvpBest || 0) >= s.pvp ? null : `Reach ${PVP_TIERS[s.pvp][0]} in the Arena`;
   if (s.ach) { const pts = ACHIEVEMENTS.filter(a => c.ach && c.ach[a.id]).reduce((t, a) => t + a.pts, 0); return pts >= s.ach ? null : `Earn ${s.ach} achievement points`; }
   return null;
 }

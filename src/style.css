@@ -326,3 +326,30 @@ img.px{image-rendering:pixelated}
 .wdcell.on{outline:2px solid var(--gold)}.wdcell.locked{opacity:.55;cursor:default}.wdcell.locked .wdimg{filter:grayscale(.9)}
 .wdcell.buy .mute{color:var(--gold)}
 @media (max-width:720px){.wardrobe{grid-template-columns:1fr}.wdstage{position:static}}
+.arenahead .chip.pvptier,.pvptier{font-weight:700}
+.pvpslots{display:grid;gap:6px;margin-top:8px}
+.pvpslot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line,rgba(255,255,255,.12));border-radius:10px}
+.pvpslot.empty{border-style:dashed}
+.pvpskill{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.pvpskill.locked{opacity:.55}
+.pvpopp{padding:10px}
+.pvpboard td,.pvpboard th{text-align:left}
+.pvpfight{text-align:center}
+.pvpbars{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:10px;text-align:left}
+.pvpbars .vs{color:var(--ember,#e8572e);font-size:18px}
+.pvphp .bar{height:12px;background:rgba(0,0,0,.4);border-radius:6px;overflow:hidden;margin-top:4px}
+.pvphp .bar i{display:block;height:100%;background:linear-gradient(90deg,#c0402a,#e8584a);transition:width .25s}
+.pvpstage{position:relative;display:flex;justify-content:space-between;align-items:flex-end;padding:20px 8% 8px;border-radius:12px;min-height:190px;overflow:hidden}
+.pvpf{position:relative;display:inline-flex}
+.pvpf.flip img{transform:scaleX(-1)}
+.pvpf.lunge{animation:lungeL .35s steps(3,jump-none)}.pvpf.flip.lunge{animation:lungeR .35s steps(3,jump-none)}
+.pvpf.hit img{animation:hitflash .3s steps(2,jump-none)}
+.pvpf.down{opacity:.45;filter:grayscale(.8);transform:translateY(8px) rotate(-8deg)}
+@keyframes lungeL{50%{transform:translateX(26px)}}@keyframes lungeR{50%{transform:translateX(-26px)}}
+@keyframes hitflash{50%{filter:brightness(2.2) saturate(.3)}}
+.pvpcall{position:absolute;left:0;right:0;top:10px;text-align:center;font-weight:700;font-size:17px;color:#2a1d17;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.pvppop{position:absolute;left:50%;top:0;transform:translateX(-50%);font-weight:800;font-size:18px;white-space:nowrap;text-shadow:0 0 3px #000,0 0 2px #000;animation:rise .9s ease-out forwards;pointer-events:none;z-index:3}
+.pvppop.dmg{color:#fff}.pvppop.crit{color:#ffd86b;font-size:22px}.pvppop.heal{color:#8fe0a0}.pvppop.miss{color:#c8ccd4}.pvppop.buff{color:#9fe2f2;font-size:15px}
+.pvpres{min-height:8px}
+@media (max-width:600px){.pvpstage{padding:20px 2% 8px}.pvpstage .px{width:96px;height:auto}}
+.chibi{flex:none}

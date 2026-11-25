@@ -207,7 +207,7 @@ function renderWizard() {
 const NAV = [
   ['Gathering', GATHER_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
-  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['events', 'Events'], ['leaders', 'Leaderboards']]],
+  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['arena', 'Arena'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['events', 'Events'], ['leaders', 'Leaderboards']]],
   ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['wardrobe', 'Wardrobe'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades'], ['guild', 'Guild']]],
   ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
@@ -264,7 +264,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { wardrobe: tabWardrobe, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { wardrobe: tabWardrobe, arena: tabArena, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -546,7 +546,7 @@ function enemyCard(e, d) {
   const tone = f.win >= 0.9 ? 'verd' : f.win >= 0.6 ? 'gold' : 'bad', why = cantStart(e);
   return `<div class="card enemy ${run ? 'running' : ''} ${e.boss ? 'boss' : ''}"><div class="spread"><div class="row" style="gap:10px;flex-wrap:nowrap">${monsterIcon(e, e.boss ? 60 : 48)}<div><b style="font-size:18px">${esc(e.name)}</b> <span class="mute">Lv ${e.level}${e.boss ? ' · Boss' : e.role === 'hidden' ? ' · Rare' : ''}</span></div></div>${tierBadge(c)}</div>
     <p class="mute" style="margin:2px 0 8px;font-size:14px">${esc(e.flavor)}</p>
-    <div class="kv"><span>Recommended power</span><span class="${tone}">${N(Math.round(f.rec))} (yours ${N(Math.round(f.cp))})</span><span>Win chance</span><span class="${tone}">${pct(f.win)}</span><span>Fight time</span><span>${fmtTime(f.time)}${!f.over ? ' <span class="mute">(no speed bonus below recommended)</span>' : ''}</span><span>Rewards</span><span>${N(e.xp * (1 + BALANCE.tierYieldBonus[k]))} XP · ${N(e.gold[0])}–${N(e.gold[1])}g</span><span>Wins</span><span data-live="next:${e.id}"></span></div>
+    <div class="kv"><span>Recommended power</span><span class="${tone}">${N(Math.round(f.rec))} (yours ${N(Math.round(f.cp))})</span><span>Win chance</span><span class="${tone}">${pct(f.win)}</span><span>Fight time</span><span>${fmtTime(f.time)}${f.crush ? ' <span class="verd">(you overpower it: 50%+ stronger)</span>' : ''}${!f.over ? ' <span class="mute">(no speed bonus below recommended)</span>' : ''}</span><span>Rewards</span><span>${N(e.xp * (1 + BALANCE.tierYieldBonus[k]))} XP · ${N(e.gold[0])}–${N(e.gold[1])}g</span><span>Wins</span><span data-live="next:${e.id}"></span></div>
     ${e.mech ? `<p style="margin:8px 0 0;font-size:14px"><b>${esc(e.mech.name)}.</b> ${esc(e.mech.text)} ${f.mech ? '<span class="verd">Countered</span>' : '<span class="bad">Not countered</span>'}</p>` : ''}
     <div class="row" style="gap:4px;margin:8px 0">${lootHtml(e)}</div>
     ${run ? `<button data-act="stop" data-arg="${e.id}">Retreat</button>` : why ? `<button disabled title="${esc(why)}">${esc(why)}</button>` : `<button class="pri" data-act="start" data-arg="${e.id}">Fight · ${e.stamina} stamina</button>`}</div>`;
@@ -821,6 +821,7 @@ const HANDLERS = {
   ...LORE_HANDLERS,
   ...PROFILE_HANDLERS,
   ...FASHION_HANDLERS,
+  ...ARENA_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },

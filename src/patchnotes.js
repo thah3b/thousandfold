@@ -2,8 +2,17 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v1.2';
+const GAME_VERSION = 'v1.3';
 const PATCH_NOTES = [
+  { v: 'v1.3', date: '2026-11-25', title: 'The Arena', notes: [
+    'Faster fights: when your combat power is 50% or more above an enemy\u2019s, the fight takes just 0.1 seconds. Bosses still take their time.',
+    'New Arena tab (Adventure \u2192 Arena): fight other players\u2019 heroes for rating. You need to be signed in.',
+    'Pick 4 skills from 14 and put them in order. Each turn your hero uses the first one that\u2019s ready, otherwise a basic attack. Your class skill is 20% stronger. A clever plan can beat a stronger hero.',
+    'Other players fight the hero you leave in the Arena, even while you\u2019re away. Fights are decided on the server, then played back as an animated battle (or skip straight to the result).',
+    '10 Arena tickets a day. Practice opponents fill in when there aren\u2019t enough players near your rating.',
+    'Monthly seasons with a leaderboard and six ranks: Bronze, Silver, Gold, Platinum, Diamond and Champion. Each new rank unlocks a Wardrobe piece for good, from the Arena Cape to the Champion\u2019s Laurel. Ratings move halfway back towards 1,000 when a season ends.',
+    'Two new achievements: First Blood and Crowd Pleaser.',
+  ] },
   { v: 'v1.2', date: '2026-11-25', title: 'The Wardrobe', notes: [
     'New Wardrobe tab (You \u2192 Wardrobe): change your hero\u2019s hat, outfit, cape, held item, hair colour and pose. It\u2019s all cosmetic, so wear whatever you like without losing any stats.',
     '94 pieces to collect. Some are free, some are bought with gold, and others are earned: reach a level, win boss fights, take part in world events, collect pet species, find secrets, earn achievement points or Ascend. Locked pieces tell you how to get them.',
