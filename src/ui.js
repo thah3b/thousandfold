@@ -229,7 +229,7 @@ const NAV = [
   ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['leaders', 'Leaderboards']]],
   ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades']]],
-  ['Town', [['shop', 'Shop'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings']]],
+  ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings']]],
 ];
 function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'mining'; agg = {}; rate = {};
@@ -282,7 +282,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -456,7 +456,7 @@ function tabAch() {
 
 // ---------- Shop ----------
 const shopPrice = (key, d) => { const it = ITEM(key), base = (it.cost || it.value * 4) * (1 - d.discount) * REGION_BY[ch.loc].priceMult; return it.type === 'supply' ? Math.ceil(base * Math.pow(BALANCE.economy.supplyGrowth, gateLevel(ch) - 1)) : Math.max(Math.ceil((it.value || 0) * 1.5), scaled(ch, base, 1)); };
-const hgCost = () => { const c = BALANCE.offline.upgradeCost[ch.offlineUpgrades]; return c ? scaled(ch, c, 1) : 0; }, invUpCost = () => { const c = BALANCE.storage.invCost[ch.invUps]; return c ? scaled(ch, c, 1) : 0; }, bankUpCost = () => { const c = BALANCE.storage.bankCost[ch.bankUps]; return c ? scaled(ch, c, 1) : 0; };
+const hgCost = () => { const c = BALANCE.offline.upgradeCost[ch.offlineUpgrades]; return c ? scaled(ch, c, 1) : 0; }, invUpCost = () => scaled(ch, Math.round(BALANCE.storage.invBase * Math.pow(BALANCE.storage.invGrowth, ch.invUps || 0)), 1), bankUpCost = () => { const c = BALANCE.storage.bankCost[ch.bankUps]; return c ? scaled(ch, c, 1) : 0; };
 const enchantGold = it => scaled(ch, BALANCE.enchant.goldCost(it.plus), it.lvl);
 function merchantOffers() {
   const day = Math.floor(Date.now() / 864e5);
@@ -828,6 +828,7 @@ function settleSavings() { const now = Date.now(); ch.savings = { bal: savingsNo
 const HANDLERS = {
   ...CLOUD_HANDLERS,
   ...SOCIAL_HANDLERS,
+  ...AUCTION_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },

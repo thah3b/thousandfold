@@ -2,8 +2,20 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.11e';
+const GAME_VERSION = 'v0.12a';
 const PATCH_NOTES = [
+  { v: 'v0.12a', date: '2026-11-24', title: 'Bigger bags', notes: [
+    'Every character now starts with 100 inventory slots instead of 60. Existing characters get +40 slots on top of anything they already bought.',
+    'Inventory upgrades (Bank → Storage) are half price, and there is no longer a limit: buy as many as you like. Each one costs 20% more than the last.',
+  ] },
+  { v: 'v0.12', date: '2026-11-24', title: 'The Auction House', notes: [
+    'New in Town: the Auction House. Buy from other players, list your own items for sale, or post a buy order for something you want.',
+    'Search any item to see its cheapest listings, the best buy orders, and a 14-day price chart with daily averages, highs, lows and how much sold.',
+    'Buying takes the cheapest listings first, up to the most you are willing to pay. If someone already wants what you have, sell to their buy order for an instant sale.',
+    'The Auction House keeps a 5% fee from each sale. Listings and buy orders last 2 days; anything unsold, and gold set aside for unfilled orders, comes back through your Mailbox.',
+    'Up to 20 listings and 20 buy orders at once. You need an account and a player name to trade.',
+    'Mailbox: new Collect all button.',
+  ] },
   { v: 'v0.11e', date: '2026-11-24', title: 'No more Lucky Strike flash', notes: [
     'Triple Lucky Strikes no longer flash the whole screen. They still show in the event log and count toward achievements.',
   ] },

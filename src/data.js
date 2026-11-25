@@ -69,8 +69,6 @@ const CLASSES = [
 // Content tables (chains, recipes, gear, items, titles, achievements) live in content.js.
 
 const LATER = [
-  ['market','Market',11,'Town shops with shifting prices and NPC merchants.'],
-  ['auction','Auction House',11,'Player listings, buy orders and price history.'],
   ['guild','Guild',13,'Shared banks, guild quests and raids.'],
   ['lore','Lore',13,'Your Lore Journal and its cryptic clues.'],
 ];

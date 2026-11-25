@@ -143,7 +143,7 @@ function tabMail() {
   if (soc.mailList === null && !soc.mailLoading) { soc.mailLoading = true; rpc('tf_mail_list').then(r => { soc.mailList = r || []; }).catch(e => { soc.err = e.message; soc.mailList = []; }).finally(() => { soc.mailLoading = false; if (tab === 'mail') renderMain(); }); }
   const list = soc.mailList || [];
   const gift = soc.gift, gf = gift && friendsOnly().find(f => f.id === gift.to);
-  return `<div class="spread"><h2>Mailbox</h2><span class="row" style="gap:6px"><button class="sm" data-act="mailrefresh">Refresh</button><button class="sm pri" data-act="socgift" data-arg="">Send a gift</button></span></div>${errBox()}
+  return `<div class="spread"><h2>Mailbox</h2><span class="row" style="gap:6px"><button class="sm" data-act="mailrefresh">Refresh</button>${list.some(m => !m.claimed && (+m.gold > 0 || Object.keys(m.items || {}).length)) ? '<button class="sm" data-act="mailall">Collect all</button>' : ''}<button class="sm pri" data-act="socgift" data-arg="">Send a gift</button></span></div>${errBox()}
     ${gift ? `<div class="card" style="margin-top:12px;border-color:var(--gold)"><div class="spread"><h3>Gift${gf ? ' to ' + esc(gf.name) : ''}</h3><button class="sm ghost" data-act="giftclose">Close</button></div>
       ${gf ? '' : `<div class="row" style="gap:4px;margin:8px 0">${friendsOnly().map(f => `<button class="chip" data-act="giftto" data-arg="${f.id}">${esc(f.name)}</button>`).join('') || '<span class="mute">Add a friend first.</span>'}</div>`}
       <p class="mute" style="font-size:13px;margin:4px 0 8px">Gifts arrive in their mailbox. Up to 5 different items, 20 gifts a day. You can gift up to 1,000 gold, or a quarter of the gold you’ve earned on the leaderboard if that’s more.</p>
