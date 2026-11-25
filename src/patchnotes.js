@@ -2,8 +2,14 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.0a';
+const GAME_VERSION = 'v2.0b';
 const PATCH_NOTES = [
+  { v: 'v2.0b', date: '2026-11-25', title: 'Feedback, auto-buy and best-first lists', notes: [
+    'Best first: gathering and crafting lists can now show your best unlocked resources and recipes at the top, so there\u2019s no scrolling down to the good stuff. It\u2019s on by default on phones; switch it with the button above each list (or in Settings \u2192 Automation).',
+    'Send feedback: tap \u2709 Feedback at the top, or the button in Settings, to send a bug report or idea straight to the developer. Works for guests too (on the website).',
+    'Auto-buy shop ingredients: crafting that uses vials, thread, spice or polish now tops them up from the shop automatically, keeping 1,000 in stock. Change the amount (or turn it off) on the crafting tab or in Settings \u2192 Automation. It never spends more than half your gold at once, and also tops up before offline progress.',
+    'Auto-use until it runs out: potions and buff meals have a new Auto-use button in your inventory. While it\u2019s on, a new one is used whenever the buff ends (while something is running), until you run out.',
+  ] },
   { v: 'v2.0a', date: '2026-11-25', title: 'Wardrobe fixes', notes: [
     'Try before you buy: tap any piece to see it on your hero straight away. Pieces you own go on at once; for the rest, the preview stays up with a Buy & wear button (or how to earn it), and you can stop trying on any time.',
     'Hair dye previews now hide your hat so you can actually see the colour.',

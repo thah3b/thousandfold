@@ -257,6 +257,7 @@ function runOffline(sec, show) {
   if (!ch || sec < 1) return;
   if (ch.hp != null && !ch.actions.some(a => ACT(a.res).kind === 'combat')) ch.hp = null;
   if (!ch.actions.length && !ch.travel) return;
+  if (typeof autoBuy === 'function') autoBuy(true);
   const d0 = D(), cap = d0.offlineH * 3600, use = Math.min(sec, cap);
   const start = Date.now() - sec * 1000, end = start + use * 1000;
   const cuts = [start, ...Object.values(ch.potions).map(p => p.until).filter(t => t > start && t < end), end].sort((a, b) => a - b);

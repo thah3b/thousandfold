@@ -129,7 +129,7 @@ function frame(t) {
     if (now - lastFlush >= BALANCE.logFlushMs) { lastFlush = now; flush(); }
     if (t - lastLive >= 1000 / BALANCE.uiHz) { lastLive = t; updateLive(); if (dirty) { dirty = false; renderMain(); renderActions(); renderTop(); } }
     if (now - lastSave >= BALANCE.autosaveMs) { lastSave = now; save(); }
-    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); dungeonTick(); qolTick(); refreshScenes(); }
+    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); dungeonTick(); qolTick(); autoBuy(); autoUseTick(); fbPoll(); refreshScenes(); }
     drawBars();
   }
   lastT = t; requestAnimationFrame(frame);
@@ -228,13 +228,13 @@ function renderTop() {
   const pots = Object.entries(ch.potions).filter(([, p]) => p.until > now).map(([cat, p]) => `<span class="chip" title="${esc(ITEMS[p.id].name + ': ' + ITEMS[p.id].desc)}">${POTION_CATS[cat]} <b data-live="pot:${cat}"></b></span>`).join('');
   $('#top').innerHTML = `<span class="brand">${gameIcon(22)} Thousandfold</span>
     <div class="cur"><span class="num">Gold <b class="gold" data-live="gold"></b></span><span class="num">Shards <b data-live="shards"></b></span><span>${ch.travel ? 'Travelling to ' : ''}<b data-live="travel"></b></span><span class="mute" data-live="clock"></span>${pots}
-    ${mailChip()}${(() => { const e = worldEvent(); return `<button class="chip evchip" data-act="tab" data-arg="events" title="${esc(e.text)}">${e.holiday ? '\u2744 ' : '\u2605 '}${esc(e.name)}</button>`; })()}</div>
+    ${mailChip()}${(() => { const e = worldEvent(); return `<button class="chip evchip" data-act="tab" data-arg="events" title="${esc(e.text)}">${e.holiday ? '\u2744 ' : '\u2605 '}${esc(e.name)}</button>`; })()}<button class="chip fbbtn" data-act="feedback" title="Send feedback to the developer">✉ Feedback</button></div>
     <div class="milestone" title="Closest upcoming milestone">Next: <b data-live="ms"></b></div>`;
   updateLive();
 }
 function renderNav() {
   const running = new Set(ch.actions.map(a => ACT(a.res).skill));
-  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'events' && ch.daily && !ch.daily.claimed ? ' <span class="dot" aria-label="reward ready"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')).join('')
+  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'chat' && typeof fb !== 'undefined' && fb.unread ? ` <span class="chip" style="padding:0 6px" aria-label="new feedback">\u2709 ${fb.unread}</span>` : ''}${id === 'events' && ch.daily && !ch.daily.claimed ? ' <span class="dot" aria-label="reward ready"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')).join('')
     + (LATER.length ? `<div class="sep">Later phases</div>` : '') + LATER.map(([id, n]) => `<button class="later ${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}</button>`).join('');
 }
 function renderActions() {
@@ -280,11 +280,13 @@ function skillHeader(skill, sub) {
   return `<div class="spread"><div><h2>${SKILLS[skill].name}</h2><p class="mute" style="margin:4px 0 0">${sub}</p></div>
     <div style="min-width:240px"><div class="spread"><span>Level <b data-live="slvl:${skill}"></b></span><span class="mute num" data-live="sxpline:${skill}"></span></div><div class="bar xp"><i data-w="sxp:${skill}"></i></div></div></div>`;
 }
+const bestFirst = () => account.settings.listOrder ? account.settings.listOrder === 'best' : window.innerWidth <= 900;
+const orderToggle = () => `<button class="chip ${bestFirst() ? 'on' : ''}" data-act="set" data-arg="listOrder|${bestFirst() ? 'chain' : 'best'}" title="Switch the list order">${bestFirst() ? '↓ Best first' : '↑ Starting first'}</button>`;
 function tabGather(skill) {
   const chain = CHAIN[skill], unl = chain.filter(o => isUnlocked(ch, o)), next = chain[unl.length], d = D(skill);
   const tool = ch.equip.tools[skill] ? ITEM(ch.equip.tools[skill]) : null;
   const card = o => { const c = ch.prof[o.id] || 0, k = tierOf(c), run = ch.actions.find(a => a.res === o.id);
-    return `<div class="card ore ${run ? 'running' : ''}"><div class="head">${resIcon(o)}<div style="flex:1"><div class="spread"><b style="font-size:18px">${esc(o.name)}</b>${tierBadge(c)}</div><div class="mute" style="font-size:13px">${esc(o.region)}</div></div></div>
+    return `<div class="card ore ${run ? 'running' : ''}" style="order:${bestFirst() ? -o.index : 0}"><div class="head">${resIcon(o)}<div style="flex:1"><div class="spread"><b style="font-size:18px">${esc(o.name)}</b>${tierBadge(c)}</div><div class="mute" style="font-size:13px">${esc(o.region)}</div></div></div>
       <div class="bar"><i data-w="tier:${o.id}"></i></div>
       <div class="row asell" role="group" aria-label="Auto-sell ${esc(o.name)}"><span class="mute" style="font-size:13px">Auto-sell</span>${[['off', 'Off'], ...BALANCE.economy.autoSellKeep.map(k => [k, k ? 'Keep ' + k.toLocaleString() : 'All'])].map(([v, n]) => `<button class="chip ${(v === 'off' ? ch.autoSell[o.id] == null : ch.autoSell[o.id] === v) ? 'on' : ''}" data-act="autosell" data-arg="${o.id}|${v}">${n}</button>`).join('')}</div>
       <div class="kv"><span>Done</span><span data-live="next:${o.id}"></span><span>Per action</span><span data-live="time:${o.id}"></span><span>Yield bonus</span><span>+${pct(BALANCE.tierYieldBonus[k])}</span><span>Stamina</span><span>${o.stamina}</span><span>XP / value</span><span>${N(o.xp)} / ${N(o.value)}g</span><span>Held</span><span data-live="inv:${o.id}"></span></div>
@@ -292,8 +294,8 @@ function tabGather(skill) {
   const fresh = false;
   return skillHeader(skill, `You are in ${esc(REGION_BY[ch.loc].name)}. Common resources can be gathered anywhere; others only in their region, but once started they keep running while you travel.<br>${unl.length} of ${chain.length} unlocked · <span data-live="total:${skill}"></span> total · ${tool ? esc(tool.name) + ` (+${pct(tool.speed, 1)} speed)` : 'no tool'} · yield +${pct(d.pool)}`)
     + (fresh ? `<div class="card" style="margin-top:14px;border-color:var(--ember)"><b>First swings.</b> Start with Stone. Every resource has its own proficiency: each tier halves the time per action until it hits 0.1s at T6, at 1,000 it opens the next resource (if your skill level is high enough), and at 10,000 (Mastered) it starts multiplying yield. You have 2 stamina, so run two things at once: try a tree in Woodcutting too. Crafting skills turn what you gather into gear, potions and meals.</div>` : '')
-    + `<div class="cols" style="margin-top:14px">${unl.map(card).join('')}
-    ${next ? `<div class="card ore locked"><div class="head">${svg('<rect x="9" y="14" width="14" height="12" rx="2" fill="var(--mute)"/><path d="M12 14v-3a4 4 0 0 1 8 0v3" stroke="var(--mute)" stroke-width="2.4" fill="none"/>')}<div><b style="font-size:18px">???</b><div class="mute" style="font-size:13px">Undiscovered</div></div></div><p style="margin:0">Needs ${esc(lockReason(ch, next))}.</p><p class="mute" style="margin:0;font-size:14px">${chain.length - unl.length - 1 > 0 ? `${chain.length - unl.length - 1} more beyond it.` : 'The last one.'}</p></div>` : ''}</div>`;
+    + `<div class="row" style="margin-top:12px">${orderToggle()}</div><div class="cols" style="margin-top:10px">${unl.map(card).join('')}
+    ${next ? `<div class="card ore locked" style="order:${bestFirst() ? 1 : 0}"><div class="head">${svg('<rect x="9" y="14" width="14" height="12" rx="2" fill="var(--mute)"/><path d="M12 14v-3a4 4 0 0 1 8 0v3" stroke="var(--mute)" stroke-width="2.4" fill="none"/>')}<div><b style="font-size:18px">???</b><div class="mute" style="font-size:13px">Undiscovered</div></div></div><p style="margin:0">Needs ${esc(lockReason(ch, next))}.</p><p class="mute" style="margin:0;font-size:14px">${chain.length - unl.length - 1 > 0 ? `${chain.length - unl.length - 1} more beyond it.` : 'The last one.'}</p></div>` : ''}</div>`;
 }
 const resKnown = r => isUnlocked(ch, r) || (ch.prof[r.id] || 0) > 0 || !!ch.seen[r.id];
 function inputsHtml(rc) {
@@ -305,9 +307,9 @@ function tabCraft(skill) {
   const locked = shown.filter(r => !isUnlocked(ch, r));
   if (!showLocked) shown = shown.filter(r => isUnlocked(ch, r)).concat(locked.slice(0, 2));
   return skillHeader(skill, `${list.filter(r => isUnlocked(ch, r)).length} of ${list.length} recipes · <span data-live="total:${skill}"></span> made · output +${pct(d.pool)}`)
-    + `<div class="row" style="margin:14px 0 10px">${['All', ...cats].map(c => `<button class="chip ${cur === c ? 'on' : ''}" data-act="ccat" data-arg="${skill}|${c}">${c}</button>`).join('')}<button class="chip ${showLocked ? 'on' : ''}" data-act="showlocked">${showLocked ? 'Hiding nothing' : 'Show all locked'}</button></div>
+    + `<div class="row" style="margin:14px 0 10px">${['All', ...cats].map(c => `<button class="chip ${cur === c ? 'on' : ''}" data-act="ccat" data-arg="${skill}|${c}">${c}</button>`).join('')}<button class="chip ${showLocked ? 'on' : ''}" data-act="showlocked">${showLocked ? 'Hiding nothing' : 'Show all locked'}</button>${orderToggle()}</div>${autoBuyBar(skill)}
     <div class="grid">${shown.map(rc => { const u = isUnlocked(ch, rc), c = ch.prof[rc.id] || 0, run = ch.actions.find(a => a.res === rc.id), out = rc.gearOut ? ITEM(gkey(rc.out)) : ITEM(rc.out);
-      return `<div class="card recipe ${run ? 'running' : ''} ${u ? '' : 'locked'}">${actIcon(rc)}<div class="rmain"><div class="spread"><span>${rname(rc.gearOut ? gkey(rc.out) : rc.out)}${rc.qty > 1 ? ` ×${rc.qty}` : ''}</span>${u ? tierBadge(c) : `<span class="mute">Level ${rc.need || rc.lvl}</span>`}</div>
+      return `<div class="card recipe ${run ? 'running' : ''} ${u ? '' : 'locked'}" style="order:${bestFirst() && u ? -list.indexOf(rc) - 1 : 0}">${actIcon(rc)}<div class="rmain"><div class="spread"><span>${rname(rc.gearOut ? gkey(rc.out) : rc.out)}${rc.qty > 1 ? ` ×${rc.qty}` : ''}</span>${u ? tierBadge(c) : `<span class="mute">Level ${rc.need || rc.lvl}</span>`}</div>
         <div class="mute" style="font-size:13px">${out.gear ? esc(statLine(out)) : esc(out.desc || '')}</div>
         <div class="row" style="gap:6px;margin-top:6px">${inputsHtml(rc)}</div>
         ${u ? `<div class="bar" style="margin-top:8px"><i data-w="tier:${rc.id}"></i></div><div class="mute" style="font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums"><span data-live="next:${rc.id}"></span> · <span data-live="time:${rc.id}"></span> each · ${N(rc.xp)} XP · ${rc.stamina} stamina · can make <span data-live="can:${rc.id}"></span></div>` : ''}</div>
@@ -356,7 +358,7 @@ function tabInv() {
 function invRow(key) {
   const it = ITEM(key), rc = RARITIES[it.rarity], m = priceMult(ch, key, Date.now());
   let acts = '';
-  if (it.type === 'potion' || it.type === 'food') acts = `<button class="sm pri" data-act="drink" data-arg="${key}">${it.type === 'food' ? 'Eat' : 'Drink'}</button>`;
+  if (it.type === 'potion' || it.type === 'food') acts = `<button class="sm pri" data-act="drink" data-arg="${key}">${it.type === 'food' ? 'Eat' : 'Drink'}</button>${autoUsable(key) ? `<button class="sm ${ch.autoUse && ch.autoUse[key] ? 'pri' : ''}" data-act="autouse" data-arg="${key}" title="Use one whenever its buff runs out (while something is running), until you run out">${ch.autoUse && ch.autoUse[key] ? 'Auto-use: on' : 'Auto-use'}</button>` : ''}`;
   if (it.gear) acts = `<button class="sm pri" data-act="equip" data-arg="${esc(key)}">Equip</button>${it.plus < 10 ? `<button class="sm" data-act="upgrade" data-arg="${esc(key)}">Upgrade</button>` : ''}`;
   if (it.type === 'upgrade') acts = `<button class="sm pri" data-act="use" data-arg="${key}">Use</button>`;
   if (it.type === 'egg') acts = `<button class="sm pri" data-act="incubate" data-arg="${key}" ${ch.incub.length < ch.incubSlots ? '' : 'disabled'}>Incubate</button>`;
@@ -480,6 +482,7 @@ function tabSettings() {
     ${guideCard()}
     <div class="card"><b>Theme</b><div class="row" style="margin-top:8px">${THEMES.map(([v, n]) => opt('theme', v, n)).join('')}</div></div>
     ${automationCard()}
+    <div class="card"><b>Feedback</b><p class="mute" style="margin:4px 0 8px;font-size:14px">Found a bug or have an idea? Send it straight to the developer.</p><button class="pri" data-act="feedback">Send feedback</button></div>
     <div class="card"><b>Numbers</b><div class="row" style="margin-top:8px">${opt('num', 'short', '1.2K')}${opt('num', 'sci', '1.2e3')}</div></div>
     <div class="card"><b>Comfort</b><div class="row" style="margin-top:8px"><button class="chip ${s.anim === false ? '' : 'on'}" data-act="set" data-arg="anim|${s.anim === false}">${s.anim === false ? 'Action animations: off' : 'Action animations: on'}</button>${opt('large', !s.large, s.large ? 'Larger text: on' : 'Larger text: off')}${opt('reduced', !s.reduced, s.reduced ? 'Reduced motion: on' : 'Reduced motion: off')}${opt('sound', !s.sound, s.sound ? 'Sound: on' : 'Sound: off')}${opt('discOff', !s.discOff, s.discOff ? 'Discovery pop-ups: off' : 'Discovery pop-ups: on')}</div></div>
     <div class="card"><b>Save</b><p class="mute" style="margin:4px 0 8px;font-size:14px">Auto-saves every 30 seconds and when you leave. Saves live in this browser; copy a save code (short and compressed) or save it as a file to move it.</p>
@@ -841,6 +844,8 @@ const HANDLERS = {
   ...QOL_HANDLERS,
   ...ANIM_HANDLERS,
   ...LOOT_HANDLERS,
+  ...FEEDBACK_HANDLERS,
+  ...EXTRA_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },

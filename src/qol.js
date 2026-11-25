@@ -233,6 +233,8 @@ function automationCard() {
   return `<div class="card"><b>Automation</b><p class="mute" style="margin:4px 0 8px;font-size:14px">Optional helpers. Auto mode fills free stamina with gathering in your lowest skills.</p>
     <div class="row" style="gap:6px">${tg('autoMode', 'Auto mode: on', 'Auto mode: off')}${tg('autoPotion', 'Auto-use potions: on', 'Auto-use potions: off')}${tg('stackPotion', 'Stack potion time: on', 'Stack potion time: off')}</div>
     <div class="row" style="gap:6px;margin-top:6px">${tg('gmStop', 'Stop at Grandmaster: on', 'Stop at Grandmaster: off')}${qs('gmStop') ? tg('gmNext', 'Then move on to the next resource: on', 'Then move on to the next resource: off') : ''}</div>
+    <div class="row" style="gap:6px;margin-top:6px;align-items:center"><button class="chip ${abOn() ? 'on' : ''}" data-act="set" data-arg="autoBuy|${!abOn()}">Auto-buy shop ingredients: ${abOn() ? 'on' : 'off'}</button><label class="mute" style="font-size:14px" for="abtarget">Keep</label><input id="abtarget" type="number" min="1" step="100" inputmode="numeric" value="${abTarget()}" style="width:8em" aria-label="Amount to keep in stock"><span class="mute" style="font-size:13px">in stock</span></div>
+    <div class="row" style="gap:6px;margin-top:6px">${(() => { const lo = account.settings.listOrder || (window.innerWidth <= 900 ? 'best' : 'chain'); return `<button class="chip ${lo === 'best' ? 'on' : ''}" data-act="set" data-arg="listOrder|${lo === 'best' ? 'chain' : 'best'}">List order: ${lo === 'best' ? 'best first' : 'starting first'}</button>`; })()}</div>
     <div class="row" style="gap:6px;margin-top:10px"><button class="sm" data-act="tourreplay">Replay the tour</button></div></div>`;
 }
 

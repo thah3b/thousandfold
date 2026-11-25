@@ -35,6 +35,7 @@ ${r('anim.js')}
 ${r('engine.js')}
 ${r('state.js')}
 ${r('loot.js')}
+${r('feedback.js')}
 ${r('cloud.js')}
 ${r('social.js')}
 ${r('auction.js')}
