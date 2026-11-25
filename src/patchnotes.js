@@ -2,8 +2,13 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.11b';
+const GAME_VERSION = 'v0.11c';
 const PATCH_NOTES = [
+  { v: 'v0.11c', date: '2026-11-24', title: 'Sign in with Google', notes: [
+    'Sign in with Google on the Account tab: no password and no confirmation email. Email and password accounts still work.',
+    'The Account tab shows which email you are signed in with.',
+    'New pages: Privacy policy and Terms of service (links in Settings).',
+  ] },
   { v: 'v0.11b', date: '2026-11-24', title: 'Account tab and open names', notes: [
     'The Cloud save tab is now the Account tab (Town). Change your character\u2019s name and gender, and your player name, any time. Race and class are still chosen when a character is created.',
     'Names can now use anything: letters from any language, numbers, symbols, emoji, ( \u0361\u00b0 \u035c\u0296 \u0361\u00b0). Up to 24 characters. Invisible characters and slurs are still blocked.',
