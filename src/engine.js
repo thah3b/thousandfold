@@ -336,7 +336,7 @@ function travelMinutes(from, to) {
   while (true) {
     let u = null; for (const k in dist) if (!done.has(k) && (u === null || dist[k] < dist[u])) u = k;
     if (u === null || u === to) break; done.add(u);
-    for (const [a, b, m] of ROUTES) { const v = a === u ? b : b === u ? a : null; if (v && (dist[v] == null || dist[u] + m < dist[v])) dist[v] = dist[u] + m; }
+    for (const [a, b, m] of (typeof openRoutes === 'function' && ch ? openRoutes() : ROUTES)) { const v = a === u ? b : b === u ? a : null; if (v && (dist[v] == null || dist[u] + m < dist[v])) dist[v] = dist[u] + m; }
   }
   return dist[to];
 }
@@ -501,7 +501,7 @@ function collectionPctRaw(ch) {
   const mons = ENEMIES.filter(e => e.role !== 'trial' && (ch.prof[e.id] || 0) > 0).length / ENEMIES.filter(e => e.role !== 'trial').length;
   const allItems = [...RES.map(r => r.id), ...Object.keys(ITEMS).filter(k => !['supply', 'upgrade'].includes(ITEMS[k].type))];
   const items = allItems.filter(k => ch.seen && ch.seen[k]).length / allItems.length;
-  const regions = Object.keys(ch.visited || {}).length / REGIONS.length;
+  const regions = Math.min(1, Object.keys(ch.visited || {}).length / REGIONS.length);
   return { pets: dex, monsters: mons, items, regions };
 }
 function petMods(ch, M) {

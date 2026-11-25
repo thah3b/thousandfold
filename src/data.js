@@ -24,8 +24,8 @@ const RACES = [
   { id:'dragonkin', name:'Dragonkin', color:'#e0573a', stat:'VIT', passive:'Hoard Instinct: +5% gold from selling.', fx:{ sell:0.05 } },
   { id:'undead', name:'Undead-touched', color:'#9aa3c7', stat:'VIT', passive:'Restless: +1 hour offline cap.', fx:{ offlineH:1 } },
   { id:'sylph', name:'Sylph', color:'#a7d8f0', stat:'AGI', passive:'Windborne: +5% action speed on every skill.', fx:{ speed:0.05 } },
-  { id:'starborn', name:'Starborn', color:'#c9b8ff', secret:true, stat:'LUCK', passive:'???', fx:{} },
-  { id:'hollowkin', name:'Hollowkin', color:'#6f7f7a', secret:true, stat:'PER', passive:'???', fx:{} },
+  { id:'starborn', name:'Starborn', color:'#c9b8ff', secret:true, stat:'LUCK', passive:'Starlit Fortune: +30% Lucky Strike and bonus-find chance.', fx:{ luckStrikeMult:0.3, bonusFindMult:0.3 } },
+  { id:'hollowkin', name:'Hollowkin', color:'#6f7f7a', secret:true, stat:'PER', passive:'Hollow Patience: +1 hour offline cap and +3% action speed.', fx:{ offlineH:1, speed:0.03 } },
 ];
 
 const ORIGINS = [

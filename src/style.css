@@ -257,3 +257,9 @@ main{grid-area:main;padding:18px max(16px,1.6vw) 40px}
 @media (max-width:600px){.ahhead,.ahrow{grid-template-columns:minmax(0,2fr) repeat(2,minmax(56px,1fr))}.hide-s{display:none}}
 .guestnote{border-left:3px solid var(--ember,#e0873a);background:color-mix(in srgb,var(--ember,#e0873a) 10%,transparent);padding:8px 10px;border-radius:6px;margin:6px 0}
 .welcome .gbtn{width:100%;justify-content:center}
+/* Secrets */
+.card.secret{padding:12px 14px}
+.card.secret.found{border-color:color-mix(in srgb,var(--gold) 55%,var(--line))}
+.simtab{border-collapse:collapse;font-size:13px;width:100%;margin-top:8px}
+.simtab th,.simtab td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.simtab th:first-child,.simtab td:first-child{text-align:left}

@@ -1,0 +1,3 @@
+# The readable secrets source is kept private (it lists every answer).
+# The published index.html contains it in scrambled form.
+src/secrets.js

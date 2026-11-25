@@ -172,7 +172,7 @@ async function cloudUpload(manual) {
   cloud.busy = false; cloudRefreshUi();
 }
 async function cloudPostScores() {
-  const entries = account.slots.filter(Boolean).map(lbEntry), key = JSON.stringify(entries.map(e => [e.cid, e.prog, e.ach, e.gold, e.kills, e.species, e.coll, e.name]));
+  const entries = account.slots.filter(c => c && !c.debugUsed).map(lbEntry), key = JSON.stringify(entries.map(e => [e.cid, e.prog, e.ach, e.gold, e.kills, e.species, e.coll, e.name]));
   if (key === cloud.lastLb) return;
   const res = await P().postScores(entries); cloud.lastLb = key;
   cloud.flags = {}; for (const r of res || []) if (r && r.flags && r.flags.length) cloud.flags[r.cid] = r.flags;

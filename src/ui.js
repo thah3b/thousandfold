@@ -148,6 +148,7 @@ function frame(t) {
     if (now - lastFlush >= BALANCE.logFlushMs) { lastFlush = now; flush(); }
     if (t - lastLive >= 1000 / BALANCE.uiHz) { lastLive = t; updateLive(); if (dirty) { dirty = false; renderMain(); renderActions(); renderTop(); } }
     if (now - lastSave >= BALANCE.autosaveMs) { lastSave = now; save(); }
+    if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); }
     drawBars();
   }
   lastT = t; requestAnimationFrame(frame);
@@ -180,9 +181,9 @@ function renderSelect() {
       <div class="mute" style="font-size:14px">${esc(START_REGIONS.find(r => r.id === c.region).name)} · last played ${new Date(c.last).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</div>
       <div class="row"><button class="pri" data-act="play" data-arg="${i}">Play</button><button class="ghost" data-act="delete" data-arg="${i}">Delete</button><button class="ghost sm" disabled title="Rename tokens come in a later phase">Rename</button></div></div>`
     : `<button class="card slot empty" data-act="new" data-arg="${i}"><span class="fell" style="font-size:26px">New character</span><span class="mute">Slot ${i + 1} is empty</span></button>`).join('');
-  $('#root').innerHTML = `<div class="screen"><div class="hero">${heroArt()}<div class="txt"><h1>Thousandfold</h1><p>Every swing counts. Ten thousand of them, and the mountain gives up its next secret.</p></div></div>
+  $('#root').innerHTML = `<div class="screen"><div class="hero">${heroArt()}<div class="txt"><h1>${heroTitle()}</h1><p>Every swing counts. Ten thousand of them, and the mountain gives up its next secret.</p></div></div>
     <div class="spread" style="margin-top:22px"><h2>Choose your character</h2><span class="row" style="gap:6px">${cloudChip()}<span class="chip">Ember Shards <b class="gold">${N(account.shards)}</b></span></span></div>
-    <div class="slots">${slots}<div class="card slot empty" style="opacity:.6"><span class="fell" style="font-size:22px">Fourth slot</span><span class="mute">Unlocked later through play</span></div></div>
+    <div class="slots">${slots}${account.slot4 ? '' : `<div class="card slot empty" style="opacity:.6"><span class="fell" style="font-size:22px">Fourth slot</span><span class="mute">Find ${SECRET_CFG.slot4At} secrets to open it</span></div>`}</div>
     <p class="bottomline">Thousandfold ${GAME_VERSION} · prototype. Saves stay in this browser and, when you are signed in, in the cloud.</p></div>`;
 }
 
@@ -206,7 +207,7 @@ function renderWizard() {
   const s = wz.step; let body = '';
   if (s === 0) body = `<div class="field"><label for="wzname">Name</label><input id="wzname" maxlength="64" value="${esc(wz.name)}" autocomplete="off"><div class="err" id="wzerr">${esc(wz.err)}</div></div>
     <div class="field"><label>Gender</label><div class="row">${['Male', 'Female'].map(g => `<button class="chip ${wz.gender === g ? 'on' : ''}" data-act="wzset" data-arg="gender|${g}">${g}</button>`).join('')}</div></div>
-    <div class="field"><label>Race</label><p class="mute" style="margin:0 0 6px">Races add a small flavour bonus and one passive. They never lock content.</p><div class="pick">${RACES.map(r => r.secret
+    <div class="field"><label>Race</label><p class="mute" style="margin:0 0 6px">Races add a small flavour bonus and one passive. They never lock content.</p><div class="pick">${RACES.map(r => r.secret && !(account.races && account.races[r.id])
     ? `<div class="opt locked card"><b>???</b><small>A secret race, unlocked through hidden content.</small></div>`
     : `<button class="opt ${wz.race === r.id ? 'on' : ''}" data-act="wzset" data-arg="race|${r.id}"><b style="color:color-mix(in srgb, ${r.color} 70%, var(--ink))">${r.name}</b><small>+1 ${r.stat}</small><small>${r.passive}</small></button>`).join('')}</div></div>`;
   if (s === 1) body = `<p class="mute">Every class can do everything; each has its own resource and four tiers of advancement (from level 25). Each class has an innate passive, a talent tree and three-tier advancement with specializations.</p><div class="pick">${CLASSES.map(c => `<button class="opt ${wz.cls === c.id ? 'on' : ''}" data-act="wzset" data-arg="cls|${c.id}"><b>${c.name}</b><small>${c.role} · ${c.res}</small><small>Grows ${c.pri}; leans ${c.sec}</small><small>Tier 2: ${c.specs.join(', ')}</small><small class="verd">Innate: ${modsText(INNATE[c.id])}</small></button>`).join('')}</div>`;
@@ -226,17 +227,18 @@ function renderWizard() {
 const NAV = [
   ['Gathering', GATHER_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
-  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['leaders', 'Leaderboards']]],
+  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['leaders', 'Leaderboards']]],
   ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades']]],
-  ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings']]],
+  ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
 ];
 function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'mining'; agg = {}; rate = {};
   $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"></section><aside class="sidepanel" id="side"></aside></div>`;
   renderTop(); renderMain(); renderActions();
-  checkProgress(true, []);
+  checkProgress(true, []); syncAcctSecrets();
   const away = (Date.now() - ch.last) / 1000;
+  if (away >= 8 * 3600 && ch.cls === 'monk') setTimeout(() => unlockSecret('cls_monk'), 500);
   if (away > 60) runOffline(away, true);
   lastT = 0; save();
 }
@@ -251,7 +253,7 @@ function renderTop() {
 }
 function renderNav() {
   const running = new Set(ch.actions.map(a => ACT(a.res).skill));
-  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')).join('')
+  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')).join('')
     + `<div class="sep">Later phases</div>` + LATER.map(([id, n]) => `<button class="later ${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}</button>`).join('');
 }
 function renderActions() {
@@ -282,7 +284,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -438,7 +440,7 @@ function tabTitles() {
       <div class="grid" style="gap:4px">${line.map(([n, name, y, st]) => { const got = ch.totals[s] >= n; return `<div class="spread" style="font-size:14px;${got ? '' : 'opacity:.55'}"><span><b class="${got ? 'gold' : ''}">${name}</b> <span class="mute">${N(n)}</span></span><span class="num">+${pct(y)} · +${st} ${SKILL_TITLES[s].stat}</span></div>`; }).join('')}</div></div>`; }).join('')}</div>
     <div class="card" style="margin-top:12px"><h3>Grandmaster titles</h3><p class="mute" style="margin:4px 0 8px">One per resource at 100,000: +2% yield everywhere and +2 PER each.</p>
       <div class="row">${RES.filter(r => (ch.prof[r.id] || 0) >= 1e5 || isUnlocked(ch, r)).map(r => (ch.prof[r.id] || 0) >= 1e5 ? `<span class="chip on">${esc(r.grandTitle)}</span>` : `<span class="chip" style="opacity:.5">${esc(r.grandTitle)}</span>`).join('')}<span class="chip" style="opacity:.5">…and more as you unlock resources</span></div></div>
-    <div class="card" style="margin-top:12px"><h3>Secret titles</h3><div class="grid" style="margin-top:8px">${SECRET_TITLES.map(s => ch.secretTitles[s.id] ? `<div><b class="gold">${s.name}</b> <span class="mute">${s.desc} +${pct(s.yield)} yield, +${s.amt} ${s.stat}</span></div>` : `<div class="mute">??? · something to do with how you work, or when.</div>`).join('')}</div></div>`;
+    <div class="card" style="margin-top:12px"><h3>Secret titles</h3><div class="grid" style="margin-top:8px">${(() => { const mine = SECRET_TITLES.filter(s => !(SECRET_BY[s.id] && SECRET_BY[s.id].cls && SECRET_BY[s.id].cls !== ch.cls)), got = mine.filter(s => ch.secretTitles[s.id]), left = mine.length - got.length; return got.map(s => `<div><b class="gold">${s.name}</b> <span class="mute">${SECRET_BY[s.id] ? '' : s.desc + ' '}+${pct(s.yield)} yield, +${s.amt} ${s.stat}</span></div>`).join('') + (left ? `<div class="mute">${got.length ? '' : 'None yet. '}${left} more secret title${left > 1 ? 's' : ''} to find. Most come from secrets: see the <button class="linkbtn" data-act="tab" data-arg="secrets">Secrets</button> tab.</div>` : ''); })()}</div></div>`;
 }
 function tabAch() {
   const pts = ACHIEVEMENTS.filter(a => ch.ach[a.id]).reduce((s, a) => s + a.pts, 0), max = ACHIEVEMENTS.reduce((s, a) => s + a.pts, 0);
@@ -507,16 +509,16 @@ function bindMain() {
 
 // ---------- Map ----------
 function regionState(r) {
-  const adj = ROUTES.some(([a, b]) => (a === r.id && ch.visited[b]) || (b === r.id && ch.visited[a]));
+  const adj = openRoutes().some(([a, b]) => (a === r.id && ch.visited[b]) || (b === r.id && ch.visited[a]));
   if (!ch.quest.done && r.id !== ch.loc) return 'sealed';
   if (ch.visited[r.id]) return 'known';
   return adj ? 'near' : 'fog';
 }
 function mapSvg() {
   const W = 720, H = 470, px = r => r.x + 40, py = r => r.y + 25;
-  const edges = ROUTES.map(([a, b, m]) => { const A = REGION_BY[a], B = REGION_BY[b], sa = regionState(A), sb = regionState(B), dim = sa === 'fog' || sb === 'fog' || sa === 'sealed' || sb === 'sealed';
+  const edges = openRoutes().map(([a, b, m]) => { const A = REGION_BY[a], B = REGION_BY[b], sa = regionState(A), sb = regionState(B), dim = sa === 'fog' || sb === 'fog' || sa === 'sealed' || sb === 'sealed';
     return `<line x1="${px(A)}" y1="${py(A)}" x2="${px(B)}" y2="${py(B)}" class="route ${dim ? 'dim' : ''}"/>${dim ? '' : `<text x="${(px(A) + px(B)) / 2}" y="${(py(A) + py(B)) / 2 - 4}" class="rmin">${m}m</text>`}`; }).join('');
-  const nodes = REGIONS.map(r => { const st = regionState(r), here = r.id === ch.loc, to = ch.travel && ch.travel.to === r.id, sel = mapSel === r.id, lock = gateLevel(ch) < r.lvl;
+  const nodes = REGIONS.filter(regionOpen).map(r => { const st = regionState(r), here = r.id === ch.loc, to = ch.travel && ch.travel.to === r.id, sel = mapSel === r.id, lock = gateLevel(ch) < r.lvl;
     const label = st === 'fog' ? '???' : r.name;
     return `<g class="node ${st} ${here ? 'here' : ''} ${sel ? 'sel' : ''} ${to ? 'to' : ''}" data-act="selregion" data-arg="${r.id}" tabindex="0" role="button" aria-label="${esc(label)}">
       <circle cx="${px(r)}" cy="${py(r)}" r="${here ? 24 : 20}" /><text x="${px(r)}" y="${py(r) + 5}" class="nlv">${st === 'fog' ? '?' : r.lvl}</text>
@@ -745,7 +747,7 @@ function tabQuests() {
   const S = REGION_STORY[rid], st = ch.story[rid] || 0;
   const story = S && ch.visited[rid] ? [1, 2, 3].map(i => { const done = st >= i, cur = st === i - 1, g = cur ? storyGoal(rid, i - 1) : null;
     return `<div class="qstep ${done ? 'done' : cur ? 'cur' : ''}"><span>${done ? '✓' : i}</span><div><b>${esc(S[i][0])}</b>${done || cur ? `<p style="margin:2px 0;font-size:14px">${esc(S[i][1])}</p>` : ''}${cur ? `<div class="spread" style="font-size:14px"><span>${esc(g.label)}</span><span class="mute num">${g.pctMode ? pct(g.have) + ' / ' + pct(g.need) : N(Math.min(g.have, g.need)) + ' / ' + N(g.need)}</span></div><div class="bar"><i style="width:${Math.min(100, g.have / g.need * 100).toFixed(1)}%"></i></div>` : ''}</div></div>`; }).join('') : '';
-  const allStories = REGIONS.map(x => `<span class="chip ${(ch.story[x.id] || 0) >= 3 ? 'on' : ''}">${esc(x.name)} ${ch.visited[x.id] ? (ch.story[x.id] || 0) + '/3' : '???'}</span>`).join('');
+  const allStories = REGIONS.filter(x => !x.secret).map(x => `<span class="chip ${(ch.story[x.id] || 0) >= 3 ? 'on' : ''}">${esc(x.name)} ${ch.visited[x.id] ? (ch.story[x.id] || 0) + '/3' : '???'}</span>`).join('');
   const act = ch.qactive.map((q, i) => q.kind === 'story' ? '' : questRow(q, i)).join('');
   return `<div class="spread"><h2>Quests</h2><span class="chip">Ember Shards <b class="gold">${N(account.shards)}</b></span></div>
     ${!ch.quest.done ? `<div class="card" style="margin-top:12px">${tutorialHtml()}</div>` : ''}
@@ -829,6 +831,7 @@ const HANDLERS = {
   ...CLOUD_HANDLERS,
   ...SOCIAL_HANDLERS,
   ...AUCTION_HANDLERS,
+  ...SECRET_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },
@@ -858,7 +861,7 @@ const HANDLERS = {
     if (wz.step === 0) { const e = nameError(wz.name); if (e) { wz.err = e; renderWizard(); $('#wzname').focus(); return; } }
     if (wz.step < WZ_STEPS.length - 1) { wz.step++; renderWizard(); window.scrollTo(0, 0); return; }
     const e = nameError(wz.name); if (e) { wz.step = 0; wz.err = e; renderWizard(); return; }
-    account.slots[wz.slot] = newCharacter(wz); save(); enterGame(wz.slot);
+    account.slots[wz.slot] = newCharacter(wz); save(); enterGame(wz.slot); secretName(wz.name);
     toast(`Welcome, <b>${esc(account.slots[wz.slot].name)}</b>. Start with Stone in Mining.`);
   },
   tab: t => { tab = t; pend = {}; if (SKILLS[t]) profSkill = charSkill = t; renderMain(); window.scrollTo({ top: 0 }); },
@@ -1031,10 +1034,10 @@ function tabCollection() {
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">${tabs.map(([k, n]) => { const steps = COLLECTION_STEPS.filter(t => C[k] >= t - 1e-9).length; return `<button class="card collcard ${collTab === k ? 'on' : ''}" data-act="colltab" data-arg="${k}"><b>${n}</b><div class="num" style="font-size:22px">${Math.floor(C[k] * 100)}%</div><div class="bar"><i style="width:${(C[k] * 100).toFixed(1)}%"></i></div><div class="mute" style="font-size:12px">${steps ? esc(modsText(COLLECTION_BONUS[k], steps)) : 'No bonus yet'}</div></button>`; }).join('')}</div>`;
   let body = '';
   if (collTab === 'pets') body = `<div class="dex">${Object.keys(SPECIES).map(id => { const S = SP(id), got = ch.petDex[id]; return `<div class="dexcell ${got ? '' : 'unk'}" title="${got ? esc(S.name) : '???'}">${got ? petGlyph(id, 44) : '<svg width="44" height="44" viewBox="0 0 64 64"><text x="32" y="42" text-anchor="middle" font-size="26" fill="currentColor" opacity=".4">?</text></svg>'}<span>${got ? esc(S.name) : '???'}</span><span class="mute" style="font-size:11px">${PET_RARITY[S.rarity]}${S.hybrid ? ' · Hybrid' : ''}</span></div>`; }).join('')}</div>`;
-  else if (collTab === 'monsters') body = REGIONS.map(r => { const es = ENEMIES.filter(e => e.region === r.id && e.role !== 'trial'); return `<h4 class="shopgrp">${esc(r.name)}</h4><div class="dex">${es.map(e => { const k = ch.prof[e.id] || 0; return `<div class="dexcell ${k ? '' : 'unk'}"><span>${k || e.area !== 'hidden' ? esc(e.name) : '???'}</span><span class="mute" style="font-size:11px">${k ? N(k) + ' defeated' : 'Not yet'}</span></div>`; }).join('')}</div>`; }).join('');
+  else if (collTab === 'monsters') body = REGIONS.filter(r => !r.secret || ch.visited[r.id]).map(r => { const es = ENEMIES.filter(e => e.region === r.id && e.role !== 'trial'); return `<h4 class="shopgrp">${esc(r.name)}</h4><div class="dex">${es.map(e => { const k = ch.prof[e.id] || 0; return `<div class="dexcell ${k ? '' : 'unk'}"><span>${k || e.area !== 'hidden' ? esc(e.name) : '???'}</span><span class="mute" style="font-size:11px">${k ? N(k) + ' defeated' : 'Not yet'}</span></div>`; }).join('')}</div>`; }).join('');
   else if (collTab === 'items') { const all = [...RES.map(r => r.id), ...Object.keys(ITEMS).filter(k => !['supply', 'upgrade'].includes(ITEMS[k].type))]; const groups = {}; for (const k of all) { const it = ITEM(k) || RES_BY[k]; const g = (it && (it.type || 'resource')) || 'resource'; (groups[g] = groups[g] || []).push(k); }
     body = Object.entries(groups).map(([g, ks]) => `<h4 class="shopgrp">${esc(g[0].toUpperCase() + g.slice(1))} <span class="mute">${ks.filter(k => ch.seen[k]).length} / ${ks.length}</span></h4><div class="row" style="gap:4px">${ks.map(k => ch.seen[k] ? `<span class="chip" style="font-size:12px">${esc((ITEM(k) || RES_BY[k]).name)}</span>` : '<span class="chip mute" style="font-size:12px">???</span>').join('')}</div>`).join(''); }
-  else body = `<div class="dex">${REGIONS.map(r => `<div class="dexcell ${ch.visited[r.id] ? '' : 'unk'}"><span>${ch.visited[r.id] ? esc(r.name) : '???'}</span><span class="mute" style="font-size:11px">${ch.visited[r.id] ? `Explored ${pct(exploreFrac(ch, r.id))}` : 'Not visited'}</span></div>`).join('')}</div>`;
+  else body = `<div class="dex">${REGIONS.filter(r => !r.secret || ch.visited[r.id]).map(r => `<div class="dexcell ${ch.visited[r.id] ? '' : 'unk'}"><span>${ch.visited[r.id] ? esc(r.name) : '???'}</span><span class="mute" style="font-size:11px">${ch.visited[r.id] ? `Explored ${pct(exploreFrac(ch, r.id))}` : 'Not visited'}</span></div>`).join('')}</div>`;
   return head + `<div style="margin-top:14px">${body}</div>`;
 }
 

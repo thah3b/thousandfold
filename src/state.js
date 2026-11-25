@@ -30,7 +30,7 @@ function save() { if (!account) return; if (ch) ch.last = Date.now(); account.sa
 function loadLocal() { try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
 
 const OLD_TOOLS = { worn_pick: 'g:worn_pickaxe:1:0', bronze_pick: 'g:pickaxe_0:1:0', sturdy_mattock: 'g:sturdy_mattock:1:0', iron_pick: 'g:pickaxe_1:1:0', steel_pick: 'g:pickaxe_2:1:0', mithril_pick: 'g:pickaxe_5:1:0', star_pick: 'g:pickaxe_6:1:0' };
-function blankCounters() { return { gathered: 0, crafted: 0, sold: 0, goldEarned: 0, toolsBought: 0, potions: 0, lucky: 0, triple: 0, veins: 0, unsold: 0, midnight: 0, mastered: 0, grand: 0, oresUnlocked: 1, maxActive: 0, godore: 0, stoneGrand: 0, fine: 0, masterwork: 0, maxPlus: 0, slotsFilled: 0, merchantBuys: 0, savingsPeak: 0, junk: 0, boot: 0, minGatherLvl: 1, kills: 0, bossKinds: 0, bossWins: 0, undeadKills: 0, rareDrops: 0, upgrades: 0, masterworks: 0, arrivals: 0, egosFound: 0, compSworn: 0, growthTier: 0, hatched: 0, species: 0, mythicPet: 0, evolved: 0, mounted: 0, combos: 0, bred: 0, collMin: 0, boardDone: 0, weeklyDone: 0, storiesDone: 0, elixirs: 0, trainedPts: 0, titlesEarned: 0, shardsEarned: 0, uniques: 0, tutorial: 0, regionsVisited: 1, regionsMapped: 0, hiddenFound: 0, shopBuys: 0 }; }
+function blankCounters() { return { gathered: 0, crafted: 0, sold: 0, goldEarned: 0, toolsBought: 0, potions: 0, lucky: 0, triple: 0, veins: 0, unsold: 0, midnight: 0, mastered: 0, grand: 0, oresUnlocked: 1, maxActive: 0, godore: 0, stoneGrand: 0, fine: 0, masterwork: 0, maxPlus: 0, slotsFilled: 0, merchantBuys: 0, savingsPeak: 0, junk: 0, boot: 0, minGatherLvl: 1, kills: 0, bossKinds: 0, bossWins: 0, undeadKills: 0, rareDrops: 0, upgrades: 0, masterworks: 0, arrivals: 0, egosFound: 0, compSworn: 0, growthTier: 0, hatched: 0, species: 0, mythicPet: 0, evolved: 0, mounted: 0, combos: 0, bred: 0, collMin: 0, boardDone: 0, weeklyDone: 0, storiesDone: 0, elixirs: 0, trainedPts: 0, titlesEarned: 0, shardsEarned: 0, uniques: 0, tutorial: 0, regionsVisited: 1, regionsMapped: 0, hiddenFound: 0, shopBuys: 0, secrets: 0 }; }
 function migrate(c) {
   c.skills = c.skills || {}; c.totals = c.totals || {}; c.unlocked = c.unlocked || {};
   for (const s of SKILL_IDS) { c.skills[s] = c.skills[s] || { xp: 0, level: 1 }; c.totals[s] = c.totals[s] || 0; }
@@ -51,6 +51,7 @@ function migrate(c) {
   c.freeTreeRespecs = c.freeTreeRespecs || 0; c.treeRespecs = c.treeRespecs || 0;
   if (!c.loc) c.loc = START_TO_REGION[c.region];
   c.visited = c.visited || { [c.loc]: true };
+  c.secrets = c.secrets || {}; c.riddle = c.riddle || null;
   if (c.invSlots != null && !c.bag100) c.invSlots += BALANCE.storage.invSlots - 60; // v0.12a: base bag 60 -> 100
   c.bag100 = true;
   Object.assign(c, Object.assign({ market: {}, bank: {}, questStats: {}, seen: {}, bossKilled: {}, areasSeen: {}, clog: [], combatFood: null, travel: null, nextEvent: 0, eventBuff: null, hp: null, invSlots: BALANCE.storage.invSlots, bankSlots: BALANCE.storage.bankSlots, invUps: 0, bankUps: 0, savings: { bal: 0, t: Date.now() }, merchant: { day: 0, bought: {} }, titlesSeen: [], secretTitles: {}, pins: [], ach: {}, potions: {}, log: [] }, c));
@@ -208,6 +209,7 @@ function step() {
       for (const [j, c] of Object.entries(r.junk)) { if (addItem(j, c)) { ch.counters.junk += c; if (j === 'old_boot') ch.counters.boot = 1; addLog('sys', `Found junk: ${ITEMS[j].name}.`); } }
       ch.counters.gathered += r.units; ch.counters.unsold += r.units; g.units += r.units; g.finds += r.finds;
       if (a.res === 'god_ore') ch.counters.godore = 1;
+      secretGather(act, n);
     } else {
       n = Math.min(n, craftable(ch, act));
       if (n <= 0) { stopAction(a.res, `Out of materials: stopped ${act.name}.`); continue; }
@@ -282,7 +284,7 @@ function runOffline(sec, show) {
         const o = offlineGatherOut(act, seg.chunks, d); xp = o.xp;
         const u = probRound(o.units, rng); addItem(a.res, u, true); s.units += u;
         const jn = probRound(o.junk, rng); if (jn) { const j = JUNK[act.skill][0][0]; if (addItem(j, jn)) ch.counters.junk += jn; }
-        ch.counters.gathered += u; ch.counters.unsold += u; if (a.res === 'god_ore') ch.counters.godore = 1;
+        ch.counters.gathered += u; ch.counters.unsold += u; if (a.res === 'god_ore') ch.counters.godore = 1; secretGather(act, seg.done);
       }
       const k0 = tierOf(ch.prof[a.res] || 0);
       ch.prof[a.res] = seg.count; ch.totals[act.skill] += seg.done; s.done += seg.done; s.xp += xp;
@@ -330,7 +332,7 @@ function nextMilestone() {
 // WORLD STATE — location, combat, exploration, travel, events, quests (Phase 4)
 // ============================================================
 const regionOfBand = b => REGIONS[b];
-function availableHere(res) { return res.band === 0 || (!ch.travel && REGIONS[res.band].id === ch.loc); }
+function availableHere(res) { return res.band === 0 || (!ch.travel && (REGIONS[res.band].id === ch.loc || (REGION_BY[ch.loc].secret && REGION_BY[ch.loc].band === res.band))); }
 function cantStart(a) {
   if (a.kind === 'gather' && !availableHere(a)) return ch.travel ? `You can't start new gathering while travelling.` : `${a.name} is only found in ${REGIONS[a.band].name}.`;
   if (a.kind === 'combat') {
@@ -475,6 +477,7 @@ function worldTick(now, dOf) {
   if (now >= ch.nextEvent) { ch.nextEvent = 0; regionEvent(); }
 }
 function regionEvent() {
+  if (secretEvent()) return;
   const ev = pick(EVENTS), r = REGION_BY[ch.loc];
   if (ev.fx) { ch.eventBuff = { id: ev.id, fx: ev.fx, until: Date.now() + ev.mins * 60000 }; addLog('lucky', `${r.name}: ${ev.text}`); toast(`<b>${esc(r.name)}</b> · ${esc(ev.text)}`, 'gold'); renderTop(); return; }
   if (ev.gold) { const g = Math.round(BALANCE.combat.goldBase * Math.pow(BALANCE.combat.goldGrowth, r.lvl) * 20); ch.gold += g; ch.counters.goldEarned += g; addLog('lucky', `${r.name}: ${ev.text} +${N(g)} gold.`); toast(`${esc(ev.text)} +${N(g)} gold`, 'gold'); return; }
@@ -1017,7 +1020,7 @@ function buyCosmetic(kind, id) {
   dirty = true;
 }
 function dressPet(uid, kind, id) { const p = petById(ch, uid); if (!p) return; if (kind === 'hat') p.hat = p.hat === id ? null : id; else p.aura = p.aura === id ? null : id; dirty = true; }
-function renamePet(uid, name) { const p = petById(ch, uid); if (!p) return; name = String(name || '').trim().slice(0, 16); if (PROFANITY.some(w => name.toLowerCase().includes(w))) { toast('Pick a different name.'); return; } p.name = name; dirty = true; }
+function renamePet(uid, name) { const p = petById(ch, uid); if (!p) return; name = String(name || '').trim().slice(0, 16); if (PROFANITY.some(w => name.toLowerCase().includes(w))) { toast('Pick a different name.'); return; } p.name = name; secretPetName(name); dirty = true; }
 function releasePet(uid) { if (ch.petActive === uid) ch.petActive = null; ch.petSupport = ch.petSupport.filter(u => u !== uid); ch.daycare = ch.daycare.filter(d => d.uid !== uid); ch.pets = ch.pets.filter(p => p.uid !== uid); dirty = true; }
 
 // ---------- Discovery pop-ups (v0.9b) ----------

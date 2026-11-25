@@ -2,8 +2,21 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.12c';
+const GAME_VERSION = 'v0.13';
 const PATCH_NOTES = [
+  { v: 'v0.13', date: '2026-11-25', title: 'Secrets', notes: [
+    'New Secrets tab (Adventure). Track every secret you have found, with hints for the regions you have visited.',
+    'The rumours from the starting regions are true. Each of the eight main regions now hides a secret, found by being in the right place at the right time, doing the right thing.',
+    'Three hidden regions that are on no map until you find the way: one behind a riddle, one under a mountain, and one where a star came down. Each has its own monsters, a hidden creature, a boss and a unique item.',
+    'The Silent Oak\u2019s riddles: five riddles, typed in the Secrets tab. Some answers only count in the right place.',
+    'Two secret races can now be unlocked for new characters: Starborn (+30% Lucky Strike and bonus-find chance) and Hollowkin (+1 hour offline cap, +3% action speed).',
+    'Every class has a secret of its own.',
+    'Easter eggs. Lots of them. No hints.',
+    'Find 12 secrets on your account to open a fourth character slot.',
+    'Secret titles: most secrets give a title with a small bonus. Three new Secrets achievements.',
+    'Some junk items finally have something to say for themselves.',
+    'For the game\u2019s admins: a Debug tab and a Progression Simulator for balance testing. Characters that use debug tools stop posting to the leaderboards.',
+  ] },
   { v: 'v0.12c', date: '2026-11-25', title: 'Play as a guest', notes: [
     'New welcome screen on your first visit: sign in (Google or email), or play as a guest with no account.',
     'Guests can play everything except the online features (leaderboards, friends, chat, trading, Auction House). Guest saves live only in this browser, so back them up with a save code in Settings. You can sign in any time to move them to the cloud.',
