@@ -231,6 +231,7 @@ const NAV = [
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['leaders', 'Leaderboards']]],
   ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
+  ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades']]],
   ['Town', [['shop', 'Shop'], ['bank', 'Bank'], ['training', 'Training'], ['cloud', 'Cloud save'], ['settings', 'Settings']]],
 ];
 function enterGame(i) {
@@ -247,13 +248,13 @@ function renderTop() {
   const pots = Object.entries(ch.potions).filter(([, p]) => p.until > now).map(([cat, p]) => `<span class="chip" title="${esc(ITEMS[p.id].name + ': ' + ITEMS[p.id].desc)}">${POTION_CATS[cat]} <b data-live="pot:${cat}"></b></span>`).join('');
   $('#top').innerHTML = `<span class="brand">Thousandfold</span>
     <div class="cur"><span class="num">Gold <b class="gold" data-live="gold"></b></span><span class="num">Shards <b data-live="shards"></b></span><span>${ch.travel ? 'Travelling to ' : ''}<b data-live="travel"></b></span><span class="mute" data-live="clock"></span>${pots}
-    <span class="chip" title="Mailbox arrives with accounts (Phase 10)">Mail 0</span></div>
+    ${mailChip()}</div>
     <div class="milestone" title="Closest upcoming milestone">Next: <b data-live="ms"></b></div>`;
   updateLive();
 }
 function renderNav() {
   const running = new Set(ch.actions.map(a => ACT(a.res).skill));
-  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}</button>`).join('')).join('')
+  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')).join('')
     + `<div class="sep">Later phases</div>` + LATER.map(([id, n]) => `<button class="later ${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}</button>`).join('');
 }
 function renderActions() {
@@ -284,7 +285,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, cloud: tabCloud, leaders: tabLeaders }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, cloud: tabCloud, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -828,6 +829,7 @@ function bankAmt() { const v = Math.floor(+($('#bankamt') || {}).value || 0); re
 function settleSavings() { const now = Date.now(); ch.savings = { bal: savingsNow(ch, now), t: now }; }
 const HANDLERS = {
   ...CLOUD_HANDLERS,
+  ...SOCIAL_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },
   petslot: a => { const [u, s] = a.split('|'); setPetSlot(u, s); renderMain(); },

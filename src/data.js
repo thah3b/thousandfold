@@ -71,7 +71,6 @@ const CLASSES = [
 const LATER = [
   ['market','Market',11,'Town shops with shifting prices and NPC merchants.'],
   ['auction','Auction House',11,'Player listings, buy orders and price history.'],
-  ['friends','Friends',10,'Friends, chat, gifting and secure trades.'],
   ['guild','Guild',13,'Shared banks, guild quests and raids.'],
   ['lore','Lore',13,'Your Lore Journal and its cryptic clues.'],
 ];

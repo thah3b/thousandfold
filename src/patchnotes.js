@@ -2,8 +2,16 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.10c';
+const GAME_VERSION = 'v0.11';
 const PATCH_NOTES = [
+  { v: 'v0.11', date: '2026-11-24', title: 'Phase 10: Friends, chat, mail and trading', notes: [
+    'New Social section (needs a Thousandfold account on the website). Pick a display name; it is separate from your characters\u2019 names.',
+    'Friends: add players by friend code or display name, accept or decline requests, see who is online, remove or block players.',
+    'Chat: a World channel for everyone and private chats with friends. Unfriendly words are masked; you can block anyone from their name in chat.',
+    'Mailbox: gifts from friends and letters from the game arrive here. Collect attachments into the character you are playing. The Mail button at the top shows unread mail.',
+    'Gifts: send a friend gold and up to 5 different items, 20 gifts a day. You can gift up to 1,000 gold, or a quarter of your verified gold earned if that is more. Bound items and sentient or growth weapons can\u2019t be given away.',
+    'Secure trading: both offers live on the server. Any change to either offer cancels both confirmations, and the trade happens only when you both confirm the same offers. While you are confirmed, your side is set aside so you can\u2019t spend it twice; if the trade is changed or cancelled it comes straight back.',
+  ] },
   { v: 'v0.10c', date: '2026-11-24', title: 'The game has a website', notes: [
     'Thousandfold now has its own website: https://thah3b.github.io/thousandfold/ . Accounts, cloud saves and leaderboards work there.',
     'On the Claude link, the Cloud save tab links to the website and explains how to bring your save over with a save code.',

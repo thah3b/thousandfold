@@ -115,13 +115,14 @@ const P = () => cloud.provider && PROVIDERS[cloud.provider];
 
 async function cloudInit() {
   account.device = account.device || 'd' + Math.random().toString(36).slice(2, 10);
+  cloud.sbBlocked = false;
   cloud.provider = sbOn() ? 'supabase' : (window.claude && window.claude.use ? 'claude' : null);
   // Claude links block outside connections: if the server can't be reached from here, fall back to the link's built-in cloud.
   if (cloud.provider === 'supabase' && !(await sbReachable())) { cloud.sbBlocked = true; cloud.provider = window.claude && window.claude.use ? 'claude' : null; }
   if (!cloud.provider) { cloud.state = 'unavailable'; return cloudRefreshUi(); }
   try { await P().init(); } catch (e) { cloud.state = 'error'; cloud.msg = String(e.message || e); }
   cloudRefreshUi();
-  if (cloud.state === 'ready') { await cloudCheckRemote(true); }
+  if (cloud.state === 'ready') { await cloudCheckRemote(true); if (cloud.provider === 'supabase') socRefresh(); }
 }
 async function cloudCheckRemote(onBoot) {
   try { cloud.meta = await P().getSave(); } catch (e) { cloud.msg = 'Could not reach the cloud: ' + (e.message || e); cloudRefreshUi(); return; }
@@ -230,9 +231,9 @@ const CLOUD_HANDLERS = {
   cloudget: () => modal(`<h3>Load cloud save?</h3><p>This replaces every character on this device with the cloud save from ${cloud.meta ? new Date(cloud.meta.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : ''}. Copy a save code first if you want a backup.</p><div class="row" style="margin-top:12px"><button class="pri" data-act="cloudload">Load it</button><button data-act="close">Cancel</button></div>`),
   cloudload: () => cloudLoad(),
   cloudset: k => { if (k === 'cloudAuto') account.settings.cloudAuto = account.settings.cloudAuto === false; else { account.settings.lbOptOut = account.settings.lbOptOut !== true; cloud.lastLb = ''; } save(); renderMain(); },
-  sbin: async () => { try { await PROVIDERS.supabase.signIn($('#sbemail').value.trim(), $('#sbpw').value); await cloudCheckRemote(true); cloudRefreshUi(); if (screen !== 'game') { closeModal(); renderSelect(); } } catch (e) { $('#sberr').textContent = e.message || 'Sign-in failed.'; } },
+  sbin: async () => { try { await PROVIDERS.supabase.signIn($('#sbemail').value.trim(), $('#sbpw').value); await cloudCheckRemote(true); socRefresh(); cloudRefreshUi(); if (screen !== 'game') { closeModal(); renderSelect(); } } catch (e) { $('#sberr').textContent = e.message || 'Sign-in failed.'; } },
   sbup: async () => { const em = $('#sbemail').value.trim(), pw = $('#sbpw').value; if (pw.length < 8) { $('#sberr').textContent = 'Use at least 8 characters.'; return; } try { const r = await PROVIDERS.supabase.signUp(em, pw); if (r === 'confirm') $('#sberr').textContent = 'Check your email to confirm the account, then sign in.'; else { await PROVIDERS.supabase.init(); cloudRefreshUi(); } } catch (e) { $('#sberr').textContent = e.message || 'Could not create the account.'; } },
-  sbout: async () => { await PROVIDERS.supabase.signOut(); cloud.meta = null; cloud.lb = null; cloudRefreshUi(); },
+  sbout: async () => { await PROVIDERS.supabase.signOut(); cloud.meta = null; cloud.lb = null; soc.me = undefined; soc.friends = []; soc.mail = 0; soc.trades = 0; soc.mailList = null; soc.tradeList = null; soc.msgs = {}; cloudRefreshUi(); socPaint(); },
   sbcfg: () => { account.settings.sbUrl = $('#sburl').value.trim(); account.settings.sbKey = $('#sbkey').value.trim(); save(); cloud = Object.assign(cloud, { provider: null, state: 'starting', meta: null, lb: null, msg: '' }); cloudRefreshUi(); cloudInit(); },
   lbcat: k => { lbCat = k; renderMain(); },
   lbrefresh: () => { cloud.lbAt = 0; cloud.lb = null; renderMain(); },

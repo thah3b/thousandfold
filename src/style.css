@@ -227,3 +227,13 @@ main{grid-area:main;padding:18px max(16px,1.6vw) 40px}
 .lbrank{color:var(--mute);text-align:right}
 .lbrow:nth-child(-n+3) .lbrank{color:var(--gold);font-weight:700}
 .lbname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Social (Phase 10) */
+.odot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mute);opacity:.5;vertical-align:middle}
+.odot.on{background:#5fd17a;opacity:1}
+.chatbox{display:flex;flex-direction:column}
+.chatlog{height:min(55vh,460px);overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+.cmsg{padding:6px 10px;border-radius:10px;background:var(--panel2);max-width:85%;align-self:flex-start;overflow-wrap:anywhere}
+.cmsg.mine{align-self:flex-end;background:color-mix(in srgb,var(--ember) 18%,var(--panel2))}
+.cname{font-weight:700}
+.mailrow.new{border-color:var(--gold)}
