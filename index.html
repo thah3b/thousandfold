@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thousandfold v0.10b</title>
+<title>Thousandfold v0.10c</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <style>
@@ -241,8 +241,12 @@ main{grid-area:main;padding:18px max(16px,1.6vw) 40px}
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.10b';
+const GAME_VERSION = 'v0.10c';
 const PATCH_NOTES = [
+  { v: 'v0.10c', date: '2026-11-24', title: 'The game has a website', notes: [
+    'Thousandfold now has its own website: https://thah3b.github.io/thousandfold/ . Accounts, cloud saves and leaderboards work there.',
+    'On the Claude link, the Cloud save tab links to the website and explains how to bring your save over with a save code.',
+  ] },
   { v: 'v0.10b', date: '2026-11-24', title: 'Clearer cloud message on the Claude link', notes: [
     'The Cloud save tab on the Claude link now says plainly that accounts work only in the standalone game, and how to move your save there.',
   ] },
@@ -3293,7 +3297,7 @@ function cloudChip() {
 function cloudPanel() {
   const p = P(), st = cloud.state, m = cloud.meta;
   let body = '';
-  if (cloud.sbBlocked && (!cloud.provider || st === 'unavailable' || st === 'signedout')) body = `<p>Thousandfold accounts can\u2019t be created or used on this Claude link: Claude links block connections to outside servers. To make an account, play the standalone game (the downloaded file, or the game\u2019s website once it has one). Your saves here stay in this browser; move them to the standalone game with <b>Copy save code</b> in Settings.</p>`;
+  if (cloud.sbBlocked && (!cloud.provider || st === 'unavailable' || st === 'signedout')) body = `<p>Thousandfold accounts can\u2019t be created or used on this Claude link: Claude links block connections to outside servers. To make an account, play on the game\u2019s website: <a href="https://thah3b.github.io/thousandfold/" target="_blank" rel="noopener">thah3b.github.io/thousandfold</a>. Your saves here stay in this browser; move them to the website with <b>Copy save code</b> in Settings here, then <b>Import save code</b> there.</p>`;
   else if (!cloud.provider || st === 'unavailable') body = cloud.sbBlocked ? `<p>Thousandfold accounts can\u2019t connect from this page: the Claude link blocks outside connections. Play the standalone game to sign in. Saves here stay in this browser; move them with save codes in Settings.</p>` : `<p>Cloud saves and leaderboards need the online game link${sbOn() ? '' : ' (or a Thousandfold server, see below)'}. This copy keeps saves in this browser only; use save codes in Settings to move them.</p>`;
   else if (st === 'starting') body = '<p class="mute">Connecting…</p>';
   else if (st === 'error') body = `<p class="bad">${esc(cloud.msg)}</p>`;

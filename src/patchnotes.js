@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.10b';
+const GAME_VERSION = 'v0.10c';
 const PATCH_NOTES = [
+  { v: 'v0.10c', date: '2026-11-24', title: 'The game has a website', notes: [
+    'Thousandfold now has its own website: https://thah3b.github.io/thousandfold/ . Accounts, cloud saves and leaderboards work there.',
+    'On the Claude link, the Cloud save tab links to the website and explains how to bring your save over with a save code.',
+  ] },
   { v: 'v0.10b', date: '2026-11-24', title: 'Clearer cloud message on the Claude link', notes: [
     'The Cloud save tab on the Claude link now says plainly that accounts work only in the standalone game, and how to move your save there.',
   ] },

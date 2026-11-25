@@ -183,7 +183,7 @@ function cloudChip() {
 function cloudPanel() {
   const p = P(), st = cloud.state, m = cloud.meta;
   let body = '';
-  if (cloud.sbBlocked && (!cloud.provider || st === 'unavailable' || st === 'signedout')) body = `<p>Thousandfold accounts can\u2019t be created or used on this Claude link: Claude links block connections to outside servers. To make an account, play the standalone game (the downloaded file, or the game\u2019s website once it has one). Your saves here stay in this browser; move them to the standalone game with <b>Copy save code</b> in Settings.</p>`;
+  if (cloud.sbBlocked && (!cloud.provider || st === 'unavailable' || st === 'signedout')) body = `<p>Thousandfold accounts can\u2019t be created or used on this Claude link: Claude links block connections to outside servers. To make an account, play on the game\u2019s website: <a href="https://thah3b.github.io/thousandfold/" target="_blank" rel="noopener">thah3b.github.io/thousandfold</a>. Your saves here stay in this browser; move them to the website with <b>Copy save code</b> in Settings here, then <b>Import save code</b> there.</p>`;
   else if (!cloud.provider || st === 'unavailable') body = cloud.sbBlocked ? `<p>Thousandfold accounts can\u2019t connect from this page: the Claude link blocks outside connections. Play the standalone game to sign in. Saves here stay in this browser; move them with save codes in Settings.</p>` : `<p>Cloud saves and leaderboards need the online game link${sbOn() ? '' : ' (or a Thousandfold server, see below)'}. This copy keeps saves in this browser only; use save codes in Settings to move them.</p>`;
   else if (st === 'starting') body = '<p class="mute">Connecting…</p>';
   else if (st === 'error') body = `<p class="bad">${esc(cloud.msg)}</p>`;
