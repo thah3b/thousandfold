@@ -4,6 +4,18 @@
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const KEY = 'thousandfold.v1';
+// Names (v0.11b): any letters, symbols, emoji or lenny faces. Only limits: 1–24 characters,
+// no invisible/control characters (they break layouts and allow look-alike tricks), no slurs.
+const NAME_MAX = 24, NAME_BAD_CHARS = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/;
+function nameProblem(n) {
+  n = String(n == null ? '' : n).trim(); const len = Array.from(n).length;
+  if (!len) return 'Enter a name.';
+  if (len > NAME_MAX) return `Up to ${NAME_MAX} characters.`;
+  if (NAME_BAD_CHARS.test(n)) return 'That name has hidden or control characters in it.';
+  const flat = n.toLowerCase().replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/[^a-z]/g, '');
+  if (PROFANITY.some(w => flat.includes(w))) return 'Please choose another name.';
+  return '';
+}
 const rng = Math.random;
 const pick = a => a[Math.floor(Math.random() * a.length)];
 

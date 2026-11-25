@@ -29,7 +29,7 @@ function socPaint() {
 let chatTimer = null;
 function chatLoop() {
   clearTimeout(chatTimer);
-  if (screen === 'game' && tab === 'chat' && socOn() && soc.me) chatFetch().finally(() => { chatTimer = setTimeout(chatLoop, document.hidden ? 15000 : 4000); });
+  if (screen === 'game' && tab === 'chat' && socOn() && soc.me) chatFetch().finally(() => { if (!document.hidden) chatTimer = setTimeout(chatLoop, 4000); });
 }
 async function chatFetch() {
   const ch_ = soc.chan, list = soc.msgs[ch_] || (soc.msgs[ch_] = []), after = list.length ? list[list.length - 1].id : 0;
@@ -55,10 +55,10 @@ function mailChip() { return `<button class="chip" id="mailchip" data-act="tab" 
 // ---------- Gate ----------
 function socGate() {
   if (cloud.sbBlocked) return `<div class="card"><p style="margin:0">Friends, chat, mail and trading work on the game’s website: <a href="https://thah3b.github.io/thousandfold/" target="_blank" rel="noopener">thah3b.github.io/thousandfold</a>. Claude links block connections to the game server.</p></div>`;
-  if (!socOn()) return `<div class="card"><p style="margin:0">Sign in to your Thousandfold account first.</p><div class="row" style="margin-top:10px"><button class="pri" data-act="tab" data-arg="cloud">Go to Cloud save</button></div></div>`;
+  if (!socOn()) return `<div class="card"><p style="margin:0">Sign in to your Thousandfold account first.</p><div class="row" style="margin-top:10px"><button class="pri" data-act="tab" data-arg="account">Go to Account</button></div></div>`;
   if (soc.me === undefined) { socRefresh(); return '<p class="mute">Loading…</p>'; }
-  if (!soc.me) return `<div class="card" style="max-width:520px"><h3>Choose a display name</h3><p class="mute" style="font-size:14px">This is how other players see you in chat, on friend lists and on trades. It’s separate from your characters’ names. 3–16 letters, numbers, spaces, - or _.</p>
-    <div class="row"><input id="socname" maxlength="16" autocomplete="off" aria-label="Display name" style="flex:1"><button class="pri" data-act="socname">Save</button></div><div class="err" id="socerr"></div></div>`;
+  if (!soc.me) return `<div class="card" style="max-width:520px"><h3>Choose a display name</h3><p class="mute" style="font-size:14px">This is how other players see you in chat, on friend lists and on trades. It’s separate from your characters’ names. Any letters, symbols or emoji, up to 24 characters.</p>
+    <div class="row"><input id="socname" maxlength="64" autocomplete="off" aria-label="Display name" style="flex:1"><button class="pri" data-act="socname">Save</button></div><div class="err" id="socerr"></div></div>`;
   return '';
 }
 const errBox = () => soc.err ? `<p class="bad" style="font-size:14px">${esc(soc.err)}</p>` : '';
@@ -75,7 +75,7 @@ function tabFriends() {
         <p class="mute" style="font-size:14px;margin:0">Friend code <b class="num" style="color:var(--ink)">${esc(soc.me.code)}</b> <button class="sm ghost" data-act="soccopy">Copy</button></p>
         <div class="row" style="margin-top:10px;gap:6px"><input id="socadd" placeholder="Friend code or display name" autocomplete="off" aria-label="Friend code or name" style="flex:1"><button class="pri" data-act="socadd">Add friend</button></div>
         <div class="err" id="socerr"></div>
-        <details style="margin-top:8px"><summary class="mute" style="font-size:13px">Change display name</summary><div class="row" style="margin-top:6px"><input id="socname" maxlength="16" value="${esc(soc.me.name)}" aria-label="Display name" style="flex:1"><button data-act="socname">Save</button></div></details></div>
+        <p class="mute" style="font-size:12px;margin:8px 0 0">Change your player name on the <button class="linkbtn" data-act="tab" data-arg="account">Account</button> tab.</p></div>
       ${inc.length ? `<div class="card"><h3>Friend requests</h3><div class="grid" style="gap:6px;margin-top:8px">${inc.map(f => `<div class="prow"><span><b>${esc(f.name)}</b> <span class="mute" style="font-size:12px">wants to be friends</span></span><span class="row" style="gap:4px"><button class="sm pri" data-act="socaccept" data-arg="${f.id}">Accept</button><button class="sm" data-act="socdecline" data-arg="${f.id}">Decline</button></span></div>`).join('')}</div></div>` : ''}
     </div>
     <h3 style="margin:16px 0 8px">Friends (${fr.length})</h3>${fr.length ? `<div class="grid" style="gap:6px">${fr.map(row).join('')}</div>` : '<p class="mute">No friends yet. Share your friend code, or add someone by their code or display name.</p>'}
@@ -216,7 +216,7 @@ function tabTrade() {
 const socErr = (id, e) => { const el = document.getElementById(id); const m = (e && e.message) || String(e); if (el) el.textContent = m; else toast(esc(m)); };
 const SOCIAL_HANDLERS = {
   socrefresh: () => socRefresh(),
-  socname: async () => { const v = $('#socname').value.trim(); try { await rpc('tf_set_profile', { p_name: v }); await socRefresh(); renderMain(); toast('Display name saved.', 'verd'); } catch (e) { socErr('socerr', e); } },
+  socname: async () => { const v = $('#socname').value.trim(), p = nameProblem(v); if (p) { socErr('socerr', p); return; } try { await rpc('tf_set_profile', { p_name: v }); await socRefresh(); renderMain(); toast('Display name saved.', 'verd'); } catch (e) { socErr('socerr', e); } },
   soccopy: async () => { try { await navigator.clipboard.writeText(soc.me.code); toast('Friend code copied.'); } catch (e) { toast('Your friend code is ' + esc(soc.me.code)); } },
   socadd: async () => { const v = $('#socadd').value.trim(); if (!v) return; try { const r = await rpc('tf_friend_add', { p_target: v }); toast({ sent: 'Friend request sent.', accepted: 'You’re now friends!', already: 'You’re already friends.', pending: 'Request already sent.' }[r] || 'Done.', 'verd'); await socRefresh(); renderMain(); } catch (e) { socErr('socerr', e); } },
   socaccept: async id => { try { await rpc('tf_friend_respond', { p_other: id, p_accept: true }); await socRefresh(); renderMain(); } catch (e) { toast(esc(e.message)); } },
@@ -269,7 +269,8 @@ document.addEventListener('change', e => {
   if (t.id === 'trgold' && soc.offer) { soc.offer.gold = Math.max(0, Math.floor(+t.value || 0)); renderMain(); }
   const q = t.dataset && t.dataset.offerq; if (q) { const p = q.split('|')[0], k = q.slice(q.indexOf('|') + 1), o = p === 'gift' ? soc.gift && soc.gift.offer : soc.offer; if (o) o.items[k] = Math.max(1, Math.floor(+t.value || 1)); if (p === 'tr') renderMain(); }
 });
-setInterval(() => { if (screen === 'game' && socOn() && Date.now() - soc.lastTick > 20000) socRefresh(); }, 5000);
+setInterval(() => { if (screen === 'game' && socOn() && !document.hidden && Date.now() - soc.lastTick > 60000) socRefresh(); }, 5000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && screen === 'game' && socOn() && Date.now() - soc.lastTick > 15000) { socRefresh(); if (tab === 'chat') chatLoop(); } });
 
 // ---------- Admin letters (v0.11a) ----------
 let adminDraft = { to: '', subject: '', body: '', gold: 0, items: {} };

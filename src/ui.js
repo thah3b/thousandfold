@@ -50,7 +50,7 @@ function itemIcon(key, size) {
 const actIcon = (a, size) => a.inputs ? itemIcon(a.gearOut ? gkey(a.out) : a.out, size) : resIcon(a, size);
 function portrait(c, size) {
   const r = RACES.find(x => x.id === c.race) || RACES[0];
-  const ini = (c.name || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const ini = Array.from((c.name || '?').trim().split(/\s+/).map(w => Array.from(w)[0] || '').join('')).slice(0, 2).join('').toUpperCase() || '?';
   const mark = { 'Old scar': '<path d="M38 22 46 34" stroke="#fff" stroke-width="2" opacity=".6"/>', 'Runic tattoo': '<path d="M14 24h6l-3 6 3 6h-6" stroke="#fff" stroke-width="1.6" fill="none" opacity=".55"/>', 'Warpaint': '<path d="M12 30h40" stroke="#000" stroke-width="5" opacity=".25"/>', 'Freckles': '<g fill="#000" opacity=".25"><circle cx="20" cy="40" r="1.4"/><circle cx="24" cy="42" r="1.4"/><circle cx="40" cy="42" r="1.4"/><circle cx="44" cy="40" r="1.4"/></g>', 'Birthmark': '<circle cx="44" cy="44" r="3" fill="#000" opacity=".22"/>' }[c.look && c.look.markings] || '';
   return `<svg class="portrait" style="width:${size || 64}px;height:${(size || 64) * 1.125}px" viewBox="0 0 64 72" aria-hidden="true"><defs><linearGradient id="pg${r.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${r.color}"/><stop offset="1" stop-color="#2a1d17"/></linearGradient></defs>
 <path d="M4 4h56v34c0 16-14 26-28 32C18 64 4 54 4 38Z" fill="url(#pg${r.id})" stroke="${c.adv && TIER_FRAME[c.adv.tier] ? TIER_FRAME[c.adv.tier] : '#000'}" stroke-opacity="${c.adv && TIER_FRAME[c.adv.tier] ? 1 : .3}" stroke-width="${c.adv && TIER_FRAME[c.adv.tier] ? 3.5 : 1}"/><path d="M8 8h48v4H8Z" fill="#fff" opacity=".15"/>${mark}
@@ -190,11 +190,8 @@ function renderSelect() {
 const WZ_STEPS = ['Identity', 'Class', 'Origin', 'Region', 'Confirm'];
 function startWizard(slot) { screen = 'wizard'; wz = { slot, step: 0, name: '', gender: 'Male', race: 'human', cls: 'warrior', origin: 'orphan', region: 'emberfall', err: '' }; renderWizard(); }
 function nameError(n) {
+  const p = nameProblem(n); if (p) return p;
   n = n.trim();
-  if (n.length < 3 || n.length > 16) return 'Use 3 to 16 characters.';
-  if (!/^[A-Za-z][A-Za-z '\-]*$/.test(n)) return 'Letters, spaces, apostrophes and hyphens only.';
-  const flat = n.toLowerCase().replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/[^a-z]/g, '');
-  if (PROFANITY.some(w => flat.includes(w))) return 'Please choose another name.';
   if (account.slots.some(c => c && c.name.toLowerCase() === n.toLowerCase())) return 'You already have a character with that name.';
   return '';
 }
@@ -207,7 +204,7 @@ function wizardPreview() {
 }
 function renderWizard() {
   const s = wz.step; let body = '';
-  if (s === 0) body = `<div class="field"><label for="wzname">Name</label><input id="wzname" maxlength="16" value="${esc(wz.name)}" autocomplete="off"><div class="err" id="wzerr">${esc(wz.err)}</div></div>
+  if (s === 0) body = `<div class="field"><label for="wzname">Name</label><input id="wzname" maxlength="64" value="${esc(wz.name)}" autocomplete="off"><div class="err" id="wzerr">${esc(wz.err)}</div></div>
     <div class="field"><label>Gender</label><div class="row">${['Male', 'Female'].map(g => `<button class="chip ${wz.gender === g ? 'on' : ''}" data-act="wzset" data-arg="gender|${g}">${g}</button>`).join('')}</div></div>
     <div class="field"><label>Race</label><p class="mute" style="margin:0 0 6px">Races add a small flavour bonus and one passive. They never lock content.</p><div class="pick">${RACES.map(r => r.secret
     ? `<div class="opt locked card"><b>???</b><small>A secret race, unlocked through hidden content.</small></div>`
@@ -232,7 +229,7 @@ const NAV = [
   ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['leaders', 'Leaderboards']]],
   ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades']]],
-  ['Town', [['shop', 'Shop'], ['bank', 'Bank'], ['training', 'Training'], ['cloud', 'Cloud save'], ['settings', 'Settings']]],
+  ['Town', [['shop', 'Shop'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings']]],
 ];
 function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'mining'; agg = {}; rate = {};
@@ -285,7 +282,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, cloud: tabCloud, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }

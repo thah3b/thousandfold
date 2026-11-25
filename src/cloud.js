@@ -45,7 +45,7 @@ function validateEntry(e) {
   if (e.prog > 15 + 60 * hours) f.push('levels gained faster than possible');
   if (e.ach > ACHIEVEMENTS.reduce((s, a) => s + a.pts, 0)) f.push('too many achievement points');
   if (e.species > Object.keys(SPECIES).length || e.coll > 100) f.push('collection out of range');
-  if (!/^[A-Za-z][A-Za-z '\-]{2,15}$/.test(e.name || '') || PROFANITY.some(w => (e.name || '').toLowerCase().replace(/[^a-z]/g, '').includes(w))) f.push('name not allowed');
+  if (nameProblem(e.name)) f.push('name not allowed');
   return f;
 }
 
@@ -172,9 +172,9 @@ async function cloudLoad() {
 }
 function cloudTick() {
   if (cloud.state !== 'ready' || account.settings.cloudAuto === false || cloud.canWrite === false) return;
-  if (Date.now() - cloud.lastUp > CLOUD.autoMins * 60000) cloudUpload(false);
+  if (Date.now() - cloud.lastUp > (document.hidden ? 30 : CLOUD.autoMins) * 60000) cloudUpload(false);
 }
-function cloudRefreshUi() { if (screen === 'game' && (tab === 'cloud' || tab === 'leaders')) renderMain(); if (screen === 'select') { const el = document.getElementById('cloudchip'); if (el) el.outerHTML = cloudChip(); } }
+function cloudRefreshUi() { if (screen === 'game' && (tab === 'account' || tab === 'leaders')) renderMain(); if (screen === 'select') { const el = document.getElementById('cloudchip'); if (el) el.outerHTML = cloudChip(); } }
 function cloudChip() {
   const t = cloud.sbBlocked && cloud.state !== 'ready' ? 'Cloud: not on this link' : cloud.state === 'ready' ? (cloud.canWrite === false ? 'Cloud: read-only' : `Cloud: on${cloud.meta ? ' · saved ' + new Date(cloud.meta.savedAt).toLocaleTimeString([], { timeStyle: 'short' }) : ''}`) : cloud.state === 'signedout' ? 'Cloud: signed out' : cloud.state === 'starting' ? 'Cloud: connecting…' : 'Cloud: offline';
   return `<button class="chip" id="cloudchip" data-act="cloudopen">${esc(t)}</button>`;
@@ -197,7 +197,7 @@ function cloudPanel() {
       <p class="mute" style="font-size:14px;margin:6px 0 0">${m ? `Cloud save: ${new Date(m.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}${m.device === account.device ? ' (this device)' : ' (another device)'} · ${esc((m.chars || []).map(c => c.name).join(', ') || 'no characters')}` : 'No cloud save yet.'}</p>
       ${cloud.canWrite === false ? `<p class="bad" style="font-size:14px">${esc(cloud.msg)}</p>` : cloud.msg ? `<p class="bad" style="font-size:14px">${esc(cloud.msg)}</p>` : ''}
       <div class="row" style="margin-top:10px"><button class="pri" data-act="cloudup" ${cloud.busy || cloud.canWrite === false ? 'disabled' : ''}>${cloud.busy ? 'Saving…' : 'Save to cloud now'}</button><button data-act="cloudget" ${m && m.code ? '' : 'disabled'}>Load cloud save</button>${cloud.provider === 'supabase' ? '<button class="ghost" data-act="sbout">Sign out</button>' : ''}</div>
-      <div class="row" style="margin-top:10px">${['cloudAuto', 'lbOptOut'].map(k => { const on = k === 'cloudAuto' ? account.settings.cloudAuto !== false : account.settings.lbOptOut !== true; return `<button class="chip ${on ? 'on' : ''}" data-act="cloudset" data-arg="${k}">${k === 'cloudAuto' ? `Auto-save every ${CLOUD.autoMins} min: ${on ? 'on' : 'off'}` : `Show my characters on leaderboards: ${on ? 'on' : 'off'}`}</button>`; }).join('')}</div>`;
+      <div class="row" style="margin-top:10px">${['cloudAuto', 'lbOptOut'].map(k => { const on = k === 'cloudAuto' ? account.settings.cloudAuto !== false : account.settings.lbOptOut !== true; return `<button class="chip ${on ? 'on' : ''}" data-act="cloudset" data-arg="${k}">${k === 'cloudAuto' ? `Auto-save (every ${CLOUD.autoMins} min while open): ${on ? 'on' : 'off'}` : `Show my characters on leaderboards: ${on ? 'on' : 'off'}`}</button>`; }).join('')}</div>`;
   }
   const local = account.slots.filter(Boolean).map(c => { const f = validateEntry(lbEntry(c)).concat((cloud.flags && cloud.flags[c.id]) || []); return `<div class="prow"><span>${esc(c.name)} · ${levelLabel(c)}</span>${f.length ? `<span class="bad" style="font-size:13px">Not ranked: ${esc([...new Set(f)].join('; '))}</span>` : '<span class="chip on" style="font-size:12px">Eligible</span>'}</div>`; }).join('');
   return `<div class="card"><div class="spread"><h3>Cloud save</h3>${cloudChip()}</div>${body}</div>
@@ -206,7 +206,22 @@ function cloudPanel() {
       <div class="grid" style="gap:8px;max-width:520px"><input id="sburl" placeholder="https://your-project.supabase.co" value="${esc(account.settings.sbUrl || '')}" aria-label="Supabase URL"><input id="sbkey" placeholder="anon key" value="${esc(account.settings.sbKey || '')}" aria-label="Supabase anon key"></div>
       <div class="row" style="margin-top:8px"><button data-act="sbcfg">Save and reconnect</button></div></details>`;
 }
-function tabCloud() { return `<div class="spread"><h2>Cloud save</h2></div><p class="mute">Keep your characters safe and play on any device. Cloud saves include every character in this browser.</p>${cloudPanel()}`; }
+function tabAccount() {
+  const r = RACES.find(x => x.id === ch.race) || RACES[0], cl = CLASSES.find(x => x.id === ch.cls) || {};
+  const prof = !socOn() ? `<p class="mute" style="margin:0;font-size:14px">Your player name is used in chat, on friend lists and on trades. ${cloud.sbBlocked ? 'Player accounts work on the game\u2019s website.' : 'Sign in below to set it.'}</p>`
+    : soc.me === undefined ? (socRefresh(), '<p class="mute">Loading\u2026</p>')
+    : `<div class="row" style="gap:6px"><input id="socname" maxlength="64" value="${esc(soc.me ? soc.me.name : '')}" placeholder="Player name" aria-label="Player name" style="flex:1"><button class="pri" data-act="socname">Save</button></div><div class="err" id="socerr"></div>${soc.me ? `<p class="mute" style="font-size:13px;margin:6px 0 0">Friend code <b class="num" style="color:var(--ink)">${esc(soc.me.code)}</b></p>` : '<p class="mute" style="font-size:13px;margin:6px 0 0">Pick a name to use Friends, Chat, Mail and Trades.</p>'}`;
+  return `<div class="spread"><h2>Account</h2></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));margin-top:12px;align-items:start">
+      <div class="card"><h3>Character</h3><div class="row" style="margin-top:8px">${portrait(ch, 56)}<div class="mute" style="font-size:14px">${esc(r.name)} ${esc(cl.name || '')}<br>Race and class are chosen when a character is created.</div></div>
+        <label class="mute" for="acname" style="font-size:14px;display:block;margin-top:10px">Name</label>
+        <div class="row" style="gap:6px"><input id="acname" maxlength="64" value="${esc(ch.name)}" aria-label="Character name" style="flex:1"><button class="pri" data-act="acname">Save</button></div><div class="err" id="acerr"></div>
+        <p class="mute" style="font-size:12px;margin:4px 0 0">Anything goes: letters from any language, numbers, symbols, emoji, ( \u0361\u00b0 \u035c\u0296 \u0361\u00b0). Up to ${NAME_MAX} characters.</p>
+        <div class="mute" style="font-size:14px;margin-top:10px">Gender</div><div class="row" style="gap:6px;margin-top:4px">${['Male', 'Female'].map(g => `<button class="chip ${ch.gender === g ? 'on' : ''}" data-act="acgender" data-arg="${g}">${g}</button>`).join('')}</div></div>
+      <div class="card"><h3>Player name</h3>${prof}</div>
+    </div>
+    <h3 style="margin:18px 0 8px">Sign-in and cloud save</h3>${cloudPanel()}`;
+}
 let lbCat = 'prog';
 function tabLeaders() {
   const cat = CLOUD.lbCats.find(c => c[0] === lbCat) || CLOUD.lbCats[0];
@@ -226,8 +241,10 @@ async function cloudLoadLb() {
   cloud.lbLoading = false; if (screen === 'game' && tab === 'leaders') renderMain();
 }
 const CLOUD_HANDLERS = {
-  cloudopen: () => { if (screen === 'game') HANDLERS.tab('cloud'); else modal(`${cloudPanel()}<div class="row" style="margin-top:12px"><button data-act="close">Close</button></div>`); },
+  cloudopen: () => { if (screen === 'game') HANDLERS.tab('account'); else modal(`${cloudPanel()}<div class="row" style="margin-top:12px"><button data-act="close">Close</button></div>`); },
   cloudup: () => cloudUpload(true),
+  acname: () => { const v = $('#acname').value.trim(), p = nameProblem(v); if (p) { $('#acerr').textContent = p; return; } if (account.slots.some(c => c && c !== ch && c.name.toLowerCase() === v.toLowerCase())) { $('#acerr').textContent = 'Another of your characters already has that name.'; return; } const old = ch.name; ch.name = v; cloud.lastLb = ''; save(); addLog('sys', `${old} is now known as ${v}.`); toast('Name saved.', 'verd'); renderTop(); renderMain(); renderActions(); },
+  acgender: g => { if (!['Male', 'Female'].includes(g)) return; ch.gender = g; save(); renderMain(); },
   cloudget: () => modal(`<h3>Load cloud save?</h3><p>This replaces every character on this device with the cloud save from ${cloud.meta ? new Date(cloud.meta.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : ''}. Copy a save code first if you want a backup.</p><div class="row" style="margin-top:12px"><button class="pri" data-act="cloudload">Load it</button><button data-act="close">Cancel</button></div>`),
   cloudload: () => cloudLoad(),
   cloudset: k => { if (k === 'cloudAuto') account.settings.cloudAuto = account.settings.cloudAuto === false; else { account.settings.lbOptOut = account.settings.lbOptOut !== true; cloud.lastLb = ''; } save(); renderMain(); },

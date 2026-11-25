@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thousandfold v0.11a</title>
+<title>Thousandfold v0.11b</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <style>
@@ -251,8 +251,14 @@ main{grid-area:main;padding:18px max(16px,1.6vw) 40px}
 // VERSION & PATCH NOTES
 // Version scheme: v0.(phase + 1). Minor / quality-of-life updates add a letter: v0.8a, v0.8b...
 // ============================================================
-const GAME_VERSION = 'v0.11a';
+const GAME_VERSION = 'v0.11b';
 const PATCH_NOTES = [
+  { v: 'v0.11b', date: '2026-11-24', title: 'Account tab and open names', notes: [
+    'The Cloud save tab is now the Account tab (Town). Change your character\u2019s name and gender, and your player name, any time. Race and class are still chosen when a character is created.',
+    'Names can now use anything: letters from any language, numbers, symbols, emoji, ( \u0361\u00b0 \u035c\u0296 \u0361\u00b0). Up to 24 characters. Invisible characters and slurs are still blocked.',
+    'The game now talks to the server less often: social updates every minute while the game is on screen, and none while it is in the background (cloud saves every 30 minutes in the background).',
+    'Old chat messages are cleared after 14 days.',
+  ] },
   { v: 'v0.11a', date: '2026-11-24', title: 'Game letters', notes: [
     'The game team can now send letters, with gold or items attached, to one player or to everyone. They arrive in your Mailbox.',
     'You can remove your own chat messages.',
@@ -2114,6 +2120,18 @@ for (const s of CRAFT_SKILLS) { const L = RECIPES.filter(r => r.skill === s), lo
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const KEY = 'thousandfold.v1';
+// Names (v0.11b): any letters, symbols, emoji or lenny faces. Only limits: 1–24 characters,
+// no invisible/control characters (they break layouts and allow look-alike tricks), no slurs.
+const NAME_MAX = 24, NAME_BAD_CHARS = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/;
+function nameProblem(n) {
+  n = String(n == null ? '' : n).trim(); const len = Array.from(n).length;
+  if (!len) return 'Enter a name.';
+  if (len > NAME_MAX) return `Up to ${NAME_MAX} characters.`;
+  if (NAME_BAD_CHARS.test(n)) return 'That name has hidden or control characters in it.';
+  const flat = n.toLowerCase().replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/[^a-z]/g, '');
+  if (PROFANITY.some(w => flat.includes(w))) return 'Please choose another name.';
+  return '';
+}
 const rng = Math.random;
 const pick = a => a[Math.floor(Math.random() * a.length)];
 
@@ -3180,7 +3198,7 @@ function validateEntry(e) {
   if (e.prog > 15 + 60 * hours) f.push('levels gained faster than possible');
   if (e.ach > ACHIEVEMENTS.reduce((s, a) => s + a.pts, 0)) f.push('too many achievement points');
   if (e.species > Object.keys(SPECIES).length || e.coll > 100) f.push('collection out of range');
-  if (!/^[A-Za-z][A-Za-z '\-]{2,15}$/.test(e.name || '') || PROFANITY.some(w => (e.name || '').toLowerCase().replace(/[^a-z]/g, '').includes(w))) f.push('name not allowed');
+  if (nameProblem(e.name)) f.push('name not allowed');
   return f;
 }
 
@@ -3307,9 +3325,9 @@ async function cloudLoad() {
 }
 function cloudTick() {
   if (cloud.state !== 'ready' || account.settings.cloudAuto === false || cloud.canWrite === false) return;
-  if (Date.now() - cloud.lastUp > CLOUD.autoMins * 60000) cloudUpload(false);
+  if (Date.now() - cloud.lastUp > (document.hidden ? 30 : CLOUD.autoMins) * 60000) cloudUpload(false);
 }
-function cloudRefreshUi() { if (screen === 'game' && (tab === 'cloud' || tab === 'leaders')) renderMain(); if (screen === 'select') { const el = document.getElementById('cloudchip'); if (el) el.outerHTML = cloudChip(); } }
+function cloudRefreshUi() { if (screen === 'game' && (tab === 'account' || tab === 'leaders')) renderMain(); if (screen === 'select') { const el = document.getElementById('cloudchip'); if (el) el.outerHTML = cloudChip(); } }
 function cloudChip() {
   const t = cloud.sbBlocked && cloud.state !== 'ready' ? 'Cloud: not on this link' : cloud.state === 'ready' ? (cloud.canWrite === false ? 'Cloud: read-only' : `Cloud: on${cloud.meta ? ' · saved ' + new Date(cloud.meta.savedAt).toLocaleTimeString([], { timeStyle: 'short' }) : ''}`) : cloud.state === 'signedout' ? 'Cloud: signed out' : cloud.state === 'starting' ? 'Cloud: connecting…' : 'Cloud: offline';
   return `<button class="chip" id="cloudchip" data-act="cloudopen">${esc(t)}</button>`;
@@ -3332,7 +3350,7 @@ function cloudPanel() {
       <p class="mute" style="font-size:14px;margin:6px 0 0">${m ? `Cloud save: ${new Date(m.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}${m.device === account.device ? ' (this device)' : ' (another device)'} · ${esc((m.chars || []).map(c => c.name).join(', ') || 'no characters')}` : 'No cloud save yet.'}</p>
       ${cloud.canWrite === false ? `<p class="bad" style="font-size:14px">${esc(cloud.msg)}</p>` : cloud.msg ? `<p class="bad" style="font-size:14px">${esc(cloud.msg)}</p>` : ''}
       <div class="row" style="margin-top:10px"><button class="pri" data-act="cloudup" ${cloud.busy || cloud.canWrite === false ? 'disabled' : ''}>${cloud.busy ? 'Saving…' : 'Save to cloud now'}</button><button data-act="cloudget" ${m && m.code ? '' : 'disabled'}>Load cloud save</button>${cloud.provider === 'supabase' ? '<button class="ghost" data-act="sbout">Sign out</button>' : ''}</div>
-      <div class="row" style="margin-top:10px">${['cloudAuto', 'lbOptOut'].map(k => { const on = k === 'cloudAuto' ? account.settings.cloudAuto !== false : account.settings.lbOptOut !== true; return `<button class="chip ${on ? 'on' : ''}" data-act="cloudset" data-arg="${k}">${k === 'cloudAuto' ? `Auto-save every ${CLOUD.autoMins} min: ${on ? 'on' : 'off'}` : `Show my characters on leaderboards: ${on ? 'on' : 'off'}`}</button>`; }).join('')}</div>`;
+      <div class="row" style="margin-top:10px">${['cloudAuto', 'lbOptOut'].map(k => { const on = k === 'cloudAuto' ? account.settings.cloudAuto !== false : account.settings.lbOptOut !== true; return `<button class="chip ${on ? 'on' : ''}" data-act="cloudset" data-arg="${k}">${k === 'cloudAuto' ? `Auto-save (every ${CLOUD.autoMins} min while open): ${on ? 'on' : 'off'}` : `Show my characters on leaderboards: ${on ? 'on' : 'off'}`}</button>`; }).join('')}</div>`;
   }
   const local = account.slots.filter(Boolean).map(c => { const f = validateEntry(lbEntry(c)).concat((cloud.flags && cloud.flags[c.id]) || []); return `<div class="prow"><span>${esc(c.name)} · ${levelLabel(c)}</span>${f.length ? `<span class="bad" style="font-size:13px">Not ranked: ${esc([...new Set(f)].join('; '))}</span>` : '<span class="chip on" style="font-size:12px">Eligible</span>'}</div>`; }).join('');
   return `<div class="card"><div class="spread"><h3>Cloud save</h3>${cloudChip()}</div>${body}</div>
@@ -3341,7 +3359,22 @@ function cloudPanel() {
       <div class="grid" style="gap:8px;max-width:520px"><input id="sburl" placeholder="https://your-project.supabase.co" value="${esc(account.settings.sbUrl || '')}" aria-label="Supabase URL"><input id="sbkey" placeholder="anon key" value="${esc(account.settings.sbKey || '')}" aria-label="Supabase anon key"></div>
       <div class="row" style="margin-top:8px"><button data-act="sbcfg">Save and reconnect</button></div></details>`;
 }
-function tabCloud() { return `<div class="spread"><h2>Cloud save</h2></div><p class="mute">Keep your characters safe and play on any device. Cloud saves include every character in this browser.</p>${cloudPanel()}`; }
+function tabAccount() {
+  const r = RACES.find(x => x.id === ch.race) || RACES[0], cl = CLASSES.find(x => x.id === ch.cls) || {};
+  const prof = !socOn() ? `<p class="mute" style="margin:0;font-size:14px">Your player name is used in chat, on friend lists and on trades. ${cloud.sbBlocked ? 'Player accounts work on the game\u2019s website.' : 'Sign in below to set it.'}</p>`
+    : soc.me === undefined ? (socRefresh(), '<p class="mute">Loading\u2026</p>')
+    : `<div class="row" style="gap:6px"><input id="socname" maxlength="64" value="${esc(soc.me ? soc.me.name : '')}" placeholder="Player name" aria-label="Player name" style="flex:1"><button class="pri" data-act="socname">Save</button></div><div class="err" id="socerr"></div>${soc.me ? `<p class="mute" style="font-size:13px;margin:6px 0 0">Friend code <b class="num" style="color:var(--ink)">${esc(soc.me.code)}</b></p>` : '<p class="mute" style="font-size:13px;margin:6px 0 0">Pick a name to use Friends, Chat, Mail and Trades.</p>'}`;
+  return `<div class="spread"><h2>Account</h2></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));margin-top:12px;align-items:start">
+      <div class="card"><h3>Character</h3><div class="row" style="margin-top:8px">${portrait(ch, 56)}<div class="mute" style="font-size:14px">${esc(r.name)} ${esc(cl.name || '')}<br>Race and class are chosen when a character is created.</div></div>
+        <label class="mute" for="acname" style="font-size:14px;display:block;margin-top:10px">Name</label>
+        <div class="row" style="gap:6px"><input id="acname" maxlength="64" value="${esc(ch.name)}" aria-label="Character name" style="flex:1"><button class="pri" data-act="acname">Save</button></div><div class="err" id="acerr"></div>
+        <p class="mute" style="font-size:12px;margin:4px 0 0">Anything goes: letters from any language, numbers, symbols, emoji, ( \u0361\u00b0 \u035c\u0296 \u0361\u00b0). Up to ${NAME_MAX} characters.</p>
+        <div class="mute" style="font-size:14px;margin-top:10px">Gender</div><div class="row" style="gap:6px;margin-top:4px">${['Male', 'Female'].map(g => `<button class="chip ${ch.gender === g ? 'on' : ''}" data-act="acgender" data-arg="${g}">${g}</button>`).join('')}</div></div>
+      <div class="card"><h3>Player name</h3>${prof}</div>
+    </div>
+    <h3 style="margin:18px 0 8px">Sign-in and cloud save</h3>${cloudPanel()}`;
+}
 let lbCat = 'prog';
 function tabLeaders() {
   const cat = CLOUD.lbCats.find(c => c[0] === lbCat) || CLOUD.lbCats[0];
@@ -3361,8 +3394,10 @@ async function cloudLoadLb() {
   cloud.lbLoading = false; if (screen === 'game' && tab === 'leaders') renderMain();
 }
 const CLOUD_HANDLERS = {
-  cloudopen: () => { if (screen === 'game') HANDLERS.tab('cloud'); else modal(`${cloudPanel()}<div class="row" style="margin-top:12px"><button data-act="close">Close</button></div>`); },
+  cloudopen: () => { if (screen === 'game') HANDLERS.tab('account'); else modal(`${cloudPanel()}<div class="row" style="margin-top:12px"><button data-act="close">Close</button></div>`); },
   cloudup: () => cloudUpload(true),
+  acname: () => { const v = $('#acname').value.trim(), p = nameProblem(v); if (p) { $('#acerr').textContent = p; return; } if (account.slots.some(c => c && c !== ch && c.name.toLowerCase() === v.toLowerCase())) { $('#acerr').textContent = 'Another of your characters already has that name.'; return; } const old = ch.name; ch.name = v; cloud.lastLb = ''; save(); addLog('sys', `${old} is now known as ${v}.`); toast('Name saved.', 'verd'); renderTop(); renderMain(); renderActions(); },
+  acgender: g => { if (!['Male', 'Female'].includes(g)) return; ch.gender = g; save(); renderMain(); },
   cloudget: () => modal(`<h3>Load cloud save?</h3><p>This replaces every character on this device with the cloud save from ${cloud.meta ? new Date(cloud.meta.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : ''}. Copy a save code first if you want a backup.</p><div class="row" style="margin-top:12px"><button class="pri" data-act="cloudload">Load it</button><button data-act="close">Cancel</button></div>`),
   cloudload: () => cloudLoad(),
   cloudset: k => { if (k === 'cloudAuto') account.settings.cloudAuto = account.settings.cloudAuto === false; else { account.settings.lbOptOut = account.settings.lbOptOut !== true; cloud.lastLb = ''; } save(); renderMain(); },
@@ -3406,7 +3441,7 @@ function socPaint() {
 let chatTimer = null;
 function chatLoop() {
   clearTimeout(chatTimer);
-  if (screen === 'game' && tab === 'chat' && socOn() && soc.me) chatFetch().finally(() => { chatTimer = setTimeout(chatLoop, document.hidden ? 15000 : 4000); });
+  if (screen === 'game' && tab === 'chat' && socOn() && soc.me) chatFetch().finally(() => { if (!document.hidden) chatTimer = setTimeout(chatLoop, 4000); });
 }
 async function chatFetch() {
   const ch_ = soc.chan, list = soc.msgs[ch_] || (soc.msgs[ch_] = []), after = list.length ? list[list.length - 1].id : 0;
@@ -3432,10 +3467,10 @@ function mailChip() { return `<button class="chip" id="mailchip" data-act="tab" 
 // ---------- Gate ----------
 function socGate() {
   if (cloud.sbBlocked) return `<div class="card"><p style="margin:0">Friends, chat, mail and trading work on the game’s website: <a href="https://thah3b.github.io/thousandfold/" target="_blank" rel="noopener">thah3b.github.io/thousandfold</a>. Claude links block connections to the game server.</p></div>`;
-  if (!socOn()) return `<div class="card"><p style="margin:0">Sign in to your Thousandfold account first.</p><div class="row" style="margin-top:10px"><button class="pri" data-act="tab" data-arg="cloud">Go to Cloud save</button></div></div>`;
+  if (!socOn()) return `<div class="card"><p style="margin:0">Sign in to your Thousandfold account first.</p><div class="row" style="margin-top:10px"><button class="pri" data-act="tab" data-arg="account">Go to Account</button></div></div>`;
   if (soc.me === undefined) { socRefresh(); return '<p class="mute">Loading…</p>'; }
-  if (!soc.me) return `<div class="card" style="max-width:520px"><h3>Choose a display name</h3><p class="mute" style="font-size:14px">This is how other players see you in chat, on friend lists and on trades. It’s separate from your characters’ names. 3–16 letters, numbers, spaces, - or _.</p>
-    <div class="row"><input id="socname" maxlength="16" autocomplete="off" aria-label="Display name" style="flex:1"><button class="pri" data-act="socname">Save</button></div><div class="err" id="socerr"></div></div>`;
+  if (!soc.me) return `<div class="card" style="max-width:520px"><h3>Choose a display name</h3><p class="mute" style="font-size:14px">This is how other players see you in chat, on friend lists and on trades. It’s separate from your characters’ names. Any letters, symbols or emoji, up to 24 characters.</p>
+    <div class="row"><input id="socname" maxlength="64" autocomplete="off" aria-label="Display name" style="flex:1"><button class="pri" data-act="socname">Save</button></div><div class="err" id="socerr"></div></div>`;
   return '';
 }
 const errBox = () => soc.err ? `<p class="bad" style="font-size:14px">${esc(soc.err)}</p>` : '';
@@ -3452,7 +3487,7 @@ function tabFriends() {
         <p class="mute" style="font-size:14px;margin:0">Friend code <b class="num" style="color:var(--ink)">${esc(soc.me.code)}</b> <button class="sm ghost" data-act="soccopy">Copy</button></p>
         <div class="row" style="margin-top:10px;gap:6px"><input id="socadd" placeholder="Friend code or display name" autocomplete="off" aria-label="Friend code or name" style="flex:1"><button class="pri" data-act="socadd">Add friend</button></div>
         <div class="err" id="socerr"></div>
-        <details style="margin-top:8px"><summary class="mute" style="font-size:13px">Change display name</summary><div class="row" style="margin-top:6px"><input id="socname" maxlength="16" value="${esc(soc.me.name)}" aria-label="Display name" style="flex:1"><button data-act="socname">Save</button></div></details></div>
+        <p class="mute" style="font-size:12px;margin:8px 0 0">Change your player name on the <button class="linkbtn" data-act="tab" data-arg="account">Account</button> tab.</p></div>
       ${inc.length ? `<div class="card"><h3>Friend requests</h3><div class="grid" style="gap:6px;margin-top:8px">${inc.map(f => `<div class="prow"><span><b>${esc(f.name)}</b> <span class="mute" style="font-size:12px">wants to be friends</span></span><span class="row" style="gap:4px"><button class="sm pri" data-act="socaccept" data-arg="${f.id}">Accept</button><button class="sm" data-act="socdecline" data-arg="${f.id}">Decline</button></span></div>`).join('')}</div></div>` : ''}
     </div>
     <h3 style="margin:16px 0 8px">Friends (${fr.length})</h3>${fr.length ? `<div class="grid" style="gap:6px">${fr.map(row).join('')}</div>` : '<p class="mute">No friends yet. Share your friend code, or add someone by their code or display name.</p>'}
@@ -3593,7 +3628,7 @@ function tabTrade() {
 const socErr = (id, e) => { const el = document.getElementById(id); const m = (e && e.message) || String(e); if (el) el.textContent = m; else toast(esc(m)); };
 const SOCIAL_HANDLERS = {
   socrefresh: () => socRefresh(),
-  socname: async () => { const v = $('#socname').value.trim(); try { await rpc('tf_set_profile', { p_name: v }); await socRefresh(); renderMain(); toast('Display name saved.', 'verd'); } catch (e) { socErr('socerr', e); } },
+  socname: async () => { const v = $('#socname').value.trim(), p = nameProblem(v); if (p) { socErr('socerr', p); return; } try { await rpc('tf_set_profile', { p_name: v }); await socRefresh(); renderMain(); toast('Display name saved.', 'verd'); } catch (e) { socErr('socerr', e); } },
   soccopy: async () => { try { await navigator.clipboard.writeText(soc.me.code); toast('Friend code copied.'); } catch (e) { toast('Your friend code is ' + esc(soc.me.code)); } },
   socadd: async () => { const v = $('#socadd').value.trim(); if (!v) return; try { const r = await rpc('tf_friend_add', { p_target: v }); toast({ sent: 'Friend request sent.', accepted: 'You’re now friends!', already: 'You’re already friends.', pending: 'Request already sent.' }[r] || 'Done.', 'verd'); await socRefresh(); renderMain(); } catch (e) { socErr('socerr', e); } },
   socaccept: async id => { try { await rpc('tf_friend_respond', { p_other: id, p_accept: true }); await socRefresh(); renderMain(); } catch (e) { toast(esc(e.message)); } },
@@ -3646,7 +3681,8 @@ document.addEventListener('change', e => {
   if (t.id === 'trgold' && soc.offer) { soc.offer.gold = Math.max(0, Math.floor(+t.value || 0)); renderMain(); }
   const q = t.dataset && t.dataset.offerq; if (q) { const p = q.split('|')[0], k = q.slice(q.indexOf('|') + 1), o = p === 'gift' ? soc.gift && soc.gift.offer : soc.offer; if (o) o.items[k] = Math.max(1, Math.floor(+t.value || 1)); if (p === 'tr') renderMain(); }
 });
-setInterval(() => { if (screen === 'game' && socOn() && Date.now() - soc.lastTick > 20000) socRefresh(); }, 5000);
+setInterval(() => { if (screen === 'game' && socOn() && !document.hidden && Date.now() - soc.lastTick > 60000) socRefresh(); }, 5000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && screen === 'game' && socOn() && Date.now() - soc.lastTick > 15000) { socRefresh(); if (tab === 'chat') chatLoop(); } });
 
 // ---------- Admin letters (v0.11a) ----------
 let adminDraft = { to: '', subject: '', body: '', gold: 0, items: {} };
@@ -3742,7 +3778,7 @@ function itemIcon(key, size) {
 const actIcon = (a, size) => a.inputs ? itemIcon(a.gearOut ? gkey(a.out) : a.out, size) : resIcon(a, size);
 function portrait(c, size) {
   const r = RACES.find(x => x.id === c.race) || RACES[0];
-  const ini = (c.name || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const ini = Array.from((c.name || '?').trim().split(/\s+/).map(w => Array.from(w)[0] || '').join('')).slice(0, 2).join('').toUpperCase() || '?';
   const mark = { 'Old scar': '<path d="M38 22 46 34" stroke="#fff" stroke-width="2" opacity=".6"/>', 'Runic tattoo': '<path d="M14 24h6l-3 6 3 6h-6" stroke="#fff" stroke-width="1.6" fill="none" opacity=".55"/>', 'Warpaint': '<path d="M12 30h40" stroke="#000" stroke-width="5" opacity=".25"/>', 'Freckles': '<g fill="#000" opacity=".25"><circle cx="20" cy="40" r="1.4"/><circle cx="24" cy="42" r="1.4"/><circle cx="40" cy="42" r="1.4"/><circle cx="44" cy="40" r="1.4"/></g>', 'Birthmark': '<circle cx="44" cy="44" r="3" fill="#000" opacity=".22"/>' }[c.look && c.look.markings] || '';
   return `<svg class="portrait" style="width:${size || 64}px;height:${(size || 64) * 1.125}px" viewBox="0 0 64 72" aria-hidden="true"><defs><linearGradient id="pg${r.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${r.color}"/><stop offset="1" stop-color="#2a1d17"/></linearGradient></defs>
 <path d="M4 4h56v34c0 16-14 26-28 32C18 64 4 54 4 38Z" fill="url(#pg${r.id})" stroke="${c.adv && TIER_FRAME[c.adv.tier] ? TIER_FRAME[c.adv.tier] : '#000'}" stroke-opacity="${c.adv && TIER_FRAME[c.adv.tier] ? 1 : .3}" stroke-width="${c.adv && TIER_FRAME[c.adv.tier] ? 3.5 : 1}"/><path d="M8 8h48v4H8Z" fill="#fff" opacity=".15"/>${mark}
@@ -3882,11 +3918,8 @@ function renderSelect() {
 const WZ_STEPS = ['Identity', 'Class', 'Origin', 'Region', 'Confirm'];
 function startWizard(slot) { screen = 'wizard'; wz = { slot, step: 0, name: '', gender: 'Male', race: 'human', cls: 'warrior', origin: 'orphan', region: 'emberfall', err: '' }; renderWizard(); }
 function nameError(n) {
+  const p = nameProblem(n); if (p) return p;
   n = n.trim();
-  if (n.length < 3 || n.length > 16) return 'Use 3 to 16 characters.';
-  if (!/^[A-Za-z][A-Za-z '\-]*$/.test(n)) return 'Letters, spaces, apostrophes and hyphens only.';
-  const flat = n.toLowerCase().replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/[^a-z]/g, '');
-  if (PROFANITY.some(w => flat.includes(w))) return 'Please choose another name.';
   if (account.slots.some(c => c && c.name.toLowerCase() === n.toLowerCase())) return 'You already have a character with that name.';
   return '';
 }
@@ -3899,7 +3932,7 @@ function wizardPreview() {
 }
 function renderWizard() {
   const s = wz.step; let body = '';
-  if (s === 0) body = `<div class="field"><label for="wzname">Name</label><input id="wzname" maxlength="16" value="${esc(wz.name)}" autocomplete="off"><div class="err" id="wzerr">${esc(wz.err)}</div></div>
+  if (s === 0) body = `<div class="field"><label for="wzname">Name</label><input id="wzname" maxlength="64" value="${esc(wz.name)}" autocomplete="off"><div class="err" id="wzerr">${esc(wz.err)}</div></div>
     <div class="field"><label>Gender</label><div class="row">${['Male', 'Female'].map(g => `<button class="chip ${wz.gender === g ? 'on' : ''}" data-act="wzset" data-arg="gender|${g}">${g}</button>`).join('')}</div></div>
     <div class="field"><label>Race</label><p class="mute" style="margin:0 0 6px">Races add a small flavour bonus and one passive. They never lock content.</p><div class="pick">${RACES.map(r => r.secret
     ? `<div class="opt locked card"><b>???</b><small>A secret race, unlocked through hidden content.</small></div>`
@@ -3924,7 +3957,7 @@ const NAV = [
   ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['quests', 'Quests'], ['leaders', 'Leaderboards']]],
   ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades']]],
-  ['Town', [['shop', 'Shop'], ['bank', 'Bank'], ['training', 'Training'], ['cloud', 'Cloud save'], ['settings', 'Settings']]],
+  ['Town', [['shop', 'Shop'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings']]],
 ];
 function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'mining'; agg = {}; rate = {};
@@ -3977,7 +4010,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, cloud: tabCloud, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: tabClass, talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide();
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
