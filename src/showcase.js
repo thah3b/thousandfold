@@ -93,7 +93,9 @@ function styledTitle(text, styleId, opt) {
     if (/^\s+$/.test(w)) return '<i class="sp"> </i>';
     const pal = st.words ? st.words[wi % st.words.length] : st.pal, cls = st.words ? `w${wi % st.words.length}` : '';
     wi++;
-    return `<span class="${cls}">${[...w].map(ch => { const k = i++; return `<i style="color:${pal[k % pal.length]};animation-delay:-${(k * 0.16).toFixed(2)}s">${esc(ch)}</i>`; }).join('')}</span>`;
+    const dur = pal.length * 0.45, now = Date.now() / 1000;
+    // Delay tied to the clock, so a redraw continues the colour flow instead of restarting it.
+    return `<span class="${cls}">${[...w].map(ch => { const k = i++; return `<i style="color:${pal[k % pal.length]};animation-delay:-${((now + k * 0.16) % dur).toFixed(2)}s">${esc(ch)}</i>`; }).join('')}</span>`;
   }).join('');
   return `<span class="stitle st-${st.id} ${o.size || ''}" data-noi18n title="${esc(text)}" aria-label="${esc(text)}">${html}</span>`;
 }

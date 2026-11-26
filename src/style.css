@@ -668,3 +668,59 @@ body.reduced .pf-founder{animation:none}
 .cstab td,.cstab th{padding:4px 8px;font-size:14px}
 @media (max-width:640px){.cscard{width:50px;height:72px}.cscard .pip{font-size:24px}.cscards{min-height:76px}.cscards .cscard+.cscard{margin-left:-18px}.csspot{min-width:0;flex:1}.cschip{width:44px;height:44px;font-size:11px}.cspays{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.cscard.deal{animation:none}}
+
+/* v2.4a Casino table (live-dealer style) */
+.cswrap{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;align-items:start}
+.cspanel{display:flex;flex-direction:column;padding:14px}
+.csbet{display:block;margin-bottom:10px;font-size:14px}.csbetrow{display:flex;gap:4px;margin-top:4px}
+.csbetrow input{flex:1;min-width:0;font:600 16px/1 'Alegreya Sans',system-ui;min-height:40px}
+.csbetrow button{min-width:40px;padding:4px 6px}
+.csbig{width:100%;min-height:50px;font-size:18px;font-weight:700}
+.csgrid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.csgrid2 button{min-height:46px;font-weight:700}
+.csgrid2 button:not(:disabled){background:var(--panel2);border-color:var(--ember)}
+kbd{font:11px Silkscreen,monospace;opacity:.6;margin-left:4px}
+.csq{font-size:14px;margin-bottom:8px}
+.cstable{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:540px;padding:18px 14px 46px;border-radius:24px 24px 220px 220px/24px 24px 120px 120px;background:radial-gradient(ellipse at 50% 30%,#22744b,#124a30 60%,#0b331f);border:8px solid #4b2e17;box-shadow:inset 0 0 0 2px #c9a227,inset 0 0 60px rgba(0,0,0,.5);color:#f3efe2}
+.csshoe{position:absolute;top:14px;right:16px;width:44px;height:58px;border-radius:6px;background:repeating-linear-gradient(45deg,#8e1f1f 0 5px,#6e1414 5px 10px);border:2px solid #f3e3b0;display:grid;place-items:end center;font:11px Silkscreen,monospace;padding-bottom:3px;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.csshoe span{background:rgba(0,0,0,.6);border-radius:4px;padding:0 4px}
+.csdealer{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:150px}
+.csfeltlbl{font:11px Silkscreen,monospace;letter-spacing:2px;opacity:.55}
+.csfelt{display:flex;flex-direction:column;align-items:center;margin:4px 0 2px;font:13px Silkscreen,monospace;letter-spacing:1px;color:#e9d48a;text-align:center}
+.csfelt .mute{color:rgba(243,239,226,.6);font:12px 'Alegreya Sans',system-ui;letter-spacing:0}
+.cstable .cscard{width:72px;height:102px}.cstable .cscard .pip{font-size:34px}.cstable .cscard .tl,.cstable .cscard .br{font-size:13px}
+.cstable .cscards{min-height:106px}.cstable .cscards .cscard+.cscard{margin-left:-30px}
+.csbub{display:inline-block;min-width:38px;text-align:center;padding:2px 10px;border-radius:999px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.25);font:700 15px/1.4 Silkscreen,monospace;color:#fff}
+.csbub.bj{background:#c9a227;color:#1c1410;border-color:#fff3b0}.csbub.lose{background:#8e1f1f}
+.cshands{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;min-height:170px;align-items:flex-start;margin-top:4px}
+.cstable .cshand{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 10px;border-radius:14px;border:2px solid transparent;transition:opacity .3s}
+.cstable .cshand.on{border-color:#ffd76a;background:rgba(255,215,106,.1);box-shadow:0 0 18px rgba(255,215,106,.25)}
+.cshand.r-lose{opacity:.6}
+.csres{font:700 13px Silkscreen,monospace;padding:2px 10px;border-radius:6px;letter-spacing:1px}
+.csres.win{background:#1f8a4c;color:#fff}.csres.bj{background:#c9a227;color:#1c1410}.csres.push{background:#555;color:#fff}.csres.lose{background:#8e1f1f;color:#fff}
+.cshbet{font-size:12px;color:#e9d48a}
+.csspots2{display:flex;gap:18px;justify-content:center;align-items:flex-end;margin-top:auto}
+.csspot2{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:96px;height:96px;border-radius:50%;border:2px solid rgba(233,212,138,.7);font:10px Silkscreen,monospace;color:#e9d48a;text-align:center}
+.csspot2:nth-child(2){width:112px;height:112px}
+.csspot2 .csstack{font:700 14px 'Alegreya Sans',system-ui;color:#fff;min-height:20px}
+.csspot2 .csstack:not(:empty){background:radial-gradient(circle,#c13d16 55%,#fff 56% 62%,#c13d16 63%);border-radius:50%;width:54px;height:54px;display:grid;place-items:center;font-size:12px;border:2px solid #4a1606;box-shadow:0 3px 0 #4a1606;margin-bottom:4px}
+.csspot2.hit{border-color:#ffd76a;box-shadow:0 0 22px rgba(255,215,106,.6)}.csspot2.miss{opacity:.55}
+.cssidewin{position:absolute;bottom:-22px;white-space:nowrap;background:#c9a227;color:#1c1410;border-radius:6px;padding:1px 8px;font-size:10px}
+.csbanner{font:700 18px Silkscreen,monospace;padding:6px 18px;border-radius:10px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);animation:cspop .35s ease-out both}
+.csbanner.win{color:#8ff0b0;border-color:#8ff0b0}.csbanner.lose{color:#ff9b93}.csbanner.push{color:#ddd}
+@keyframes cspop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
+.csbw{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:radial-gradient(circle,rgba(40,20,0,.55),rgba(0,0,0,.82));cursor:pointer;animation:csfade .25s both;overflow:hidden}
+@keyframes csfade{from{opacity:0}to{opacity:1}}
+.csbwbox{text-align:center;padding:28px 40px;border-radius:20px;background:radial-gradient(circle at 50% 30%,#3a2508,#1a1004);border:4px solid #c9a227;box-shadow:0 0 0 4px #4d3b05,0 0 60px rgba(255,200,60,.55);animation:csbwin .55s cubic-bezier(.2,1.6,.4,1) both;position:relative}
+@keyframes csbwin{from{transform:scale(.3) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
+.csbwt{font:700 44px/1.1 Silkscreen,monospace;letter-spacing:2px;background:linear-gradient(180deg,#fff6b8,#ffd700 45%,#c98a00);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(3px 3px 0 #4d2a00);animation:csbwpulse 1s ease-in-out infinite alternate}
+.csbw.huge .csbwt{background-image:linear-gradient(180deg,#fff,#ff9e3d 45%,#e0301e)}.csbw.mega .csbwt{background-image:linear-gradient(90deg,#3ee0ff,#9a4dff,#ff4dd8,#ffd700);background-size:200% 100%;animation:csbwpulse 1s ease-in-out infinite alternate,csbwslide 2s linear infinite}
+@keyframes csbwpulse{from{transform:scale(1)}to{transform:scale(1.06)}}@keyframes csbwslide{to{background-position:200% 0}}
+.csbwamt{font:700 38px/1.2 Silkscreen,monospace;color:#fff;margin-top:8px;text-shadow:3px 3px 0 #000}
+.csbwsub{font-size:16px;color:#e9d48a}
+.csbwcoins{position:absolute;inset:0;pointer-events:none}
+.csbwcoins i{position:absolute;top:-20px;width:14px;height:14px;background:#ffd700;box-shadow:inset -3px -3px 0 #c98a00,inset 3px 3px 0 #fff6b8;image-rendering:pixelated;animation:cscoin linear infinite}
+@keyframes cscoin{from{transform:translateY(0) rotate(0)}to{transform:translateY(110vh) rotate(540deg)}}
+@media (max-width:900px){.cswrap{grid-template-columns:1fr}.cswrap .cstable{order:-1}}
+@media (max-width:640px){.cstable{min-height:0;border-radius:18px 18px 120px 120px/18px 18px 70px 70px;padding:12px 6px}.cstable .cscard{width:54px;height:78px}.cstable .cscard .pip{font-size:26px}.cstable .cscards{min-height:80px}.cstable .cscards .cscard+.cscard{margin-left:-24px}
+  .csspot2{width:74px;height:74px;font-size:8px}.csspot2:nth-child(2){width:86px;height:86px}.csspot2 .csstack:not(:empty){width:44px;height:44px;font-size:10px}.csbwt{font-size:30px}.csbwamt{font-size:26px}.csbwbox{padding:20px 22px}}
+@media (prefers-reduced-motion:reduce){.csbw,.csbwbox,.csbwt,.csbanner{animation:none}.csbwcoins{display:none}}

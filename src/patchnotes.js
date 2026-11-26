@@ -2,8 +2,14 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.4';
+const GAME_VERSION = 'v2.4a';
 const PATCH_NOTES = [
+  { v: 'v2.4a', date: '2026-11-26', title: 'Blackjack table redesign', notes: [
+    "Blackjack table redesigned in the style of online live-dealer tables: type your main and side bets (2500, 25k, 1.5m all work) with \u00bd, 2\u00d7 and Max buttons, then Bet. Keyboard: H hit, S stand, D double, P split, Space or Enter to bet.",
+    "No table limits: bet up to what you hold.",
+    "Big win screen when a round pays back 3\u00d7 or more of your bet (Big, Huge and Mega wins).",
+    "Fixed: the Casino and Profile pages no longer redraw every second, so open panels stay open and coloured titles flow smoothly.",
+  ] },
   { v: 'v2.4', date: '2026-11-26', title: 'Casino: Blackjack', notes: [
     "Casino is open (Town \u2192 Casino). First game: Blackjack with an 8-deck shoe. Blackjack pays 3:2, dealer stands on all 17s, insurance pays 2:1, double on any two cards (also after a split), split up to 4 hands. Side bets: Perfect Pairs (up to 25:1) and 21+3 (up to 100:1). Bet gold or Thousandium.",
     "Casino stats: a graph of your money, net result, wagered, won and lost amounts round by round, plus totals and your recent rounds. Gold and Thousandium are tracked separately. Casino winnings don't count toward the gold-earned leaderboard.",

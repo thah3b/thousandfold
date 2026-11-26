@@ -121,6 +121,9 @@ function clockText() {
 
 // ---------- Loop ----------
 let lastT = 0, loopAcc = 0, lastLive = 0, lastSave = Date.now();
+// Tabs the player drives by hand: game ticks don't redraw them (live numbers still update), so open panels
+// and animations aren't reset every second.
+const QUIET_TABS = new Set(['casino', 'showcase']);
 function frame(t) {
   if (screen === 'game' && ch) {
     const dt = lastT ? t - lastT : 0;
@@ -128,7 +131,7 @@ function frame(t) {
     else { loopAcc += dt; let s = 0; while (loopAcc >= BALANCE.tickMs && s < 60) { step(); loopAcc -= BALANCE.tickMs; s++; } if (s >= 60) loopAcc = 0; }
     const now = Date.now();
     if (now - lastFlush >= BALANCE.logFlushMs) { lastFlush = now; flush(); }
-    if (t - lastLive >= 1000 / BALANCE.uiHz) { lastLive = t; updateLive(); if (dirty) { dirty = false; renderMain(); renderActions(); renderTop(); } }
+    if (t - lastLive >= 1000 / BALANCE.uiHz) { lastLive = t; updateLive(); if (dirty) { dirty = false; if (!QUIET_TABS.has(tab)) renderMain(); else renderSide(); renderActions(); renderTop(); } }
     if (now - lastSave >= BALANCE.autosaveMs) { lastSave = now; save(); }
     if (now - (frame.sec || 0) >= 2000) { frame.sec = now; checkSecrets(); eventTick(); loreTick(); dungeonTick(); qolTick(); autoBuy(); autoUseTick(); fbPoll(); refreshScenes(); }
     drawBars();
@@ -276,7 +279,9 @@ function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
   const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { home: tabHome, games: tabGames, casino: tabCasino, showcase: tabShowcase, wardrobe: tabWardrobe, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
+  const openD = new Set([...$('#main').querySelectorAll('details[open] > summary')].map(x => x.textContent));
   $('#main').innerHTML = f();
+  if (openD.size) for (const d of $('#main').querySelectorAll('details')) { const sm = d.querySelector(':scope > summary'); if (sm && openD.has(sm.textContent)) d.open = true; }
   renderNav(); renderSide(); const ap = document.querySelector('.app'); if (ap) ap.dataset.tab = tab;
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
   bindMain(); updateLive(); refreshScenes();

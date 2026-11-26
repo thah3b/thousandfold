@@ -11,8 +11,8 @@
 const CS = {
   decks: 8,
   cur: {
-    gold: { name: 'Gold', min: 10, max: 10000000, sideMax: 1000000, chips: [10, 100, 1000, 10000, 100000, 1000000] },
-    th: { name: 'Thousandium', min: 1, max: 50, sideMax: 10, chips: [1, 5, 10, 25] },
+    gold: { name: 'Gold', min: 1, max: Infinity, sideMax: Infinity },
+    th: { name: 'Thousandium', min: 1, max: Infinity, sideMax: Infinity },
   },
   pp: [['Perfect pair', 25], ['Coloured pair', 12], ['Mixed pair', 6]],
   t3: [['Suited three of a kind', 100], ['Straight flush', 40], ['Three of a kind', 30], ['Straight', 10], ['Flush', 5]],
@@ -76,8 +76,6 @@ function csCanDeal() {
   const c = csState(), b = c.bets[c.cur], L = CS.cur[c.cur];
   const total = b.main + b.pp + b.t3;
   if (b.main < L.min) return `Minimum bet is ${N(L.min)}.`;
-  if (b.main > L.max) return `Maximum bet is ${N(L.max)}.`;
-  if (b.pp > L.sideMax || b.t3 > L.sideMax) return `Side bets are up to ${N(L.sideMax)} each.`;
   if (total > csBal(c.cur)) return `Not enough ${L.name}.`;
   return '';
 }
@@ -88,7 +86,7 @@ function csDeal() {
   const b = c.bets[c.cur];
   csPay(c.cur, -(b.main + b.pp + b.t3));
   const r = c.round = { cur: c.cur, bet: b.main, pp: b.pp, t3: b.t3, staked: b.main + b.pp + b.t3, back: 0, hands: [{ cards: [], bet: b.main }], act: 0, dealer: [], phase: 'play', ins: 0, notes: [] };
-  c.msg = ''; csSeen = new Set();
+  c.msg = ''; c.bigWin = null; csSeen = new Set();
   r.hands[0].cards.push(csDraw(c)); r.dealer.push(csDraw(c)); r.hands[0].cards.push(csDraw(c)); r.dealer.push(csDraw(c));
   // Side bets settle straight away.
   const h = r.hands[0].cards;
@@ -97,12 +95,12 @@ function csDeal() {
   if (r.back) csPay(r.cur, r.back);
   if (csRank(r.dealer[0]) === 0 && csBal(r.cur) >= Math.ceil(r.bet / 2)) r.phase = 'insurance';
   else csPeek();
-  save(); renderTop(); renderMain();
+  save(); renderTop(); renderMain(); csBigWinStart();
 }
 function csInsurance(take) {
   const c = csState(), r = c.round; if (!r || r.phase !== 'insurance') return;
   if (take) { r.ins = Math.ceil(r.bet / 2); csPay(r.cur, -r.ins); r.staked += r.ins; }
-  r.phase = 'play'; csPeek(); save(); renderTop(); renderMain();
+  r.phase = 'play'; csPeek(); save(); renderTop(); renderMain(); csBigWinStart();
 }
 // Dealer checks the hole card when showing an Ace or a ten-value card.
 function csPeek() {
@@ -140,7 +138,7 @@ function csAction(a) {
     h.splitAces = aces; h.split = true;
     r.hands.splice(r.act + 1, 0, nh);
   }
-  csAutoStand(); save(); renderTop(); renderMain();
+  csAutoStand(); save(); renderTop(); renderMain(); csBigWinStart();
 }
 const csCanSplit = (r, h) => h.cards.length === 2 && csVal(h.cards[0]) === csVal(h.cards[1]) && r.hands.length < 4 && !h.splitAces && csBal(r.cur) >= h.bet;
 
@@ -152,7 +150,7 @@ function csDealerPlay() {
     const t = csTotal(r.dealer).t;
     if (live && t < 17) { r.dealer.push(csDraw(ch.casino)); save(); if (tab === 'casino') renderMain(); csTimer = setTimeout(step, account.settings.reduced ? 0 : 550); return; }
     csSettle();
-    if (tab === 'casino') { renderTop(); renderMain(); }
+    if (tab === 'casino') { renderTop(); renderMain(); csBigWinStart(); }
   };
   clearTimeout(csTimer);
   if (account.settings.reduced) { while (live && csTotal(r.dealer).t < 17) r.dealer.push(csDraw(ch.casino)); csSettle(); return; }
@@ -183,14 +181,14 @@ function csSettle() {
   S.best = Math.max(S.best, net); S.worst = Math.min(S.worst, net);
   S.hist.push([Math.round(Date.now() / 1000), csBal(r.cur), r.staked, net]);
   if (S.hist.length > CS.histMax) { const o = S.hist.shift(); S.base.w += o[2]; if (o[3] > 0) S.base.won += o[3]; else S.base.lost -= o[3]; }
-  r.net = net; r.phase = 'done';
+  r.net = net; r.phase = 'done'; csCheckBigWin(r);
   const cn = r.cur === 'th' ? 'Thousandium' : 'gold';
   if (r.hands.some(h => h.res === 'bj')) addLog('lucky', `Blackjack! Won ${N(Math.floor(r.bet * 3 / 2))} ${cn} at the Casino.`);
   for (const [k, s] of r.notes) if ((k === 'pp' || k === 't3') && / pays (1[2-9]|[2-9]\d|\d{3}):1/.test(s)) addLog('lucky', `Casino: ${s.replace(/ \(\+.*\)$/, '')}`);
   save();
 }
 
-// ---------- Table view ----------
+// ---------- Table view (layout after online live-dealer tables: controls on the left, felt on the right) ----------
 function csCard(c, key, hidden) {
   const isNew = !csSeen.has(key); csSeen.add(key);
   const cls = `cscard ${hidden ? 'back' : csRed(c) ? 'red' : 'blk'} ${isNew && !account.settings.reduced ? 'deal' : ''}`;
@@ -198,45 +196,125 @@ function csCard(c, key, hidden) {
   const r = CS_RANKS[csRank(c)], s = CS_SUITS[csSuit(c)];
   return `<div class="${cls}" aria-label="${r}${s}"><span class="tl">${r}<br>${s}</span><span class="pip">${s}</span><span class="br">${r}<br>${s}</span></div>`;
 }
-function csTotalLabel(cards, final) { const { t, soft } = csTotal(cards); if (csIsBJ(cards)) return 'Blackjack'; if (t > 21) return final === 'hand' ? `${t}` : `${t} · Bust`; return soft && t < 21 && !final ? `${t - 10} / ${t}` : `${t}`; }
-const CS_RES = { win: ['Win', 'verd'], bj: ['Blackjack 3:2', 'gold'], push: ['Push', 'mute'], lose: ['Lose', 'bad'], bust: ['Bust', 'bad'] };
-function csChipLabel(n) { return n >= 1e6 ? (n / 1e6) + 'M' : n >= 1e3 ? (n / 1e3) + 'K' : String(n); }
-
+function csTotalLabel(cards, final) { const { t, soft } = csTotal(cards); if (csIsBJ(cards)) return 'BJ'; return soft && t < 21 && !final ? `${t - 10}/${t}` : `${t}`; }
+const CS_RES = { win: ['Win', 'win'], bj: ['Blackjack', 'bj'], push: ['Push', 'push'], lose: ['Lose', 'lose'], bust: ['Bust', 'lose'] };
+// Typed amounts: "2500", "2.5k", "10m", "1b".
+function csParse(v) { const m = String(v || '').trim().toLowerCase().replace(/[, _]/g, '').match(/^(\d*\.?\d+)([kmb])?$/); if (!m) return 0; return Math.floor(+m[1] * ({ k: 1e3, m: 1e6, b: 1e9 }[m[2]] || 1)); }
+function csBetBox(k, label, c, L, locked) {
+  const v = c.bets[c.cur][k];
+  return `<label class="csbet"><span class="spread"><span>${label}</span><span class="mute num" id="csv-${k}">${v ? N(v) : ''}</span></span>
+    <span class="csbetrow"><input id="csin-${k}" class="csin" data-k="${k}" inputmode="decimal" autocomplete="off" value="${v || ''}" placeholder="0" ${locked ? 'disabled' : ''}>
+    <button class="sm" data-act="csbetop" data-arg="${k}|half" ${locked ? 'disabled' : ''}>½</button><button class="sm" data-act="csbetop" data-arg="${k}|dbl" ${locked ? 'disabled' : ''}>2×</button><button class="sm" data-act="csbetop" data-arg="${k}|max" ${locked ? 'disabled' : ''}>Max</button></span></label>`;
+}
 function csTableHtml() {
-  const c = csState(), r = c.round, L = CS.cur[c.cur], b = c.bets[c.cur];
-  const live = r && r.phase !== 'done';
-  const showHole = r && (r.phase === 'dealer' || r.phase === 'done');
-  const dealer = r ? `<div class="csrow"><div class="cslabel">Dealer ${showHole ? `<b>${csTotalLabel(r.dealer, true)}</b>` : `<b>${csVal(r.dealer[0]) === 11 ? '1 / 11' : csVal(r.dealer[0])}</b>`}</div><div class="cscards">${r.dealer.map((x, i) => csCard(x, (i === 1 && !showHole ? 'dh' : 'd') + i, i === 1 && !showHole)).join('')}</div></div>` : `<div class="csrow"><div class="cslabel">Dealer</div><div class="cscards"><div class="cscard ghost"></div><div class="cscard ghost"></div></div></div>`;
-  const hands = r ? `<div class="cshands">${r.hands.map((h, i) => {
-    const on = r.phase === 'play' && i === r.act, res = h.res && CS_RES[h.res];
-    return `<div class="cshand ${on ? 'on' : ''}"><div class="cscards">${h.cards.map((x, j) => csCard(x, `h${i}-${j}`)).join('')}</div>
-      <div class="cslabel"><b>${csTotalLabel(h.cards, h.res ? 'hand' : h.done || r.phase !== 'play')}</b> · bet ${N(h.bet)}${h.dbl ? ' (doubled)' : ''}${res ? ` · <b class="${res[1]}">${res[0]}</b>` : ''}</div></div>`;
-  }).join('')}</div>` : `<div class="cshands"><div class="cshand"><div class="cscards"><div class="cscard ghost"></div><div class="cscard ghost"></div></div><div class="cslabel mute">Place your bets</div></div></div>`;
-  const notes = r && r.notes.length ? `<div class="csnotes">${r.notes.map(([k, s]) => `<span class="chip ${/x$/.test(k) ? '' : 'on'}">${esc(s)}</span>`).join('')}</div>` : '';
-  let controls;
-  if (r && r.phase === 'insurance') controls = `<p style="margin:0 0 8px">Dealer shows an Ace. Take insurance for <b>${N(Math.ceil(r.bet / 2))}</b>? It pays 2:1 if the dealer has Blackjack.</p><div class="row"><button class="pri" data-act="csins" data-arg="1">Take insurance</button><button data-act="csins" data-arg="0">No thanks</button></div>`;
-  else if (r && r.phase === 'play') {
-    const h = csHand();
-    controls = `<div class="row csacts"><button class="pri" data-act="csact" data-arg="hit">Hit</button><button class="pri" data-act="csact" data-arg="stand">Stand</button>
-      <button data-act="csact" data-arg="double" ${h.cards.length === 2 && csBal(r.cur) >= h.bet ? '' : 'disabled'}>Double</button>
-      <button data-act="csact" data-arg="split" ${csCanSplit(r, h) ? '' : 'disabled'}>Split</button></div>`;
-  } else if (r && r.phase === 'dealer') controls = `<p class="mute" style="margin:0">Dealer is drawing…</p>`;
+  const c = csState(), r = c.round, L = CS.cur[c.cur];
+  const live = r && r.phase !== 'done', showHole = r && (r.phase === 'dealer' || r.phase === 'done');
+  const bubble = (txt, cls) => `<span class="csbub ${cls || ''}">${txt}</span>`;
+  // Dealer
+  const dTot = r ? (showHole ? csTotalLabel(r.dealer, true) : (csVal(r.dealer[0]) === 11 ? '1/11' : csVal(r.dealer[0]))) : '';
+  const dBust = r && showHole && csTotal(r.dealer).t > 21;
+  const dealer = `<div class="csdealer"><div class="cscards">${r ? r.dealer.map((x, i) => csCard(x, (i === 1 && !showHole ? 'dh' : 'd') + i, i === 1 && !showHole)).join('') : '<div class="cscard ghost"></div><div class="cscard ghost"></div>'}</div>
+    ${r ? bubble(dBust ? `${dTot} · Bust` : dTot, dBust ? 'lose' : '') : ''}<div class="csfeltlbl">DEALER</div></div>`;
+  // Felt text, like a real table
+  const felt = `<div class="csfelt"><span>BLACKJACK PAYS 3 TO 2</span><span class="mute">Dealer stands on all 17s · Insurance pays 2 to 1</span></div>`;
+  // Player hands
+  const hands = r ? r.hands.map((h, i) => {
+    const on = r.phase === 'play' && i === r.act, res = h.res && CS_RES[h.res], t = csTotal(h.cards).t;
+    return `<div class="cshand ${on ? 'on' : ''} ${res ? 'r-' + res[1] : ''}"><div class="cscards">${h.cards.map((x, j) => csCard(x, `h${i}-${j}`)).join('')}</div>
+      ${bubble(csTotalLabel(h.cards, h.done || r.phase !== 'play'), t > 21 ? 'lose' : csIsBJ(h.cards) && !h.split ? 'bj' : '')}
+      ${res ? `<span class="csres ${res[1]}">${res[0]}</span>` : ''}<span class="cshbet">${N(h.bet)}${h.dbl ? ' · 2×' : ''}</span></div>`;
+  }).join('') : '';
+  // Bet spots on the felt
+  const b = r ? { pp: r.pp, main: r.bet, t3: r.t3 } : c.bets[c.cur];
+  const note = k => r && r.notes.find(n => n[0] === k || n[0] === k + 'x');
+  const spot = (k, n) => { const nt = note(k), hit = nt && nt[0] === k; return `<div class="csspot2 ${hit ? 'hit' : nt ? 'miss' : ''}"><span class="csstack">${b[k] ? N(b[k]) : ''}</span><span class="lbl">${n}</span>${hit ? `<span class="cssidewin">${esc(nt[1].replace(/ \(.*$/, ''))}</span>` : ''}</div>`; };
+  const spots = `<div class="csspots2">${spot('pp', 'PERFECT PAIRS')}${spot('main', 'MAIN')}${spot('t3', '21+3')}</div>`;
+  // Controls
+  let act;
+  if (r && r.phase === 'insurance') act = `<div class="csq">Insurance? Dealer shows an Ace. Costs <b>${N(Math.ceil(r.bet / 2))}</b>, pays 2:1 if the dealer has Blackjack.</div>
+    <div class="csgrid2"><button class="pri" data-act="csins" data-arg="1">Insure</button><button data-act="csins" data-arg="0">No insurance</button></div>`;
   else {
-    const spot = (k, n) => `<button class="csspot ${c.spot === k ? 'on' : ''}" data-act="csspot" data-arg="${k}"><span class="mute">${n}</span><b class="num">${N(b[k])}</b></button>`;
-    const err = csCanDeal();
-    controls = `${r ? `<p style="margin:0 0 10px;font-size:18px">${r.net > 0 ? `You won <b class="verd">${N(r.net)}</b> ${r.cur === 'th' ? 'Thousandium' : 'gold'}.` : r.net < 0 ? `You lost <b class="bad">${N(-r.net)}</b> ${r.cur === 'th' ? 'Thousandium' : 'gold'}.` : 'You broke even.'}</p>` : ''}
-      <div class="row csspots">${spot('main', 'Main bet')}${spot('pp', 'Perfect Pairs')}${spot('t3', '21+3')}</div>
-      <div class="row cschips">${L.chips.map(v => `<button class="cschip" data-act="cschip" data-arg="${v}">${csChipLabel(v)}</button>`).join('')}<button class="sm ghost" data-act="csclear">Clear bets</button><button class="sm ghost" data-act="csx2">×2</button></div>
-      <div class="row" style="margin-top:10px"><button class="pri" data-act="csdeal" ${err ? 'disabled' : ''}>Deal</button><span class="mute" style="font-size:14px">${esc(c.msg || err || `Table limits: ${N(L.min)}–${N(L.max)}, side bets up to ${N(L.sideMax)}.`)}</span></div>`;
+    const h = r && r.phase === 'play' ? csHand() : null;
+    const can = { hit: !!h, stand: !!h, double: !!h && h.cards.length === 2 && csBal(r.cur) >= h.bet, split: !!h && csCanSplit(r, h) };
+    act = `<div class="csgrid2"><button data-act="csact" data-arg="hit" ${can.hit ? '' : 'disabled'}>Hit <kbd>H</kbd></button><button data-act="csact" data-arg="stand" ${can.stand ? '' : 'disabled'}>Stand <kbd>S</kbd></button>
+      <button data-act="csact" data-arg="split" ${can.split ? '' : 'disabled'}>Split <kbd>P</kbd></button><button data-act="csact" data-arg="double" ${can.double ? '' : 'disabled'}>Double <kbd>D</kbd></button></div>`;
   }
+  const err = live ? '' : csCanDeal(), total = c.bets[c.cur].main + c.bets[c.cur].pp + c.bets[c.cur].t3;
+  const panel = `<div class="cspanel card">
+    ${csBetBox('main', 'Main bet', c, L, live)}${csBetBox('pp', 'Perfect Pairs', c, L, live)}${csBetBox('t3', '21+3', c, L, live)}
+    <div class="spread mute" style="font-size:13px;margin:2px 0 10px"><span>Total bet</span><b class="num" id="cstotal" style="color:var(--ink)">${N(total)}</b></div>
+    <button class="pri csbig" data-act="csdeal" id="csdealbtn" ${live || err ? 'disabled' : ''}>${r && !live ? 'Bet again' : 'Bet'} <kbd>Space</kbd></button>
+    <p class="mute" id="csmsg" style="font-size:13px;margin:6px 0 10px;min-height:18px">${esc(live ? (r.phase === 'dealer' ? 'Dealer is drawing…' : '') : (c.msg || err || 'No table limit: bet up to what you hold.'))}</p>
+    ${act}
+    <p class="mute" style="font-size:12px;margin:10px 0 0">Type amounts like 2500, 25k or 1.5m.</p></div>`;
+  const result = r && r.phase === 'done' ? `<div class="csbanner ${r.net > 0 ? 'win' : r.net < 0 ? 'lose' : 'push'}">${r.net > 0 ? `You won <b>${N(r.net)}</b>` : r.net < 0 ? `You lost <b>${N(-r.net)}</b>` : 'Push · your bet is returned'}</div>` : '';
   const left = c.shoe.length - c.pos;
-  return `<div class="cstable">${dealer}${notes}${hands}</div>
-    <div class="card" style="margin-top:12px">${controls}</div>
-    <p class="mute" style="font-size:13px;margin:10px 0 0">8-deck shoe · ${left} cards left${c.pos >= c.cut ? ' · shuffle next hand' : ''} · Blackjack pays 3:2 · Dealer stands on all 17s · Insurance pays 2:1 · Double on any two cards, also after a split · Split up to 4 hands · Split Aces get one card</p>
+  return `<div class="cswrap">${panel}<div class="cstable">
+      <div class="csshoe" title="${left} cards left in the shoe"><span>${left}</span></div>
+      ${dealer}${felt}${result}<div class="cshands">${hands}</div>${spots}
+      ${r && r.notes.some(n => n[0] === 'ins' || n[0] === 'insx') ? `<div class="csnotes">${r.notes.filter(n => n[0].startsWith('ins')).map(([k, s]) => `<span class="chip ${k === 'ins' ? 'on' : ''}">${esc(s)}</span>`).join('')}</div>` : ''}
+    </div></div>
+    <p class="mute" style="font-size:13px;margin:10px 0 0">8-deck shoe${c.pos >= c.cut ? ' · shuffle next hand' : ''} · Blackjack pays 3:2 · Dealer stands on all 17s · Insurance pays 2:1 · Double on any two cards, also after a split · Split up to 4 hands · Split Aces get one card</p>
     <details class="card" style="margin-top:10px"><summary><b>Side bet payouts</b></summary>
       <div class="cspays"><div><b>Perfect Pairs</b>${CS.pp.map(([n, p]) => `<div class="spread"><span>${n}</span><b>${p}:1</b></div>`).join('')}</div>
       <div><b>21+3</b>${CS.t3.map(([n, p]) => `<div class="spread"><span>${n}</span><b>${p}:1</b></div>`).join('')}</div></div>
-      <p class="mute" style="font-size:13px;margin:8px 0 0">Perfect Pairs uses your first two cards. 21+3 uses your first two cards and the dealer's up card. Both pay the moment the cards are dealt.</p></details>`;
+      <p class="mute" style="font-size:13px;margin:8px 0 0">Perfect Pairs uses your first two cards. 21+3 uses your first two cards and the dealer's up card. Both pay the moment the cards are dealt.</p></details>
+    ${csBigWinHtml(c)}`;
+}
+// Typing a bet updates the numbers without redrawing the table.
+document.addEventListener('input', e => {
+  const el = e.target; if (!el.classList || !el.classList.contains('csin') || typeof ch === 'undefined' || !ch) return;
+  const c = csState(), k = el.dataset.k; c.bets[c.cur][k] = csParse(el.value); c.msg = '';
+  const v = document.getElementById('csv-' + k); if (v) v.textContent = c.bets[c.cur][k] ? N(c.bets[c.cur][k]) : '';
+  csPanelRefresh();
+});
+function csPanelRefresh() {
+  const c = csState(), b = c.bets[c.cur], L = CS.cur[c.cur], err = csCanDeal();
+  const t = document.getElementById('cstotal'); if (t) t.textContent = N(b.main + b.pp + b.t3);
+  const d = document.getElementById('csdealbtn'); if (d) d.disabled = !!err;
+  const m = document.getElementById('csmsg'); if (m) m.textContent = err || 'No table limit: bet up to what you hold.';
+  const sp = document.querySelectorAll('.csspots2 .csstack'); if (sp.length === 3 && !(c.round && c.round.phase !== 'done')) [b.pp, b.main, b.t3].forEach((v, i) => sp[i].textContent = v ? N(v) : '');
+}
+// Keyboard: H hit, S stand, D double, P split, Space bet.
+document.addEventListener('keydown', e => {
+  if (typeof tab === 'undefined' || tab !== 'casino' || e.ctrlKey || e.metaKey || e.altKey || document.getElementById('modal')) return;
+  const inInput = e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
+  const c = ch && ch.casino; if (!c) return;
+  if (c.bigWin) { if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); CASINO_HANDLERS.csbigok(); } return; }
+  if (e.key === 'Enter' && inInput) { e.preventDefault(); csDeal(); return; }
+  if (inInput) return;
+  const k = e.key.toLowerCase(), m = { h: 'hit', s: 'stand', d: 'double', p: 'split' }[k];
+  if (m && c.round && c.round.phase === 'play') { e.preventDefault(); csAction(m); }
+  else if (e.key === ' ' && c.view === 'table' && !(c.round && c.round.phase !== 'done')) { e.preventDefault(); csDeal(); }
+});
+
+// ---------- Big win ----------
+// Shown when a round pays back at least 3× what you put on the table at the deal
+// (a won double, a won split, a fat side bet…). Tap or wait to close.
+const CS_TIERS = [[25, 'MEGA WIN'], [10, 'HUGE WIN'], [3, 'BIG WIN']];
+function csCheckBigWin(r) {
+  const base = r.bet + r.pp + r.t3, mult = r.back / Math.max(1, base);
+  const tier = r.net > 0 && CS_TIERS.find(t => mult >= t[0]);
+  if (!tier) return;
+  ch.casino.bigWin = { amt: r.net, back: r.back, mult: Math.floor(mult * 10) / 10, tier: tier[1], cur: r.cur, at: Date.now() };
+  addLog('lucky', `Casino ${tier[1].toLowerCase()}: +${N(r.net)} ${r.cur === 'th' ? 'Thousandium' : 'gold'} (${Math.floor(mult * 10) / 10}× your bet).`);
+}
+function csBigWinHtml(c) {
+  const w = c.bigWin; if (!w) return '';
+  if (Date.now() - w.at > 8000) { c.bigWin = null; return ''; }
+  const coins = account.settings.reduced ? '' : Array.from({ length: 26 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${((i * 0.13) % 1.2).toFixed(2)}s;animation-duration:${(1.6 + (i % 5) * 0.25).toFixed(2)}s"></i>`).join('');
+  return `<div class="csbw ${w.tier === 'MEGA WIN' ? 'mega' : w.tier === 'HUGE WIN' ? 'huge' : ''}" data-act="csbigok" role="dialog" aria-label="${w.tier}">
+    <div class="csbwcoins">${coins}</div>
+    <div class="csbwbox"><div class="csbwt">${w.tier}</div><div class="csbwamt num" data-to="${w.amt}">${account.settings.reduced ? '+' + N(w.amt) : '+0'}</div>
+    <div class="csbwsub">${w.cur === 'th' ? 'Thousandium' : 'gold'} · ${w.mult}× your bet</div><div class="mute" style="font-size:13px;margin-top:10px">Tap to continue</div></div></div>`;
+}
+let csBwTimer = null;
+function csBigWinStart() {
+  const el = document.querySelector('.csbwamt'); if (!el || account.settings.reduced) return;
+  const to = +el.dataset.to, t0 = performance.now(), dur = 1400;
+  const step = t => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = '+' + N(Math.floor(to * e)); if (k < 1 && document.body.contains(el)) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  clearTimeout(csBwTimer); csBwTimer = setTimeout(() => { if (ch && ch.casino && ch.casino.bigWin) CASINO_HANDLERS.csbigok(); }, 4200);
 }
 
 // ---------- Stats view ----------
@@ -322,10 +400,11 @@ function tabCasino() {
 const CASINO_HANDLERS = {
   cscur: k => { const c = csState(); if (c.round && c.round.phase !== 'done') return; c.cur = k; c.statCur = k; c.msg = ''; renderMain(); },
   csview: k => { csState().view = k; renderMain(); },
-  csspot: k => { csState().spot = k; renderMain(); },
-  cschip: v => { const c = csState(), b = c.bets[c.cur], L = CS.cur[c.cur]; const cap = c.spot === 'main' ? L.max : L.sideMax; b[c.spot] = Math.min(cap, b[c.spot] + +v); c.msg = ''; renderMain(); },
-  csclear: () => { const c = csState(); c.bets[c.cur] = { main: 0, pp: 0, t3: 0 }; c.msg = ''; renderMain(); },
-  csx2: () => { const c = csState(), b = c.bets[c.cur], L = CS.cur[c.cur]; b.main = Math.min(L.max, b.main * 2); b.pp = Math.min(L.sideMax, b.pp * 2); b.t3 = Math.min(L.sideMax, b.t3 * 2); renderMain(); },
+  csbetop: a => { const [k, op] = a.split('|'), c = csState(), b = c.bets[c.cur], L = CS.cur[c.cur], cap = k === 'main' ? L.max : L.sideMax;
+    if (op === 'half') b[k] = Math.floor(b[k] / 2); else if (op === 'dbl') b[k] = Math.max(1, b[k]) * 2;
+    else { const other = (k === 'main' ? 0 : b.main) + (k === 'pp' ? 0 : b.pp) + (k === 't3' ? 0 : b.t3); b[k] = Math.max(0, Math.floor(csBal(c.cur) - other)); }
+    const el = document.getElementById('csin-' + k); if (el) el.value = b[k] || ''; const v = document.getElementById('csv-' + k); if (v) v.textContent = b[k] ? N(b[k]) : ''; c.msg = ''; csPanelRefresh(); },
+  csbigok: () => { const c = csState(); c.bigWin = null; clearTimeout(csBwTimer); const el = document.querySelector('.csbw'); if (el) el.remove(); },
   csdeal: () => csDeal(),
   csins: a => csInsurance(a === '1'),
   csact: a => csAction(a),
