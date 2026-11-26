@@ -724,3 +724,20 @@ kbd{font:11px Silkscreen,monospace;opacity:.6;margin-left:4px}
 @media (max-width:640px){.cstable{min-height:0;border-radius:18px 18px 120px 120px/18px 18px 70px 70px;padding:12px 6px}.cstable .cscard{width:54px;height:78px}.cstable .cscard .pip{font-size:26px}.cstable .cscards{min-height:80px}.cstable .cscards .cscard+.cscard{margin-left:-24px}
   .csspot2{width:74px;height:74px;font-size:8px}.csspot2:nth-child(2){width:86px;height:86px}.csspot2 .csstack:not(:empty){width:44px;height:44px;font-size:10px}.csbwt{font-size:30px}.csbwamt{font-size:26px}.csbwbox{padding:20px 22px}}
 @media (prefers-reduced-motion:reduce){.csbw,.csbwbox,.csbwt,.csbanner{animation:none}.csbwcoins{display:none}}
+
+/* v2.5 unlocks + guided tutorial */
+nav.side button.locked,.bsh-grid button.locked{opacity:.5}
+.lockico{font-size:12px;margin-right:5px;filter:grayscale(1)}
+.newb{display:inline-block;font:700 10px/1 Silkscreen,monospace;background:var(--ember);color:#fff;border-radius:6px;padding:3px 5px;margin-left:4px;vertical-align:middle}
+.chip.locked{opacity:.75}
+.lockpage .lockbig{font-size:40px;line-height:1;filter:grayscale(.3)}
+.lockpage .bar i{display:block;height:100%;background:var(--ember)}
+.coachspot{position:fixed;z-index:70;pointer-events:none;border:3px solid var(--ember);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.55),0 0 18px var(--ember);animation:coachpulse 1.4s ease-in-out infinite}
+.coachspot.soft{box-shadow:0 0 0 9999px rgba(0,0,0,.35),0 0 14px var(--ember)}
+.coachspot.nudge{animation:coachnudge .4s}
+@keyframes coachpulse{50%{border-color:#ffd76a}}
+@keyframes coachnudge{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.coachbox{position:fixed;z-index:71;right:16px;bottom:16px;width:min(380px,calc(100vw - 32px));background:var(--panel);border:2px solid var(--ember);border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.coachbox.attop{bottom:auto;top:16px}
+@media (max-width:900px){.coachbox{left:12px;right:12px;width:auto;bottom:84px}.coachbox.attop{top:12px;bottom:auto}}
+@media (prefers-reduced-motion:reduce){.coachspot{animation:none;transition:none}}

@@ -84,7 +84,7 @@ function autoFill() {
   while (guard++ < 12) {
     const free = D().stamina - staminaUsed(); if (free <= 0) return;
     const busy = new Set(ch.actions.map(a => ACT(a.res).skill));
-    const skills = GATHER_SKILLS.filter(s => !busy.has(s)).sort((a, b) => ch.skills[a].level - ch.skills[b].level);
+    const skills = GATHER_SKILLS.filter(s => !busy.has(s) && tabOpen(s)).sort((a, b) => ch.skills[a].level - ch.skills[b].level);
     let started = false;
     for (const s of skills) {
       const pick = CHAIN[s].filter(x => isUnlocked(ch, x) && availableHere(x) && x.stamina <= free && !(qs('gmStop') && tierOf(ch.prof[x.id] || 0) >= 9)).pop();
@@ -245,7 +245,7 @@ function automationCard() {
     <div class="row" style="gap:6px;margin-top:6px">${tg('gmStop', 'Stop at Grandmaster: on', 'Stop at Grandmaster: off')}${qs('gmStop') ? tg('gmNext', 'Then move on to the next resource: on', 'Then move on to the next resource: off') : ''}</div>
     <div class="row" style="gap:6px;margin-top:6px;align-items:center"><button class="chip ${abOn() ? 'on' : ''}" data-act="set" data-arg="autoBuy|${!abOn()}">Auto-buy shop ingredients: ${abOn() ? 'on' : 'off'}</button><label class="mute" style="font-size:14px" for="abtarget">Keep</label><input id="abtarget" type="number" min="1" step="100" inputmode="numeric" value="${abTarget()}" style="width:8em" aria-label="Amount to keep in stock"><span class="mute" style="font-size:13px">in stock</span></div>
     <div class="row" style="gap:6px;margin-top:6px">${(() => { const lo = account.settings.listOrder || (window.innerWidth <= 900 ? 'best' : 'chain'); return `<button class="chip ${lo === 'best' ? 'on' : ''}" data-act="set" data-arg="listOrder|${lo === 'best' ? 'chain' : 'best'}">List order: ${lo === 'best' ? 'best first' : 'starting first'}</button>`; })()}</div>
-    <div class="row" style="gap:6px;margin-top:10px"><button class="sm" data-act="tourreplay">Replay the tour</button></div></div>`;
+    <div class="row" style="gap:6px;margin-top:10px"><button class="sm" data-act="coachrestart">Restart the tutorial</button></div></div>`;
 }
 
 const QOL_HANDLERS = {

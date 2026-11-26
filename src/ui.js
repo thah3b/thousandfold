@@ -213,10 +213,11 @@ function renderWizard() {
 const NAV = [
   ['Gathering', GATHER_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
-  ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['arena', 'Arena'], ['dungeons', 'Dungeons'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['events', 'Events'], ['games', 'Daily games'], ['leaders', 'Leaderboards']]],
-  ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['showcase', 'Profile'], ['wardrobe', 'Wardrobe'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
+  ['Adventure', [['quests', 'Quests'], ['map', 'Map'], ['combat', 'Combat'], ['dungeons', 'Dungeons'], ['arena', 'Arena']]],
+  ['You', [['inv', 'Inventory'], ['char', 'Character'], ['prof', 'Proficiency'], ['class', 'Class'], ['talents', 'Talents'], ['training', 'Training'], ['companions', 'Companions'], ['pets', 'Pets'], ['showcase', 'Profile'], ['wardrobe', 'Wardrobe'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades'], ['guild', 'Guild']]],
-  ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['casino', 'Casino'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
+  ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
+  ['Misc', [['events', 'Events'], ['games', 'Daily games'], ['casino', 'Casino'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['leaders', 'Leaderboards']]],
 ];
 function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'home'; agg = {}; rate = {};
@@ -241,7 +242,7 @@ function renderTop() {
 function renderNav() {
   const running = new Set(ch.actions.map(a => ACT(a.res).skill));
   const col = account.settings.navCollapsed || {};
-  $('#nav').innerHTML = `<button class="${tab === 'home' ? 'on' : ''}" data-act="tab" data-arg="home">\u2302 Home</button>` + NAV.map(([g, items]) => { const shut = col[g] && !items.some(([i]) => i === tab); return `<button class="sep" data-act="navgrp" data-arg="${g}" aria-expanded="${!shut}">${shut ? '\u25B8' : '\u25BE'} ${g}</button>` + (shut ? '' : items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'chat' && typeof fb !== 'undefined' && fb.unread ? ` <span class="chip" style="padding:0 6px" aria-label="new feedback">\u2709 ${fb.unread}</span>` : ''}${id === 'events' && ch.daily && !ch.daily.claimed ? ' <span class="dot" aria-label="reward ready"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')); }).join('')
+  $('#nav').innerHTML = `<button class="${tab === 'home' ? 'on' : ''}" data-act="tab" data-arg="home">\u2302 Home</button>` + NAV.map(([g, items]) => { const shut = col[g] && !items.some(([i]) => i === tab); return `<button class="sep" data-act="navgrp" data-arg="${g}" aria-expanded="${!shut}">${shut ? '\u25B8' : '\u25BE'} ${g}</button>` + (shut ? '' : items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''} ${tabOpen(id) ? '' : 'locked'}" data-act="tab" data-arg="${id}"${tabOpen(id) ? '' : ` title="${esc('Unlocks at ' + gateText(id))}"`}>${navLockIco(id)}${n}${navNew(id)}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'chat' && typeof fb !== 'undefined' && fb.unread ? ` <span class="chip" style="padding:0 6px" aria-label="new feedback">\u2709 ${fb.unread}</span>` : ''}${id === 'events' && ch.daily && !ch.daily.claimed ? ' <span class="dot" aria-label="reward ready"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')); }).join('')
     + (LATER.length ? `<div class="sep">Later phases</div>` : '') + LATER.map(([id, n]) => `<button class="later ${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}</button>`).join('');
   renderBnav();
 }
@@ -280,7 +281,8 @@ function renderMain() {
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
   const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { home: tabHome, games: tabGames, casino: tabCasino, showcase: tabShowcase, wardrobe: tabWardrobe, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
   const openD = new Set([...$('#main').querySelectorAll('details[open] > summary')].map(x => x.textContent));
-  $('#main').innerHTML = f();
+  gateFreshSeen(tab);
+  $('#main').innerHTML = tabOpen(tab) ? f() : tabLocked(tab);
   if (openD.size) for (const d of $('#main').querySelectorAll('details')) { const sm = d.querySelector(':scope > summary'); if (sm && openD.has(sm.textContent)) d.open = true; }
   renderNav(); renderSide(); const ap = document.querySelector('.app'); if (ap) ap.dataset.tab = tab;
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -862,6 +864,7 @@ const HANDLERS = {
   ...I18N_HANDLERS,
   ...GAMES_HANDLERS,
   ...CASINO_HANDLERS,
+  ...GATE_HANDLERS,
   ...SHOWCASE_HANDLERS,
   ...EXTRA_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },

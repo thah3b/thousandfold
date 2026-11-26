@@ -8,12 +8,13 @@ const BNAV = [
   ['skills', 'Skills', '⚒', ['Gathering', 'Crafting']],
   ['adventure', 'Adventure', '⚔', ['Adventure']],
   ['social', 'Social', '☺', ['Social']],
-  ['more', 'More', '☰', ['You', 'Town']],
+  ['more', 'More', '☰', ['You', 'Town', 'Misc']],
 ];
 const navGroupOf = t => { if (t === 'home') return 'home'; for (const [id, , , gs] of BNAV) if (gs && NAV.some(([g, items]) => gs.includes(g) && items.some(([i]) => i === t))) return id; return 'more'; };
 function bnavBadge(id) {
   if (id === 'skills') return ch.actions.some(a => ACT(a.res).kind !== 'combat') ? '<span class="dot"></span>' : '';
-  if (id === 'adventure') return (ch.daily && !ch.daily.claimed) || (typeof rwPlayedToday === 'function' && !rwPlayedToday()) || (ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need)) ? '<span class="dot"></span>' : '';
+  if (id === 'adventure') return (ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need)) ? '<span class="dot"></span>' : '';
+  if (id === 'more') return (tabOpen('events') && ch.daily && !ch.daily.claimed) || (tabOpen('games') && typeof rwPlayedToday === 'function' && !rwPlayedToday()) || (ch.gate && ch.gate.fresh && Object.keys(ch.gate.fresh).length) ? '<span class="dot"></span>' : '';
   if (id === 'social') { const n = (typeof soc !== 'undefined' && soc.me ? soc.mail || 0 : 0) + (typeof fb !== 'undefined' && fb.unread ? fb.unread : 0); return n ? `<span class="bcount">${n}</span>` : ''; }
   return '';
 }
@@ -26,12 +27,19 @@ function bsheet(id) {
   const g = BNAV.find(b => b[0] === id); if (!g) return;
   const groups = NAV.filter(([name]) => g[3].includes(name));
   const running = new Set(ch.actions.map(a => ACT(a.res).skill));
-  modal(`<div class="spread"><h3>${g[1]}</h3><button class="sm ghost" data-act="close" aria-label="Close">✕</button></div>` + groups.map(([name, items]) => `<div class="mute bsh-h">${name}</div><div class="bsh-grid">${items.filter(([i]) => i !== 'debug' || isDev()).map(([i, n]) => `<button class="${tab === i ? 'on' : ''}" data-act="bgo" data-arg="${i}">${SKILLS[i] ? skillIcon(i) : ''}<span>${n}</span>${SKILLS[i] ? `<small class="mute">Lv ${ch.skills[i].level}</small>` : ''}${running.has(i) ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`).join(''));
+  modal(`<div class="spread"><h3>${g[1]}</h3><button class="sm ghost" data-act="close" aria-label="Close">✕</button></div>` + groups.map(([name, items]) => `<div class="mute bsh-h">${name}</div><div class="bsh-grid">${items.filter(([i]) => i !== 'debug' || isDev()).map(([i, n]) => `<button class="${tab === i ? 'on' : ''} ${tabOpen(i) ? '' : 'locked'}" data-act="bgo" data-arg="${i}">${tabOpen(i) ? (SKILLS[i] ? skillIcon(i) : '') : '<span class="lockico">🔒</span>'}<span>${n}${navNew(i)}</span>${SKILLS[i] ? `<small class="mute">Lv ${ch.skills[i].level}</small>` : ''}${running.has(i) ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`).join(''));
   const m = document.querySelector('.modal'); if (m) m.classList.add('sheet');
 }
 const skillIcon = s => { try { const o = (CHAIN[s] || RECIPES_BY[s] || [])[0]; return o ? (o.inputs ? actIcon(o) : resIcon(o)) : ''; } catch (e) { return ''; } };
 
 // ---------- Home ----------
+// v2.5: the next few unlocks, closest first.
+function homeSoon() {
+  if (!ch.gate || ch.gate.all) return '';
+  const soon = Object.keys(GATES).filter(id => !tabOpen(id) && NAV.some(([, it]) => it.some(([x]) => x === id))).map(id => [id, gateBest(id)]).sort((a, b) => gateNear(a[1]) - gateNear(b[1])).slice(0, 3);
+  if (!soon.length) return '';
+  return `<div class="card"><b>Coming up</b><div class="homeneeds">${soon.map(([id]) => `<button class="chip locked" data-act="tab" data-arg="${id}">🔒 ${esc(tabName(id))} <span class="mute">· ${esc(gateText(id))}</span></button>`).join('')}</div></div>`;
+}
 function homeNeeds() {
   const n = [];
   if (ch.daily && !ch.daily.claimed) n.push(['events', '★ Daily reward ready']);
@@ -44,8 +52,8 @@ function homeNeeds() {
   if (ch.unspent) n.push(['char', `${ch.unspent} stat point${ch.unspent > 1 ? 's' : ''} to spend`]);
   if (ch.skillPts) n.push(['talents', `${ch.skillPts} talent point${ch.skillPts > 1 ? 's' : ''} to spend`]);
   if (typeof fb !== 'undefined' && fb.unread) n.push(['chat', `✉ ${fb.unread} new feedback`]);
-  if (!ch.actions.length) n.push(['mining', 'Nothing running: start something']);
-  return n;
+  if (!ch.actions.length) n.push([GATHER_SKILLS.find(x => tabOpen(x)) || 'mining', 'Nothing running: start something']);
+  return n.filter(([id]) => tabOpen(id));
 }
 function homeActHtml() {
   const d = D(), used = staminaUsed();
@@ -61,7 +69,7 @@ function tabHome() {
       ${account.settings.anim === false ? `<div class="mute" style="padding:20px 0;text-align:center">Animations are off (Settings → Comfort).</div>` : '<div class="scene-slot homescene"></div>'}
       ${pots.length ? `<div class="row" style="gap:6px;margin-top:8px">${pots.map(([cat, p]) => `<span class="chip">${POTION_CATS[cat]} ${esc(ITEMS[p.id].name)} <b data-live="pot:${cat}"></b></span>`).join('')}</div>` : ''}</div>
     <div class="card" id="homeact">${homeActHtml()}</div>
-    <div class="card"><b>Needs you</b><div class="homeneeds">${homeNeeds().map(([t, s]) => `<button class="chip" data-act="tab" data-arg="${t}">${esc(s)}</button>`).join('') || '<span class="mute">All caught up.</span>'}</div></div>
+    <div class="card"><b>Needs you</b><div class="homeneeds">${homeNeeds().map(([t, s]) => `<button class="chip" data-act="tab" data-arg="${t}">${esc(s)}</button>`).join('') || '<span class="mute">All caught up.</span>'}</div></div>${homeSoon()}
     <div class="card"><b>Recent</b><div class="log" style="margin-top:6px">${last.map(l => `<div class="${l.k === 'bad' ? 'bad' : l.k === 'lucky' ? 'k-lucky' : ''}">${esc(l.s)}</div>`).join('') || '<div class="mute">Nothing yet.</div>'}</div></div>
   </div>`;
 }

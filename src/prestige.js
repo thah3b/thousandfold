@@ -123,7 +123,7 @@ function dailyCheck() {
   const yest = dayKey(Date.now() - 864e5);
   D_.streak = D_.day === yest ? D_.streak + 1 : 1; D_.day = today; D_.claimed = false; D_.best = Math.max(D_.best || 0, D_.streak);
   ch.counters.bestStreak = D_.best; dirty = true;
-  if (screen === 'game') toast(`<b>Daily reward ready</b> · day ${D_.streak} of your streak. Collect it in Events.`, 'gold');
+  if (screen === 'game' && (typeof tabOpen !== 'function' || tabOpen('events'))) toast(`<b>Daily reward ready</b> · day ${D_.streak} of your streak. Collect it in Events.`, 'gold');
 }
 function dailyText(i) {
   const R = DAILY[i], p = [];

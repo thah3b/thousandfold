@@ -38,6 +38,7 @@ ${r('loot.js')}
 ${r('feedback.js')}
 ${r('i18n.js')}
 ${r('home.js')}
+${r('gates.js')}
 ${r('words.js')}
 ${r('games.js')}
 ${r('casino.js')}

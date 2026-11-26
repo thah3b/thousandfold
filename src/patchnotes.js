@@ -2,8 +2,14 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.4b';
+const GAME_VERSION = 'v2.5';
 const PATCH_NOTES = [
+  { v: 'v2.5', date: '2026-11-26', title: 'Unlocks and a guided tutorial', notes: [
+    "New players now unlock the game step by step instead of seeing every tab at once. You start with your two home skills, Quests, Inventory, Character and the Shop. Everything else opens as you progress: for example Blacksmithing at Mining level 10, Cooking at Farming 10 + Fishing 10, Dungeons at level 50 and the Arena at level 55. Locked tabs show a \ud83d\udd12; open one to see what it needs, and Home shows what unlocks next.",
+    "A new guided tutorial: highlighted steps you click through to learn gathering, stamina, stat points, selling, the shop, crafting, food and combat. It also explains how to get more stamina (put stat points into DEX until you reach 16). You can skip it, and restart it from Settings.",
+    "Characters made before this update keep everything unlocked, and so does any new character on a save that already has a fully unlocked character.",
+    "Menu tidy-up: a new Misc group holds Events, Daily games, Casino, Secrets, Lore and Leaderboards. Training moved to You.",
+  ] },
   { v: 'v2.4b', date: '2026-11-26', title: 'Auto-sell: keep 100,000', notes: [
     "Auto-sell for gathering resources has a new option: Keep 100,000.",
   ] },

@@ -52,17 +52,25 @@ function migrate(c) {
   if (!c.loc) c.loc = START_TO_REGION[c.region];
   c.visited = c.visited || { [c.loc]: true };
   c.secrets = c.secrets || {}; c.riddle = c.riddle || null;
-  c.fashion = c.fashion || {}; c.wardrobe = c.wardrobe || {}; c.tour = c.tour || { done: true }; c.presets = c.presets || [];
+  c.fashion = c.fashion || {}; c.wardrobe = c.wardrobe || {}; c.tour = c.tour || { done: true }; c.gate = c.gate || { all: true }; c.coach = c.coach || { on: false, done: {} }; c.presets = c.presets || [];
   if (c.invSlots != null && !c.bag100) c.invSlots += BALANCE.storage.invSlots - 60; // v0.12a: base bag 60 -> 100 (now -> 200 in one go)
   else if (c.invSlots != null && !c.bag200) c.invSlots += 100; // v2.0e: base bag 100 -> 200
   c.bag100 = true; c.bag200 = true;
   Object.assign(c, Object.assign({ market: {}, bank: {}, questStats: {}, seen: {}, bossKilled: {}, areasSeen: {}, clog: [], combatFood: null, travel: null, nextEvent: 0, eventBuff: null, hp: null, invSlots: BALANCE.storage.invSlots, bankSlots: BALANCE.storage.bankSlots, invUps: 0, bankUps: 0, savings: { bal: 0, t: Date.now() }, merchant: { day: 0, bought: {} }, titlesSeen: [], secretTitles: {}, pins: [], ach: {}, potions: {}, log: [] }, c));
   return c;
 }
+function gateVeteran() {
+  if (typeof location !== 'undefined' && /[?&]tftest=1/.test(location.search)) return true; // automated tests start unlocked
+  if (typeof account === 'undefined' || !account) return false;
+  return account.slots.some(c => c && (!c.gate || c.gate.all || (typeof GATES !== 'undefined' && Object.keys(GATES).every(id => tabOpen(id, c)))));
+}
 function newCharacter(w) {
   const origin = ORIGINS.find(o => o.id === w.origin);
   const c = migrate({
-    quest: { step: 0, done: false }, tour: typeof account !== 'undefined' && account && account.tourSeen ? { done: true } : { step: 0 },
+    quest: { step: 0, done: false }, tour: { done: true },
+    // v2.5: new players unlock tabs as they progress and get the guided tutorial; players who already have a
+    // fully unlocked character on this save know the game, so their new characters start with everything open.
+    ...(gateVeteran() ? { gate: { all: true }, coach: { on: false, done: {} } } : { gate: { all: false, open: {}, fresh: {} }, coach: { on: true, done: {} } }),
     id: 'c' + Date.now().toString(36), name: w.name.trim(), gender: w.gender,
     race: w.race, cls: w.cls, origin: w.origin, region: w.region, created: Date.now(), last: Date.now(),
     gold: 25 + origin.gold, xp: 0, level: 1, unspent: 0, skillPts: 0, respecs: 0, freeRespecs: 0, alloc: {}, prof: {}, inv: {}, actions: [], offlineUpgrades: 0, displayTitle: null,
@@ -166,6 +174,7 @@ function checkProgress(quiet, notes) {
 // ---------- Actions ----------
 function startAction(id) {
   const a = ACT(id); if (!a || !isUnlocked(ch, a) || ch.actions.find(x => x.res === id)) return;
+  if (typeof tabOpen === 'function' && !tabOpen(actTab(a))) { toast(`🔒 ${esc(tabName(actTab(a)))} unlocks at ${esc(gateText(actTab(a)))}.`); return; }
   const why = cantStart(a); if (why) { toast(esc(why)); return; }
   if (a.kind === 'combat') { const cur = ch.actions.find(x => ACT(x.res).kind === 'combat'); if (cur) stopAction(cur.res); if (ch.hp != null && ch.hp < D('slaying').maxHP * 0.2) { toast('Too hurt to fight. Rest or eat first.'); return; } }
   if (a.inputs && craftable(ch, a) < 1) { toast(`Not enough materials for ${esc(a.name)}.`); return; }
@@ -874,7 +883,7 @@ function questHave(q) {
 }
 function boardOffers(rid) {
   const r = REGION_BY[rid], d = D('slaying'), seed = n => hashStr(`${ch.id}:${ch.board.day}:${rid}:${n}`);
-  const known = RES.filter(x => (x.band === 0 || x.band === r.band) && isUnlocked(ch, x));
+  const known = RES.filter(x => (x.band === 0 || x.band === r.band) && isUnlocked(ch, x) && tabOpen(x.skill));
   const foes = ENEMIES.filter(e => e.region === rid && !e.hamlet && (e.area === 0 || e.area === 1) && areaOpen(ch, e, d));
   const hamletFoes = ENEMIES.filter(e => e.region === rid && e.hamlet && e.role !== 'tboss');
   const pool = [];
