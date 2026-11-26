@@ -15,7 +15,8 @@ const CLOUD_CFG = {
 const CLOUD = { autoMins: 2, lbCats: [
   ['prog', 'Level', e => `A${e.asc} · Lv ${e.level}`],
   ['ach', 'Achievement points', e => N(e.ach)],
-  ['gold', 'Gold earned', e => N(e.gold)],
+  ['held', 'Richest', e => `${N(e.held || 0)} gold`],
+  ['casino_lost', 'Casino losses', e => e.casino_lost > 0 ? `Lost ${N(e.casino_lost)}` : e.casino_lost < 0 ? `Won ${N(-e.casino_lost)}` : 'Even'],
   ['kills', 'Monsters slain', e => N(e.kills)],
   ['species', 'Pet species', e => N(e.species)],
   ['coll', 'Collection', e => e.coll + '%'],
@@ -28,7 +29,7 @@ function lbEntry(c) {
   const ach = ACHIEVEMENTS.filter(a => c.ach && c.ach[a.id]).reduce((s, a) => s + a.pts, 0);
   let coll = 0; try { const C = collectionPct(c); coll = Math.round(Object.values(C).reduce((s, v) => s + v, 0) / 4 * 100); } catch (e) { }
   return { cid: c.id, name: c.name, cls: c.cls, race: c.race, asc: c.ascension || 0, level: c.level, prog: (c.ascension || 0) * BALANCE.level.max + c.level,
-    xp: Math.floor(c.xp), ach, gold: Math.floor(c.counters.goldEarned || 0), kills: c.counters.kills || 0, species: Object.keys(c.petDex || {}).length, coll,
+    xp: Math.floor(c.xp), ach, gold: Math.floor(c.counters.goldEarned || 0), held: Math.max(0, Math.floor(c.gold || 0)), casino_net: csLifetimeNet(c), kills: c.counters.kills || 0, species: Object.keys(c.petDex || {}).length, coll,
     alloc: Object.values(c.alloc || {}).reduce((s, v) => s + (+v || 0), 0), unspent: c.unspent || 0, created: c.created || 0,
     skills: SKILL_IDS.map(s => [c.skills[s].level, Math.floor(c.skills[s].xp)]), ver: GAME_VERSION, at: Date.now() };
 }
@@ -86,7 +87,7 @@ const PROVIDERS = {
       catch (e) { if (/Could not find the function|PGRST202|404/.test(e.message || '')) await sbFetch('/rest/v1/rpc/tf_put_save', { method: 'POST', body: JSON.stringify(args) }); else throw e; }
     },
     async postScores(entries) { const r = await sbFetch('/rest/v1/rpc/tf_submit_scores', { method: 'POST', body: JSON.stringify({ p_entries: entries }) }); return r || []; },
-    async leaderboard(cat) { const j = await sbFetch(`/rest/v1/tf_leaderboard?select=*&order=${cat}.desc&limit=100`); return (j || []).map(r => Object.assign({}, r, { mine: r.user_id === cloud.uid })); },
+    async leaderboard(cat) { const nn = cat === 'held' || cat === 'casino_lost' ? `&${cat}=not.is.null` : ''; const j = await sbFetch(`/rest/v1/tf_leaderboard?select=*${nn}&order=${cat}.desc.nullslast&limit=100`); return (j || []).map(r => Object.assign({}, r, { mine: r.user_id === cloud.uid })); },
   },
   claude: {
     label: 'Claude account',
@@ -312,7 +313,7 @@ function tabLeaders() {
     : cloud.lbErr ? `<p class="bad">${esc(cloud.lbErr)}</p>` : !cloud.lb ? '<p class="mute">Loading…</p>' : !rows.length ? '<p class="mute">Nobody has posted yet. Save to the cloud to be first.</p>'
     : `<div class="lbtable" role="table">${rows.map((e, i) => `<div class="lbrow ${e.mine ? 'mine' : ''} ${e.flagged || e.banned ? 'flag' : ''}" role="row"><span class="num lbrank">${i + 1}</span><span class="lbname">${e.user_id ? `<button class="linkbtn" data-act="profuser" data-arg="${esc(e.user_id)}"><b>${esc(e.name)}</b></button>` : `<b>${esc(e.name)}</b>`}${e.title ? ` ${styledTitle(e.title, e.tstyle, { size: 'sm' })}` : ''}<span class="mute" style="font-size:12px"> ${esc((CLASSES.find(c => c.id === e.cls) || {}).name || '')}${e.mine ? ' · you' : ''}${e.flagged ? ' · failed checks' : ''}${e.banned ? ' · hidden' : ''}</span></span><span class="mute hide-s" style="font-size:13px">${cat[0] === 'prog' ? '' : `A${+e.asc || 0} · Lv ${+e.level || 1}`}</span><span class="num gold">${esc(cat[2](e))}</span>${cloud.isOwner && cloud.provider === 'claude' && !e.mine ? `<button class="sm ghost" data-act="lbban" data-arg="${esc(e.user_id)}">${e.banned ? 'Unhide' : 'Hide'}</button>` : ''}</div>`).join('')}</div>`;
   return `<div class="spread"><h2>Leaderboards</h2><button class="sm" data-act="lbrefresh" ${cloud.state === 'ready' ? '' : 'disabled'}>Refresh</button></div>
-    <p class="mute">Top 100 characters. Ascension counts here: A0 means not yet ascended. Your characters are posted each time you save to the cloud.</p>
+    <p class="mute">Top 100 characters. ${lbCat === 'casino_lost' ? 'Lifetime gold won or lost at the Casino: the biggest losers are at the top and players in profit at the bottom. Only characters that have played are listed.' : lbCat === 'held' ? 'Gold each character holds right now.' : 'Ascension counts here: A0 means not yet ascended.'} Your characters are posted each time you save to the cloud.</p>
     <div class="row" style="margin:10px 0">${CLOUD.lbCats.map(([k, n]) => `<button class="chip ${lbCat === k ? 'on' : ''}" data-act="lbcat" data-arg="${k}">${n}</button>`).join('')}</div>${table}`;
 }
 async function cloudLoadLb() {

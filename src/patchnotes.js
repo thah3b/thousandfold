@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.5b';
+const GAME_VERSION = 'v2.5c';
 const PATCH_NOTES = [
+  { v: 'v2.5c', date: '2026-11-26', title: 'New leaderboards', notes: [
+    "Leaderboards: \"Gold earned\" is replaced by Richest (the gold you hold right now), and there's a new Casino losses board: lifetime gold lost at the Casino, biggest losers on top and players in profit at the bottom.",
+  ] },
   { v: 'v2.5b', date: '2026-11-26', title: 'Gather anywhere', notes: [
     "Gathering no longer depends on where you are: once you've gathered a resource at least once, you can gather it from any region. Your location now only matters for combat (and the first time you gather something).",
   ] },

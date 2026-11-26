@@ -32,6 +32,13 @@ function csTotal(cards) {
 }
 const csIsBJ = cards => cards.length === 2 && csTotal(cards).t === 21;
 
+// Lifetime gold result at the casino (for the Casino losses leaderboard). Not touched by "Reset stats".
+// Started from the gold stats for characters that played before v2.5c. null = never played.
+function csLifetimeNet(c) {
+  if (!c || !c.counters) return null;
+  if (c.counters.casinoNet == null) { const S = c.casino && c.casino.stats && c.casino.stats.gold; if (!S || !S.rounds) return null; c.counters.casinoNet = S.won - S.lost; c.counters.casinoRounds = S.rounds; }
+  return Math.round(c.counters.casinoNet);
+}
 // ---------- State ----------
 function csState() {
   const c = ch.casino = ch.casino || {};
@@ -177,6 +184,7 @@ function csSettle() {
   csPay(r.cur, pay); r.back += pay;
   const net = r.back - r.staked;
   S.rounds++; S.wagered += r.staked;
+  if (r.cur === 'gold') { csLifetimeNet(ch); ch.counters.casinoNet += net; ch.counters.casinoRounds = (ch.counters.casinoRounds || 0) + 1; }
   if (net > 0) S.won += net; else S.lost += -net;
   S.best = Math.max(S.best, net); S.worst = Math.min(S.worst, net);
   S.hist.push([Math.round(Date.now() / 1000), csBal(r.cur), r.staked, net]);
