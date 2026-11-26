@@ -692,7 +692,7 @@ function ascend() {
   const A = BALANCE.ascension;
   ch.ascGrowth = (ch.ascGrowth || 0) + (ch.level - 1) * BALANCE.level.classGrowthPerLevel;
   ch.ascension++; ch.level = 1; ch.xp = 0; account.shards += A.shards; ch.counters.shardsEarned += A.shards;
-  const msg = `Ascension ${ch.ascension}! Your level starts again at 1. Stats, skills, talents, items and class all stay. Permanent bonus now: +${pct(A.xp * ch.ascension)} XP, +${pct(A.yield * ch.ascension)} yield, +${pct(A.power * ch.ascension)} attack and HP. +${A.shards} Ember Shards.`;
+  const msg = `Ascension ${ch.ascension}! Your level starts again at 1. Stats, skills, talents, items and class all stay. Permanent bonus now: +${pct(A.xp * ch.ascension)} XP, +${pct(A.yield * ch.ascension)} yield, +${pct(A.power * ch.ascension)} attack and HP. +${A.shards} Thousandium.`;
   addLog('level', msg); toast(`<b>A${ch.ascension}</b> · ${esc(msg)}`, 'gold'); flash(); chime(523, 1568); dirty = true;
 }
 
@@ -904,13 +904,13 @@ function claimQuest(i) {
   else if (rng() < 0.1) { addItem('egg_common', 1, true); extra += ', Common Egg'; }
   else if (rng() < 0.2) { addItem(`elixir_${stat}_0`, 1, true); extra = `, ${ITEMS[`elixir_${stat}_0`].name}`; }
   ch.qactive.splice(i, 1);
-  addLog('lucky', `Quest done: ${q.label}. +${N(gold)} gold, +${shards} Ember Shard${shards > 1 ? 's' : ''}${extra}.`); toast(`<b>Quest complete</b> · +${N(gold)} gold, +${shards} shard${shards > 1 ? 's' : ''}${esc(extra)}`, 'gold'); chime(659, 988);
+  addLog('lucky', `Quest done: ${q.label}. +${N(gold)} gold, +${shards} Thousandium${extra}.`); toast(`<b>Quest complete</b> · +${N(gold)} gold, +${shards} Thousandium${esc(extra)}`, 'gold'); chime(659, 988);
   checkProgress(); dirty = true;
 }
 function buyShard(i) {
   const o = SHARD_SHOP[i]; if (!o || account.shards < o.price) return;
   if (!addItem(o.key, 1)) { toast('Inventory full.'); return; }
-  account.shards -= o.price; addLog('sys', `Exchanged ${o.price} Ember Shards for ${ITEM(o.key).name}.`); dirty = true;
+  account.shards -= o.price; addLog('sys', `Exchanged ${o.price} Thousandium for ${ITEM(o.key).name}.`); dirty = true;
 }
 
 // ============================================================

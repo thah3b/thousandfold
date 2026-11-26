@@ -165,7 +165,7 @@ function renderSelect() {
       <div class="row"><button class="pri" data-act="play" data-arg="${i}">Play</button><button class="ghost" data-act="delete" data-arg="${i}">Delete</button><button class="ghost sm" disabled title="Rename tokens come in a later phase">Rename</button></div></div>`
     : `<button class="card slot empty" data-act="new" data-arg="${i}"><span class="fell" style="font-size:26px">New character</span><span class="mute">Slot ${i + 1} is empty</span></button>`).join('');
   $('#root').innerHTML = `<div class="screen"><div class="hero">${heroArt()}<div class="txt">${gameIcon(72)}<h1>${heroTitle()}</h1></div></div>
-    <div class="spread" style="margin-top:22px"><h2>Choose your character</h2><span class="row" style="gap:6px">${cloudChip()}<span class="chip">Ember Shards <b class="gold">${N(account.shards)}</b></span></span></div>
+    <div class="spread" style="margin-top:22px"><h2>Choose your character</h2><span class="row" style="gap:6px">${cloudChip()}<span class="chip">Thousandium <b class="gold">${N(account.shards)}</b></span></span></div>
     <div class="slots">${slots}${account.slot4 ? '' : `<div class="card slot empty" style="opacity:.6"><span class="fell" style="font-size:22px">Fourth slot</span><span class="mute">Find ${SECRET_CFG.slot4At} secrets to open it</span></div>`}</div>
     <p class="bottomline">Thousandfold ${GAME_VERSION} · prototype. Saves stay in this browser and, when you are signed in, in the cloud.</p><div class="langbar">${langButton()}</div></div>`;
 }
@@ -211,7 +211,7 @@ const NAV = [
   ['Gathering', GATHER_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Adventure', [['map', 'Map'], ['combat', 'Combat'], ['arena', 'Arena'], ['dungeons', 'Dungeons'], ['quests', 'Quests'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['events', 'Events'], ['games', 'Daily games'], ['leaders', 'Leaderboards']]],
-  ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['wardrobe', 'Wardrobe'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
+  ['You', [['prof', 'Proficiency'], ['inv', 'Inventory'], ['char', 'Character'], ['showcase', 'Profile'], ['wardrobe', 'Wardrobe'], ['class', 'Class'], ['talents', 'Talents'], ['companions', 'Companions'], ['pets', 'Pets'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades'], ['guild', 'Guild']]],
   ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
 ];
@@ -219,7 +219,7 @@ function enterGame(i) {
   account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'home'; agg = {}; rate = {};
   $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><nav class="bnav" id="bnav" aria-label="Sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"><div id="actbody"></div><div id="actscene"></div></section><aside class="sidepanel" id="side"></aside></div>`;
   renderTop(); renderMain(); renderActions();
-  checkProgress(true, []); syncAcctSecrets(); markFounder(); tourMaybe();
+  checkProgress(true, []); syncAcctSecrets(); markFounder(); tourMaybe(); setTimeout(() => { if (typeof sxSync === 'function') sxSync(true); }, 3000);
   const away = (Date.now() - ch.last) / 1000;
   if (away >= 8 * 3600 && ch.cls === 'monk') setTimeout(() => unlockSecret('cls_monk'), 500);
   if (away > 60) runOffline(away, true);
@@ -230,7 +230,7 @@ function renderTop() {
   const nb = Object.values(ch.potions).filter(p => p.until > now && ITEMS[p.id]).length;
   const pots = `<button class="chip buffbtn ${nb ? '' : 'mute'}" data-act="buffs" title="Show your active buffs" aria-label="Active buffs: ${nb}">\u2726 Buffs${nb ? ` <b>${nb}</b>` : ''}</button>`;
   $('#top').innerHTML = `<span class="brand">${gameIcon(22)} Thousandfold</span>
-    <div class="cur"><span class="num">Gold <b class="gold" data-live="gold"></b></span><span class="num">Shards <b data-live="shards"></b></span><span>${ch.travel ? 'Travelling to ' : ''}<b data-live="travel"></b></span><span class="mute" data-live="clock"></span>${pots}
+    <div class="cur"><span class="num">Gold <b class="gold" data-live="gold"></b></span><span class="num">Thousandium <b data-live="shards"></b></span><span>${ch.travel ? 'Travelling to ' : ''}<b data-live="travel"></b></span><span class="mute" data-live="clock"></span>${pots}
     ${cloud.held ? `<button class="chip bad" data-act="cloudheld" title="Cloud saving is paused on this device">\u2601 Newer save on ${esc(devLabel(cloud.held.device))}</button>` : ''}${mailChip()}${(() => { const e = worldEvent(); return `<button class="chip evchip" data-act="tab" data-arg="events" title="${esc(e.text)}">${e.holiday ? '\u2744 ' : '\u2605 '}${esc(e.name)}</button>`; })()}<button class="chip fbbtn" data-act="feedback" title="Send feedback to the developer">✉ Feedback</button></div>
     <div class="milestone" title="Closest upcoming milestone">Next: <b data-live="ms"></b></div>`;
   updateLive();
@@ -259,7 +259,7 @@ function renderActions() {
 function renderSide() {
   if (!ch) return;
   const now = Date.now(), food = activeBuff(ch, 'food', now);
-  $('#side').innerHTML = `<div class="row">${portrait(ch, 52)}<div style="flex:1"><b>${esc(ch.name)}</b><div class="mute" style="font-size:14px">${ch.displayTitle ? esc(ch.displayTitle) + ' · ' : ''}${esc(race().name)} ${esc(tierName(ch.cls, ch.adv.spec, ch.adv.tier))}</div>
+  $('#side').innerHTML = `<div class="row">${portrait(ch, 52)}<div style="flex:1"><b>${esc(ch.name)}</b>${ch.displayTitle ? `<div class="sidetitle">${styledTitle(ch.displayTitle, showcaseOf(ch).style)}</div>` : ''}<div class="mute" style="font-size:14px">${esc(race().name)} ${esc(tierName(ch.cls, ch.adv.spec, ch.adv.tier))}</div>
       <div class="spread" style="font-size:14px"><span><b data-live="lvl"></b></span><span class="mute num" data-live="xpline"></span></div><div class="bar xp"><i data-w="xp"></i></div></div></div>
     <div><div class="spread" style="font-size:14px"><span>HP</span><span class="num" data-live="hp"></span></div><div class="bar hpbar"><i data-w="hp"></i></div></div>
     ${!ch.quest.done ? `<button class="card qtrack" data-act="tab" data-arg="quests"><span class="mute" style="font-size:13px">Quest ${ch.quest.step + 1} of 10 · ${esc(TUTORIAL_TITLES[ch.quest.step])}</span><b data-live="quest"></b><span class="bar"><i data-w="quest"></i></span></button>` : ''}
@@ -275,7 +275,7 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { home: tabHome, games: tabGames, wardrobe: tabWardrobe, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { home: tabHome, games: tabGames, showcase: tabShowcase, wardrobe: tabWardrobe, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
   $('#main').innerHTML = f();
   renderNav(); renderSide(); const ap = document.querySelector('.app'); if (ap) ap.dataset.tab = tab;
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
@@ -473,7 +473,7 @@ function tabShop() {
     <p class="mute">Prices rise as you level (an item costs more the further you are above its tier); supplies rise only slightly. Gold only, always. Potions boost results (yield, procs, XP, luck), never speed. One potion per category, plus one meal; an equal or stronger one refreshes the timer.</p>
     <div class="card" style="margin-top:12px;border-color:var(--gold)"><div class="spread"><h3>Travelling merchant</h3><span class="mute" style="font-size:14px">New stock every day</span></div>
       <div class="inv" style="margin-top:8px">${offers.map(o => { const p = Math.ceil(o.price * (1 - d.discount)); return `<div class="irow">${itemIcon(o.key)}<div>${rname(o.key)}<div class="mute" style="font-size:13px">${esc(ITEM(o.key).gear ? statLine(ITEM(o.key)) : ITEM(o.key).desc || '')}</div></div><span class="num gold">${N(p)}g</span><span class="mute hide-s">${o.left} left</span><button class="sm ${o.left && ch.gold >= p ? 'pri' : ''}" data-act="mbuy" data-arg="${o.i}" ${o.left && ch.gold >= p ? '' : 'disabled'}>${o.left ? 'Buy' : 'Sold out'}</button></div>`; }).join('')}</div></div>
-    <div class="card" style="margin-top:12px"><div class="spread"><h3>Ember Shard exchange</h3><span>Shards <b class="gold">${N(account.shards)}</b></span></div><p class="mute" style="margin:4px 0 8px;font-size:14px">Shards are earned only: board quests, weeklies and Ascension. Prices never change.</p>
+    <div class="card" style="margin-top:12px"><div class="spread"><h3>Thousandium exchange</h3><span>Shards <b class="gold">${N(account.shards)}</b></span></div><p class="mute" style="margin:4px 0 8px;font-size:14px">Shards are earned only: board quests, weeklies and Ascension. Prices never change.</p>
       <div class="inv">${SHARD_SHOP.map((o, i) => `<div class="irow">${itemIcon(o.key)}<div>${rname(o.key)}<div class="mute" style="font-size:13px">${esc(ITEM(o.key).desc || '')}</div></div><span class="num gold">${o.price} shards</span><span class="hide-s"></span><button class="sm ${account.shards >= o.price ? 'pri' : ''}" data-act="buyshard" data-arg="${i}" ${account.shards >= o.price ? '' : 'disabled'}>Exchange</button></div>`).join('')}</div></div>
     <h3 style="margin:18px 0 8px">Supplies</h3><div class="inv">${SHOP.supplies.map(k => row(k, true)).join('')}</div>
     <h3 style="margin:18px 0 8px">Loot chests</h3><p class="mute" style="margin:0 0 8px;font-size:14px">Gold only. Open them from your inventory; the odds are listed inside.</p><div class="inv">${SHOP.chests.map(k => row(k, false)).join('')}</div>
@@ -621,7 +621,7 @@ function tabClass() {
   const c = cls(), A = ADVANCE[ch.cls], q = ch.adv.quest, res = c.res;
   const AS = BALANCE.ascension;
   let questHtml = `<p class="mute" style="margin:4px 0 8px">You have reached your final tier. At level ${AS.needLevel} you can ascend: your level starts again at 1 and you keep everything else, including allocated stats, skills, talents, items and class. You earn stat and skill points all over again, with no cap.</p>
-    <div class="kv"><span>Ascensions</span><span>A${ch.ascension}</span><span>Next ascension adds</span><span>+${pct(AS.xp)} XP, +${pct(AS.yield)} yield, +${pct(AS.power)} attack and HP, ${AS.shards} Ember Shards</span><span>Level</span><span>${ch.level} / ${AS.needLevel}</span></div>
+    <div class="kv"><span>Ascensions</span><span>A${ch.ascension}</span><span>Next ascension adds</span><span>+${pct(AS.xp)} XP, +${pct(AS.yield)} yield, +${pct(AS.power)} attack and HP, ${AS.shards} Thousandium</span><span>Level</span><span>${ch.level} / ${AS.needLevel}</span></div>
     <div class="row" style="margin-top:10px"><button class="pri" data-act="askascend" ${canAscend() ? '' : 'disabled'}>${canAscend() ? `Ascend to A${ch.ascension + 1}` : `Ascend at level ${AS.needLevel}`}</button></div>`;
   if (q) {
     const steps = [0, 1, 2, 3, 4].map(i => { const g = advGoal(i), done = i < q.step, cur = i === q.step;
@@ -752,14 +752,14 @@ function questRow(q, i) {
 }
 function tabQuests() {
   const rid = ch.loc, r = REGION_BY[rid], here = !ch.travel, offers = here && ch.quest.done ? boardOffers(rid) : null;
-  const rw = k => { const g = scaled(ch, k === 'weekly' ? BOARD.weeklyGold : BOARD.dailyGold, r.lvl), sh = k === 'weekly' ? BOARD.weeklyShards : BOARD.dailyShards, el = ITEMS[`elixir_${REGION_STORY[rid][0].toLowerCase()}_${k === 'weekly' ? 1 : 0}`]; return `${N(g)} gold · ${sh} Ember Shard${sh > 1 ? 's' : ''} · ${k === 'weekly' ? esc(el.name) : '20% chance of ' + esc(el.name)}`; };
+  const rw = k => { const g = scaled(ch, k === 'weekly' ? BOARD.weeklyGold : BOARD.dailyGold, r.lvl), sh = k === 'weekly' ? BOARD.weeklyShards : BOARD.dailyShards, el = ITEMS[`elixir_${REGION_STORY[rid][0].toLowerCase()}_${k === 'weekly' ? 1 : 0}`]; return `${N(g)} gold · ${sh} Thousandium · ${k === 'weekly' ? esc(el.name) : '20% chance of ' + esc(el.name)}`; };
   const offer = o => { const taken = ch.board.taken[o.oid]; return `<div class="card offer ${taken ? 'taken' : ''}"><div class="spread"><b>${esc(o.label)}</b><span class="chip">${o.kind === 'weekly' ? 'Weekly' : 'Daily'}</span></div><p class="mute" style="margin:4px 0 8px;font-size:14px">Reward: ${rw(o.kind)}</p>${taken ? '<span class="mute">Accepted</span>' : `<button class="sm pri" data-act="acceptq" data-arg="${o.oid}">Accept</button>`}</div>`; };
   const S = REGION_STORY[rid], st = ch.story[rid] || 0;
   const story = S && ch.visited[rid] ? [1, 2, 3].map(i => { const done = st >= i, cur = st === i - 1, g = cur ? storyGoal(rid, i - 1) : null;
     return `<div class="qstep ${done ? 'done' : cur ? 'cur' : ''}"><span>${done ? '✓' : i}</span><div><b>${esc(S[i][0])}</b>${done || cur ? `<p style="margin:2px 0;font-size:14px">${esc(S[i][1])}</p>` : ''}${cur ? `<div class="spread" style="font-size:14px"><span>${esc(g.label)}</span><span class="mute num">${g.pctMode ? pct(g.have) + ' / ' + pct(g.need) : N(Math.min(g.have, g.need)) + ' / ' + N(g.need)}</span></div><div class="bar"><i style="width:${Math.min(100, g.have / g.need * 100).toFixed(1)}%"></i></div>${storyGoBtn(rid, i - 1)}` : ''}</div></div>`; }).join('') : '';
   const allStories = REGIONS.filter(x => !x.secret).map(x => `<span class="chip ${(ch.story[x.id] || 0) >= 3 ? 'on' : ''}">${esc(x.name)} ${ch.visited[x.id] ? (ch.story[x.id] || 0) + '/3' : '???'}</span>`).join('');
   const act = ch.qactive.map((q, i) => q.kind === 'story' ? '' : questRow(q, i)).join('');
-  return `<div class="spread"><h2>Quests</h2><span class="chip">Ember Shards <b class="gold">${N(account.shards)}</b></span></div>
+  return `<div class="spread"><h2>Quests</h2><span class="chip">Thousandium <b class="gold">${N(account.shards)}</b></span></div>
     ${!ch.quest.done ? `<div class="card" style="margin-top:12px">${tutorialHtml()}</div>` : ''}
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));margin-top:14px;align-items:start">
       <div><h3 style="margin-bottom:8px">Active (${ch.qactive.length}/${BOARD.maxActive})</h3><div class="grid">${act || '<p class="mute">No board quests accepted. Pick some from the board.</p>'}</div></div>
@@ -779,7 +779,7 @@ function tabTraining() {
         <div class="spread" style="font-size:14px"><span>Today: +${g.toFixed(2)} ${t.stat}</span><span class="mute">cap ${TRAIN_CFG.dailyCap}</span></div><div class="bar"><i style="width:${(g / TRAIN_CFG.dailyCap * 100).toFixed(1)}%"></i></div>
         <div class="kv"><span>Per session</span><span data-live="time:${t.id}"></span><span>Gain each</span><span>+${(TRAIN_CFG.perCompletion * (1 + d.pool)).toFixed(3)} ${t.stat}</span><span>Trained in total</span><span>+${Math.floor(ch.trained[t.stat] || 0)} ${t.stat}</span></div>
         ${run ? `<button data-act="stop" data-arg="${t.id}">Stop</button>` : `<button class="${full ? '' : 'pri'}" data-act="start" data-arg="${t.id}" ${full ? 'disabled' : ''}>${full ? 'Done for today' : 'Train ' + t.stat}</button>`}</div>`; }).join('')}</div>
-    <div class="card" style="margin-top:14px"><h3>Elixirs of Growth</h3><p class="mute" style="margin:4px 0 8px;font-size:14px">Permanent stat potions. Each stat can take up to ${ELIXIR_CAP} points from elixirs, with smaller gains as you approach the cap. Brew them in Alchemy, find Mythic ones on region bosses, or trade Ember Shards at the shop.</p>
+    <div class="card" style="margin-top:14px"><h3>Elixirs of Growth</h3><p class="mute" style="margin:4px 0 8px;font-size:14px">Permanent stat potions. Each stat can take up to ${ELIXIR_CAP} points from elixirs, with smaller gains as you approach the cap. Brew them in Alchemy, find Mythic ones on region bosses, or trade Thousandium at the shop.</p>
       <div class="kv">${STAT_IDS.map(s => `<span>${s}</span><span>${(ch.elixirs[s] || 0).toFixed(1)} / ${ELIXIR_CAP} · next lesser +${elixirGain(s, 1).toFixed(2)}</span>`).join('')}</div></div>`;
 }
 // ---------- Commands ----------
@@ -856,6 +856,7 @@ const HANDLERS = {
   ...HOME_HANDLERS,
   ...I18N_HANDLERS,
   ...GAMES_HANDLERS,
+  ...SHOWCASE_HANDLERS,
   ...EXTRA_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },

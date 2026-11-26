@@ -2,8 +2,16 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.2b';
+const GAME_VERSION = 'v2.3';
 const PATCH_NOTES = [
+  { v: 'v2.3', date: '2026-11-26', title: "Profile showcase", notes: [
+    "New Profile page (You → Profile): dress up your public profile with a styled title, a subtitle, a background and a frame, with a live preview.",
+    "Styled titles: 10 animated colour styles for your earned titles, from Classic Gold and Moonsilver to Heatwave, Candy Floss, Watermelon Heaven, Christmas Spirit, Reaper, 80's Riff, Artist's Talent and Rainbow God. Earn them by playing or buy them with Thousandium; they're yours on every character. Your styled title shows on your profile, next to your name in chat, on the leaderboards and in your sidebar.",
+    "Profile backgrounds (Volcano, Constellations, Ruins, Pirate map, Frost kingdom, Void) and frames (Adventurer, Mythic, PvP Gladiator, Founder's), all earned by playing. Everyone who played before 2.0 gets the Founder's frame.",
+    "Profiles now also show your best Arena rank, dungeon clears, best gear, lifetime stats (rocks hit, chests opened, Lucky Strikes…) and a trophy shelf with your pinned achievements and unique items.",
+    "Ember Shards are now called Thousandium (Đá vip in Vietnamese). Nothing else changes.",
+    "Fixed: outfits from the Wardrobe show on public profiles again.",
+  ] },
   { v: 'v2.2b', date: '2026-11-26', title: 'Language in Settings', notes: [
     'You can now switch between English and Tiếng Việt in Settings too, not only on the character select screen.',
   ] },

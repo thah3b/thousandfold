@@ -2,7 +2,7 @@
 // v2.1 — Daily games. First game: Runeword, a fantasy Wordle.
 // Everyone gets the same word on the same calendar day. One try a day per account.
 // Win: a boost to XP and yield for every character until midnight (+5%, +1% per streak
-// day after the first, up to +15%) and 1–3 shards. A loss or a missed day ends the streak.
+// day after the first, up to +15%) and 1–3 Thousandium. A loss or a missed day ends the streak.
 // ============================================================
 const RW = { len: 5, tries: 6, epoch: [2026, 10, 25] }; // #1 = 25 Nov 2026 (local date)
 const rwDayNo = (t = Date.now()) => { const d = new Date(t), e = new Date(RW.epoch[0], RW.epoch[1], RW.epoch[2]); return Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - e) / 86400000) + 1; };
@@ -52,8 +52,8 @@ function rwSubmit() {
       account.shards = (account.shards || 0) + shards;
       if (ch) { ch.counters.rwWins = Math.max(ch.counters.rwWins || 0, r.wins); ch.counters.rwStreak = Math.max(ch.counters.rwStreak || 0, r.best); if (cur.guesses.length <= 2) ch.counters.rwTwo = 1; }
       cur.reward = { pct, shards };
-      addLog('lucky', `Runeword #${cur.day} solved in ${cur.guesses.length}: +${pct}% XP and yield until midnight, +${shards} shard${shards > 1 ? 's' : ''}.`);
-      toast(`<b>Runeword solved!</b> +${pct}% XP and yield until midnight · +${shards} shard${shards > 1 ? 's' : ''}`, 'gold');
+      addLog('lucky', `Runeword #${cur.day} solved in ${cur.guesses.length}: +${pct}% XP and yield until midnight, +${shards} Thousandium.`);
+      toast(`<b>Runeword solved!</b> +${pct}% XP and yield until midnight · +${shards} Thousandium`, 'gold');
     } else {
       r.streak = 0; addLog('sys', `Runeword #${cur.day}: the word was ${ans}. A new one tomorrow.`);
     }
@@ -81,9 +81,9 @@ function rwRenderBoard() { const el = document.getElementById('rwboard'); if (el
 function tabGames() {
   const r = rwState(), cur = r.cur, b = account.mg.boost, active = dailyBoost() > 0;
   const winPct = r.played ? Math.round(r.wins / r.played * 100) : 0, maxD = Math.max(1, ...r.dist);
-  const result = cur.done ? `<div class="card rw-result">${cur.won ? `<b class="verd">Solved in ${cur.guesses.length}!</b> +${cur.reward ? cur.reward.pct : rwBoostPct(r.streak)}% XP and yield for all your characters until midnight${cur.reward ? `, and +${cur.reward.shards} shard${cur.reward.shards > 1 ? 's' : ''}` : ''}.` : `<b>Out of tries.</b> The word was <b>${rwAnswer(cur.day)}</b>. Your streak starts again tomorrow.`}
+  const result = cur.done ? `<div class="card rw-result">${cur.won ? `<b class="verd">Solved in ${cur.guesses.length}!</b> +${cur.reward ? cur.reward.pct : rwBoostPct(r.streak)}% XP and yield for all your characters until midnight${cur.reward ? `, and +${cur.reward.shards} Thousandium` : ''}.` : `<b>Out of tries.</b> The word was <b>${rwAnswer(cur.day)}</b>. Your streak starts again tomorrow.`}
       <div class="row" style="gap:6px;margin-top:8px"><button class="pri" data-act="rwshare">Copy result</button><span class="mute" style="font-size:13px">Next word in <b data-live="rwnext"></b></span></div></div>` : '';
-  return `<h2>Daily games</h2><p class="mute">A new puzzle every day, the same for everyone. Win for a boost to XP and yield for all your characters until midnight, plus shards. Keep a streak going for a bigger boost (up to +15%).</p>
+  return `<h2>Daily games</h2><p class="mute">A new puzzle every day, the same for everyone. Win for a boost to XP and yield for all your characters until midnight, plus Thousandium. Keep a streak going for a bigger boost (up to +15%).</p>
     <div class="cols rw-wrap"><div class="card"><div class="spread"><h3 style="margin:0">Runeword #${cur.day}</h3><span class="mute" style="font-size:13px">Guess the 5-letter word in 6 tries</span></div>
       <div id="rwboard">${rwBoardHtml()}</div></div>
       <div>${result}

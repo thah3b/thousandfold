@@ -17,12 +17,15 @@ function profileCard() {
     return {
       name: c.name, race: c.race, cls: c.cls, gender: c.gender, mark: c.mark, look: fashionLook(c), adv: { tier: (c.adv && c.adv.tier) || 1 },
       tierName: (() => { try { return tierName(c.cls, c.adv && c.adv.spec, (c.adv && c.adv.tier) || 1); } catch (e) { return ''; } })(),
-      asc: c.ascension || 0, level: c.level, title: c.displayTitle || '', ach, coll,
+      asc: c.ascension || 0, level: c.level, title: showcaseOf(c).title || '', ach, coll,
       species: Object.keys(c.petDex || {}).length, pet: pet ? { sp: pet.sp, name: pet.name || '', level: pet.level || 1 } : null,
       comp: c.comp && c.comp.cls && COMPANIONS[c.comp.cls] ? COMPANIONS[c.comp.cls][0] : null,
       egos, secrets: Object.keys(c.secrets || {}).length, lore: Object.keys(c.lore || {}).length,
       skills, gathered: c.counters.gathered || 0, kills: c.counters.kills || 0, events: c.counters.eventsJoined || 0,
       streak: (c.daily && c.daily.best) || 0, created: c.created || 0,
+      showcase: (() => { const sc = showcaseOf(c); return { sub: sc.sub || '', style: sc.style, bg: sc.bg, frame: sc.frame }; })(),
+      arena: account.pvpBest || 0, dg: [0, 1, 2].map(d => sxDg(c, d)), gear: profBestGear(c), trophies: profTrophies(c),
+      fun: { mined: c.counters.mined || 0, crafted: c.counters.crafted || 0, gold: c.counters.goldEarned || 0, potions: c.counters.potions || 0, chests: c.counters.chests || 0, digs: c.counters.digs || 0, lucky: c.counters.lucky || 0, junk: c.counters.junk || 0, bosses: c.counters.bossWins || 0, uniques: c.counters.uniques || 0 },
     };
   });
   return { v: 1, chars, at: Date.now() };
@@ -54,8 +57,7 @@ function profileHtml(d) {
   if (!C) return `<div class="profpage">${head}<p class="mute" style="margin-top:12px">${d.hidden ? 'This player keeps their characters private.' : 'This player hasn’t shared their characters yet.'}</p><div class="row"><button data-act="close">Close</button></div></div>`;
   const cards = chars.map(c => {
     const R = RACES.find(r => r.id === c.race) || RACES[0], K = CLASSES.find(k => k.id === c.cls) || CLASSES[0];
-    return `<div class="card profchar"><div class="row" style="gap:12px;align-items:flex-start">${heroShowcase(c, 84, { cls: 'small', pet: c.pet })}<div style="flex:1;min-width:0">
-        <h3 style="margin:0">${esc(c.name)}</h3>${c.title ? `<div class="gold" style="font-size:14px">${esc(c.title)}</div>` : ''}
+    return `${showcaseCharCard(c)}
         <div class="mute" style="font-size:14px">${esc(R.name)} ${esc(c.tierName || K.name)} · <b>${c.asc ? `A${c.asc} · ` : ''}Lv ${c.level}</b></div></div></div>
       <div class="profstats">
         <span><b>${profNum(c.ach)}</b> achievement points</span><span><b>${c.coll}%</b> collection</span>
@@ -63,6 +65,7 @@ function profileHtml(d) {
         <span><b>${c.species}</b> pet species</span><span><b>${c.secrets}</b> secrets · <b>${c.lore}</b> lore page${c.lore === 1 ? '' : 's'}</span>
         ${c.events ? `<span><b>${c.events}</b> event${c.events === 1 ? '' : 's'}</span>` : ''}${c.streak ? `<span><b>${c.streak}</b>-day best streak</span>` : ''}</div>
       <div class="profrow">${(c.skills || []).map(([s, l]) => `<span class="chip">${esc(SKILLS[s] ? SKILLS[s].name : s)} ${l}</span>`).join('')}</div>
+      ${profExtras(c)}
       ${c.pet || c.comp || (c.egos || []).length ? `<div class="profrow">${c.pet && typeof petGlyph === 'function' && SP(c.pet.sp) ? `<span class="row" style="gap:4px">${petGlyph(c.pet.sp, 32)}<span style="font-size:13px">${esc(c.pet.name || SP(c.pet.sp).name)} <span class="mute">Lv ${c.pet.level}</span></span></span>` : ''}${c.comp ? `<span style="font-size:13px">⚔ with <b>${esc(c.comp)}</b></span>` : ''}${(c.egos || []).length ? `<span style="font-size:13px">Sentient weapons: ${c.egos.map(esc).join(', ')}</span>` : ''}</div>` : ''}
     </div>`;
   }).join('');
@@ -89,4 +92,28 @@ function profileFromUrl() {
   const m = location.search.match(/[?&]p=([^&]+)/); if (!m) return;
   const code = decodeURIComponent(m[1]); history.replaceState(null, '', location.pathname + location.hash);
   setTimeout(() => { const w = document.getElementById('modal'); if (w) closeModal(); profileOpen({ code }); }, 50);
+}
+
+// v2.3: best gear, trophies and the extra profile sections.
+function profBestGear(c) {
+  let best = null;
+  for (const k of Object.values((c.equip && c.equip.slots) || {})) { if (!k || typeof k !== 'string' || !k.startsWith('g:')) continue; const g = parseG(k), it = ITEM(k); if (!it) continue; const sc = g.grade * 100 + g.plus * 2 + (it.unique ? 50 : 0); if (!best || sc > best.sc) best = { sc, name: it.name, grade: g.grade, plus: g.plus }; }
+  return best ? { name: best.name, grade: best.grade, plus: best.plus } : null;
+}
+function profTrophies(c) {
+  const out = (c.pins || []).map(id => { const a = ACHIEVEMENTS.find(x => x.id === id); return a ? { k: 'ach', n: a.name } : null; }).filter(Boolean);
+  const seen = new Set();
+  for (const k of [...Object.values((c.equip && c.equip.slots) || {}), ...Object.keys(c.inv || {})]) { if (!k || typeof k !== 'string' || !k.startsWith('g:')) continue; const it = ITEM(k); if (it && it.unique && !seen.has(it.name)) { seen.add(it.name); out.push({ k: 'item', n: it.name }); } if (out.length >= 8) break; }
+  return out.slice(0, 8);
+}
+function profExtras(c) {
+  const parts = [], dgN = ['Normal', 'Heroic', 'Mythic'];
+  if (c.arena || (c.dg && c.dg.some(Boolean)) || c.gear) parts.push(`<div class="profrow">${c.arena ? `<span class="chip" style="color:${PVP_TIERS[c.arena][1]};border-color:${PVP_TIERS[c.arena][1]}">Arena best: ${PVP_TIERS[c.arena][0]}</span>` : ''}${(c.dg || []).map((n, i) => n ? `<span class="chip">${dgN[i]} dungeons: ${n}</span>` : '').join('')}${c.gear ? `<span class="chip grade-${c.gear.grade}">Best gear: ${esc(c.gear.name)}${c.gear.plus ? ' +' + c.gear.plus : ''} (${GRADES[c.gear.grade]})</span>` : ''}</div>`);
+  const f = c.fun;
+  if (f) parts.push(`<details class="proffun"><summary>Lifetime stats</summary><div class="profstats">
+      <span><b>${profNum(f.mined)}</b> rocks hit</span><span><b>${profNum(f.crafted)}</b> things crafted</span><span><b>${profNum(f.gold)}</b> gold earned</span>
+      <span><b>${profNum(f.potions)}</b> potions and meals</span><span><b>${profNum(f.chests)}</b> chests opened</span><span><b>${profNum(f.digs)}</b> treasure dug up</span>
+      <span><b>${profNum(f.lucky)}</b> Lucky Strikes</span><span><b>${profNum(f.junk)}</b> pieces of junk</span><span><b>${profNum(f.bosses)}</b> bosses beaten</span></div></details>`);
+  if (c.trophies && c.trophies.length) parts.push(`<div class="trophies"><span class="mute" style="font-size:12px">Trophy shelf</span>${c.trophies.map(t => `<span class="trophy ${t.k}" title="${t.k === 'ach' ? 'Achievement' : 'Unique item'}">${t.k === 'ach' ? '\u{1F3C6}' : '\u2726'} ${esc(t.n)}</span>`).join('')}</div>`);
+  return parts.join('');
 }

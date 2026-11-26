@@ -100,7 +100,7 @@ function tabChat() {
 function chatHtml() {
   const list = soc.msgs[soc.chan] || [];
   if (!list.length) return '<p class="mute" style="margin:auto;text-align:center">No messages yet.</p>';
-  return list.map(m => `<div class="cmsg ${m.mine ? 'mine' : ''}"><span class="cname">${m.mine ? 'You' : `<button class="linkbtn" data-act="socwho" data-arg="${esc(m.from)}|${esc(m.name)}">${esc(m.name)}</button>`}</span> <span class="mute" style="font-size:11px">${new Date(m.at).toLocaleTimeString([], { timeStyle: 'short' })}</span>${m.mine || (soc.me && soc.me.admin) ? ` <button class="linkbtn mute" style="font-size:11px" data-act="chatdel" data-arg="${m.id}">remove</button>` : ''}<div>${esc(m.body)}</div></div>`).join('');
+  return list.map(m => `<div class="cmsg ${m.mine ? 'mine' : ''}"><span class="cname">${m.mine ? 'You' : `<button class="linkbtn" data-act="socwho" data-arg="${esc(m.from)}|${esc(m.name)}">${esc(m.name)}</button>`}${m.title ? ` ${styledTitle(m.title, m.tstyle, { size: 'sm' })}` : ''}</span> <span class="mute" style="font-size:11px">${new Date(m.at).toLocaleTimeString([], { timeStyle: 'short' })}</span>${m.mine || (soc.me && soc.me.admin) ? ` <button class="linkbtn mute" style="font-size:11px" data-act="chatdel" data-arg="${m.id}">remove</button>` : ''}<div>${esc(m.body)}</div></div>`).join('');
 }
 function chatPaint(scroll) {
   if (tab !== 'chat') return; const el = document.getElementById('chatlog'); if (!el) return;

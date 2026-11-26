@@ -41,7 +41,7 @@ function perkCard() {
     <div class="perks">${PERKS.map(p => { const n = (ch.perks || {})[p.id] || 0, can = free > 0 && n < p.max;
       return `<div class="perk ${n ? 'has' : ''}"><div class="spread"><b>${esc(p.name)}</b><span class="pips">${'●'.repeat(n)}${'○'.repeat(p.max - n)}</span></div><div class="mute" style="font-size:13px">${esc(p.text)} per rank${n ? ` · now ${esc(perkNow(p, n))}` : ''}</div>
         <button class="sm ${can ? 'pri' : ''}" data-act="perk" data-arg="${p.id}" ${can ? '' : 'disabled'} style="margin-top:6px">${n >= p.max ? 'Maxed' : 'Add a point'}</button></div>`; }).join('')}</div>
-    ${spent ? `<div class="row" style="margin-top:10px"><button class="sm ghost" data-act="perkreset" ${account.shards >= PERK_RESET_SHARDS ? '' : 'disabled'}>Reset perks (${PERK_RESET_SHARDS} Ember Shards)</button></div>` : ''}</div>`;
+    ${spent ? `<div class="row" style="margin-top:10px"><button class="sm ghost" data-act="perkreset" ${account.shards >= PERK_RESET_SHARDS ? '' : 'disabled'}>Reset perks (${PERK_RESET_SHARDS} Thousandium)</button></div>` : ''}</div>`;
 }
 function perkNow(p, n) {
   if (p.slots) return `+${p.slots * n} slots`;
@@ -128,7 +128,7 @@ function dailyCheck() {
 function dailyText(i) {
   const R = DAILY[i], p = [];
   if (R.gold) { const wk = Math.floor((((ch.daily && ch.daily.streak) || 1) - 1) / 7); p.push(`${N(dailyReward(wk * 7 + i + 1).gold)} gold`); }
-  if (R.item) p.push(`${R.item[1] > 1 ? R.item[1] + '\u00d7 ' : ''}${ITEM(R.item[0]).name}`); if (R.shards) p.push(`${R.shards} Ember Shards`);
+  if (R.item) p.push(`${R.item[1] > 1 ? R.item[1] + '\u00d7 ' : ''}${ITEM(R.item[0]).name}`); if (R.shards) p.push(`${R.shards} Thousandium`);
   return p.join(' + ');
 }
 function dailyReward(streak) {
@@ -141,7 +141,7 @@ function claimDaily() {
   const R = dailyReward(D_.streak), got = [];
   if (R.gold) { ch.gold += R.gold; ch.counters.goldEarned += R.gold; got.push(`${N(R.gold)} gold`); }
   if (R.item) { addItem(R.item[0], R.item[1], true); got.push(`${R.item[1] > 1 ? R.item[1] + '\u00d7 ' : ''}${ITEM(R.item[0]).name}`); }
-  if (R.shards) { account.shards += R.shards; ch.counters.shardsEarned += R.shards; got.push(`${R.shards} Ember Shards`); }
+  if (R.shards) { account.shards += R.shards; ch.counters.shardsEarned += R.shards; got.push(`${R.shards} Thousandium`); }
   D_.claimed = true; addLog('lucky', `Daily reward (day ${D_.streak}): ${got.join(', ')}.`); toast(`<b>Day ${D_.streak}:</b> ${esc(got.join(', '))}`, 'gold'); chime(659, 988);
   dirty = true; save();
 }
@@ -168,7 +168,7 @@ function tabEvents() {
 }
 const PRESTIGE_HANDLERS = {
   perk: id => { buyPerk(id); renderMain(); renderSide(); },
-  perkreset: () => modal(`<h3>Reset your perks?</h3><p>All ${perkSpent(ch)} points come back to spend again. Costs ${PERK_RESET_SHARDS} Ember Shards.</p><div class="row"><button class="pri" data-act="perkresetok">Reset</button><button data-act="close">Cancel</button></div>`),
+  perkreset: () => modal(`<h3>Reset your perks?</h3><p>All ${perkSpent(ch)} points come back to spend again. Costs ${PERK_RESET_SHARDS} Thousandium.</p><div class="row"><button class="pri" data-act="perkresetok">Reset</button><button data-act="close">Cancel</button></div>`),
   perkresetok: () => { closeModal(); resetPerks(); renderMain(); },
   daily: () => { claimDaily(); renderMain(); renderTop(); },
 };

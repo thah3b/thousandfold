@@ -99,7 +99,7 @@ for (const [id, c] of Object.entries(CHESTS)) ITEMS[id] = { name: c.name, type: 
 ITEMS.treasure_map = { name: 'Treasure Map', type: 'map', rarity: 2, value: 50, desc: 'An X marks a spot somewhere in this region. Dig it up for a chest.' };
 SHARD_SHOP.push({ key: 'chest_gold', price: 20 });
 SHOP.chests = ['chest_wood', 'chest_iron'];
-// Chest-only Wardrobe pieces (duplicates turn into Ember Shards).
+// Chest-only Wardrobe pieces (duplicates turn into Thousandium).
 FASHIONS.push(
   F('hat_mimic', 'hat', 'Mimic Hat', 'mimic', { chest: 1 }), F('hat_goldcrown', 'hat', 'Treasure Crown', 'crown', { chest: 1 }),
   F('out_pirate', 'outfit', 'Pirate Garb', ['#2a2a34', '#e8c15a', false], { chest: 1 }), F('out_dragon', 'outfit', 'Dragonscale Mail', ['#3a7a4a', '#ffd36b', false], { chest: 1 }),
@@ -132,7 +132,7 @@ function openChest(id) {
   const extra = [];
   if (rng() < C.wardrobe) {
     const f = CHEST_WARDROBE[Math.floor(rng() * CHEST_WARDROBE.length)]; account.chestWardrobe = account.chestWardrobe || {};
-    if (account.chestWardrobe[f]) { account.shards += C.dupe; extra.push({ text: `${FASHION_BY[f].name} (duplicate) → +${C.dupe} Ember Shards`, cls: 'dupe' }); }
+    if (account.chestWardrobe[f]) { account.shards += C.dupe; extra.push({ text: `${FASHION_BY[f].name} (duplicate) → +${C.dupe} Thousandium`, cls: 'dupe' }); }
     else { account.chestWardrobe[f] = Date.now(); extra.push({ text: `New Wardrobe piece: ${FASHION_BY[f].name}!`, cls: 'ward' }); }
   }
   if (rng() < 0.25) { const st = maxL < 30 ? 'lesser_stone' : maxL < 55 ? 'greater_stone' : maxL < 80 ? 'grand_stone' : 'mythic_stone'; addItem(st, 1, true); extra.push({ key: st }); }
@@ -158,7 +158,7 @@ function chestModal(id) {
     <div class="chestanim" id="chestanim">${chestImg(id, false, 128, 'chibi chestclosed')}</div>
     <div id="chestloot" class="chestloot"></div>
     <div class="row" style="justify-content:center;gap:6px;margin-top:10px" id="chestctl"><button class="pri" data-act="chestopen" data-arg="${id}" ${have ? '' : 'disabled'}>Open (${N(have)} left)</button><button data-act="close">Close</button></div>
-    <details style="margin-top:10px;text-align:left"><summary>Odds</summary><div class="kv" style="margin-top:6px">${chestOdds(id).map(([g, p]) => `<span>${g}</span><span>${p}% per gear piece</span>`).join('')}<span>Gear pieces</span><span>${C.gear[0] === C.gear[1] ? C.gear[0] : C.gear[0] + '–' + C.gear[1]}</span><span>Wardrobe piece</span><span>${pct(C.wardrobe)} (duplicates → ${C.dupe} Ember Shards)</span><span>Enchant stone</span><span>25%</span><span>Pity</span><span>Legendary or better guaranteed by open ${C.pity} (${pity} so far)</span></div></details></div>`, 'wide');
+    <details style="margin-top:10px;text-align:left"><summary>Odds</summary><div class="kv" style="margin-top:6px">${chestOdds(id).map(([g, p]) => `<span>${g}</span><span>${p}% per gear piece</span>`).join('')}<span>Gear pieces</span><span>${C.gear[0] === C.gear[1] ? C.gear[0] : C.gear[0] + '–' + C.gear[1]}</span><span>Wardrobe piece</span><span>${pct(C.wardrobe)} (duplicates → ${C.dupe} Thousandium)</span><span>Enchant stone</span><span>25%</span><span>Pity</span><span>Legendary or better guaranteed by open ${C.pity} (${pity} so far)</span></div></details></div>`, 'wide');
 }
 function chestReveal(id) {
   const r = openChest(id); if (!r) return;

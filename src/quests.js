@@ -46,7 +46,7 @@ const STORY_REWARD = { stat: 2, gold: 2000 };
 
 // Quest board (per town). Daily: 3 offers, weekly: 2 offers. Rewards scale with level.
 const BOARD = { daily: 3, weekly: 2, maxActive: 6, dailyGold: 1500, weeklyGold: 15000, dailyShards: 1, weeklyShards: 5, weeklyElixirChance: 1 };
-// Ember Shard exchange (earn-only currency).
+// Thousandium exchange (earn-only currency).
 const SHARD_SHOP = [
   ...ELIXIR_DEFS.map(([stat]) => ({ key: `elixir_${stat.toLowerCase()}_2`, price: 30 })),
   { key: 'satchel', price: 15 }, { key: 'potion_prod5', price: 8 }, { key: 'enlightenment', price: 8 },
@@ -64,5 +64,5 @@ ACHIEVEMENTS.push(
   { id:'titles10', cat:'Exploration', name:'Many Names', desc:'Earn 10 titles.', pts:15, goal:10, stat:'titlesEarned' },
   { id:'titles40', cat:'Exploration', name:'Name Collector', desc:'Earn 40 titles.', pts:50, goal:40, stat:'titlesEarned' },
   { id:'gm5', cat:'Gathering', name:'Five Grandmasteries', desc:'Reach Grandmaster on 5 things.', pts:50, goal:5, stat:'grand' },
-  { id:'shards50', cat:'Economy', name:'Shard Hoarder', desc:'Earn 50 Ember Shards.', pts:15, goal:50, stat:'shardsEarned' },
+  { id:'shards50', cat:'Economy', name:'Shard Hoarder', desc:'Earn 50 Thousandium.', pts:15, goal:50, stat:'shardsEarned' },
 );
