@@ -48,8 +48,23 @@ async function profileOpen(by) {
   } catch (e) { const el = document.querySelector('#modal .profpage'); if (el) el.innerHTML = `<p class="bad">${esc(e.message || 'Could not load that profile.')}</p><div class="row"><button data-act="close">Close</button></div>`; }
 }
 const profNum = n => N(+n || 0);
+// A player on the leaderboards who hasn't chosen a display name yet: show what the leaderboards know.
+function profileBasicHtml(d) {
+  const rows = (d.rows || []).map(c => {
+    const R = RACES.find(r => r.id === c.race) || RACES[0], K = CLASSES.find(k => k.id === c.cls) || CLASSES[0];
+    return `<div class="card" style="margin:0"><div class="row" style="gap:10px;align-items:baseline"><b style="font-size:17px">${esc(c.name)}</b>${c.title ? styledTitle(c.title, c.tstyle, { size: 'sm' }) : ''}</div>
+      <div class="mute" style="font-size:14px">${esc(R.name)} ${esc(K.name)} · <b>${+c.asc ? `A${+c.asc} · ` : ''}Lv ${+c.level || 1}</b></div>
+      <div class="profstats"><span><b>${profNum(c.ach)}</b> achievement points</span><span><b>${+c.coll || 0}%</b> collection</span><span><b>${profNum(c.kills)}</b> fights won</span><span><b>${+c.species || 0}</b> pet species</span></div></div>`;
+  }).join('');
+  const note = d.me ? 'Only basic leaderboard info is shown for you. Choose a display name in Friends to share your full profile with outfits, gear and trophies.' : 'This player hasn’t set up their public profile yet, so only their leaderboard info is shown.';
+  return `<div class="profpage"><div class="profhead"><div class="row" style="gap:12px;flex-wrap:nowrap;align-items:flex-start">${gameIcon(40)}<div><h2 style="margin:0">${esc(d.name || 'Adventurer')}</h2><div class="mute" style="font-size:14px">${note}</div></div></div></div>
+    <div class="profchars" style="display:grid;gap:10px;margin-top:12px">${rows}</div>
+    <p class="mute" style="font-size:12px;margin:10px 0 0">Updated ${d.updated ? new Date(d.updated).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'never'}.</p>
+    <div class="row" style="margin-top:10px">${d.me ? '<button class="pri" data-act="profsetname">Choose a display name</button>' : ''}<button data-act="close">Close</button></div></div>`;
+}
 function profileHtml(d) {
   if (!d) return `<div class="profpage"><h2>Player not found</h2><p class="mute">That link or code doesn’t match a player.</p><div class="row"><button data-act="close">Close</button></div></div>`;
+  if (d.basic) return profileBasicHtml(d);
   const C = d.card, chars = (C && C.chars) || [];
   const head = `<div class="profhead"><div class="row" style="gap:12px;flex-wrap:nowrap;align-items:flex-start">${gameIcon(40)}<div><h2 style="margin:0">${esc(d.name)} ${d.guild ? `<span class="chip" title="${esc(d.guild.name)}">${esc(d.guild.tag)}</span>` : ''}</h2>
       <div class="mute" style="font-size:14px">${d.online ? '<span class="odot on"></span> online · ' : ''}${d.guild ? `${esc(G_RANK[d.guild.rank] || '')} of ${esc(d.guild.name)} · ` : ''}playing since ${new Date(d.joined).toLocaleDateString([], { month: 'short', year: 'numeric' })} · friend code <b>${esc(d.code)}</b></div></div></div>
@@ -84,6 +99,7 @@ function myProfileCard() {
 const PROFILE_HANDLERS = {
   profview: code => profileOpen({ code }),
   profuser: id => profileOpen({ id }),
+  profsetname: () => { closeModal(); HANDLERS.tab('friends'); },
   profcopy: async code => { const link = SITE_URL + '?p=' + encodeURIComponent(code); try { await navigator.clipboard.writeText(link); toast('Profile link copied.', 'verd'); } catch (e) { toast(esc(link)); } },
   profhide: async () => { account.settings.profileHidden = !account.settings.profileHidden; save(); await profilePublish(true); renderMain(); toast(account.settings.profileHidden ? 'Your characters are hidden.' : 'Your profile is public.', 'verd'); },
 };

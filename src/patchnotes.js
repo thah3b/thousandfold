@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.3a';
+const GAME_VERSION = 'v2.3b';
 const PATCH_NOTES = [
+  { v: 'v2.3b', date: '2026-11-26', title: 'Leaderboard profiles', notes: [
+    "Leaderboard names now always open a profile. Players who haven't chosen a display name yet show a basic profile from their leaderboard info (characters, level, title) instead of \"Player not found\". The Profile tab reminds you to choose a display name so your full profile is public.",
+  ] },
   { v: 'v2.3a', date: '2026-11-26', title: '20 more title styles', notes: [
     "20 new title styles: Ocean Breeze, Forest Spirit, Sakura, Lavender Dream, Bumblebee, Mint Chip, Sunset Boulevard, Peppermint, Blood Moon, Ice Queen, Toxic, Cyberpunk, Aurora, Deep Abyss, Midas Touch, Molten Core, Galaxy, Royal Velvet, Prismatic Diamond and Phoenix. Most unlock with an achievement (it says which); all can be bought with Thousandium. Styles you own are listed first.",
   ] },
