@@ -13,7 +13,7 @@ const BNAV = [
 const navGroupOf = t => { if (t === 'home') return 'home'; for (const [id, , , gs] of BNAV) if (gs && NAV.some(([g, items]) => gs.includes(g) && items.some(([i]) => i === t))) return id; return 'more'; };
 function bnavBadge(id) {
   if (id === 'skills') return ch.actions.some(a => ACT(a.res).kind !== 'combat') ? '<span class="dot"></span>' : '';
-  if (id === 'adventure') return (ch.daily && !ch.daily.claimed) || (ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need)) ? '<span class="dot"></span>' : '';
+  if (id === 'adventure') return (ch.daily && !ch.daily.claimed) || (typeof rwPlayedToday === 'function' && !rwPlayedToday()) || (ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need)) ? '<span class="dot"></span>' : '';
   if (id === 'social') { const n = (typeof soc !== 'undefined' && soc.me ? soc.mail || 0 : 0) + (typeof fb !== 'undefined' && fb.unread ? fb.unread : 0); return n ? `<span class="bcount">${n}</span>` : ''; }
   return '';
 }
@@ -35,6 +35,7 @@ const skillIcon = s => { try { const o = (CHAIN[s] || RECIPES_BY[s] || [])[0]; r
 function homeNeeds() {
   const n = [];
   if (ch.daily && !ch.daily.claimed) n.push(['events', '★ Daily reward ready']);
+  if (typeof rwPlayedToday === 'function' && !rwPlayedToday()) n.push(['games', '\u{1F524} Today\u2019s Runeword']);
   if (!ch.quest.done) n.push(['quests', `Quest ${ch.quest.step + 1}/10: ${TUTORIAL_TITLES[ch.quest.step]}`]);
   else if (ch.qactive.some(q => questHave(q) >= q.need)) n.push(['quests', '✔ Quest ready to hand in']);
   if (typeof soc !== 'undefined' && soc.me && soc.mail) n.push(['mail', `✉ ${soc.mail} mail`]);

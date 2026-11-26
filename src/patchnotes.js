@@ -2,8 +2,15 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.0f';
+const GAME_VERSION = 'v2.1';
 const PATCH_NOTES = [
+  { v: 'v2.1', date: '2026-11-26', title: 'Daily games: Runeword', notes: [
+    'New: Daily games (Adventure \u2192 Daily games). The first one is Runeword: guess the day\u2019s 5-letter fantasy word in 6 tries. Everyone gets the same word on the same day, and you can copy your result to share it.',
+    'Solve it for a boost to XP and yield for all your characters until midnight: +5%, plus 1% for every day of your streak after the first, up to +15%. You also get 1 to 3 shards (fewer guesses, more shards).',
+    'Your streak, win rate and guess spread are on the Daily games page. Missing a day or running out of tries starts the streak again.',
+    'Home and the Adventure button remind you when today\u2019s Runeword is waiting. 5 new achievements. More daily games are coming.',
+    'Fewer pop-ups: rare drops from monsters (potions, enchant stones and the like) now go to the event log only. Truly unique drops still pop up.',
+  ] },
   { v: 'v2.0f', date: '2026-11-25', title: 'Buffs button', notes: [
     'The top bar now has a single \u2726 Buffs button instead of a row of buff timers. Tap it to see each active buff, what it does and how long it has left, and to add more time or turn on Auto-use from there.',
     'Buffs of the same kind don\u2019t mix tiers: a stronger buff replaces a weaker one, and a weaker one can\u2019t be used while a stronger one is active (the Drink button says so). Using the same strength again still adds its time, up to 24 hours.',

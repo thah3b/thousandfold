@@ -132,14 +132,14 @@ function derive(ch, now, pending, skill) {
   const yieldParts = [
     ['Titles', (titles.bySkill[skill] || 0) + titles.global], [SK.yieldStat ? STATS.find(s => s.id === SK.yieldStat).name : 'Stats', statY],
     ['Race', (rfx.skillYieldR || {})[skill] || 0], ['Class & talents', (gather ? M.gyield || 0 : 0) + (SK.kind === 'craft' ? M.cyield || 0 : 0) + (M.skillYield[skill] || 0)],
-    ['Potion', yPot ? yPot.power : 0], ['Food', gather ? ffx.gyield || 0 : 0],
+    ['Potion', yPot ? yPot.power : 0], ['Food', gather ? ffx.gyield || 0 : 0], ['Daily game', typeof dailyBoost === 'function' ? dailyBoost(now) : 0],
   ];
   const poolRaw = yieldParts.reduce((s, p) => s + p[1], 0);
   const pool = poolRaw <= BALANCE.yieldPoolSoftCap ? poolRaw : BALANCE.yieldPoolSoftCap + (poolRaw - BALANCE.yieldPoolSoftCap) * BALANCE.yieldPoolOverflow;
   const procPot = activeBuff(ch, 'proc', now), xpPot = activeBuff(ch, 'xp', now), luckPot = activeBuff(ch, 'luck', now);
   const lucky = (F.luckStrikeBase + above(st('LUCK')) * F.luckStrike) * (1 + (rfx.luckStrikeMult || 0)) + (procPot ? procPot.power : 0) + (ffx.proc || 0) + (M.luckStrike || 0) + (M.skillLuck[skill] || 0);
   const bonusFind = gather ? (above(st('PER')) * F.perBonusFind) * (1 + (rfx.bonusFindMult || 0)) + (M.bonusFind || 0) + (luckPot ? luckPot.power : 0) : 0;
-  const xpMult = 1 + above(st('WIS')) * F.wisXp + (rfx.xp || 0) + (xpPot ? xpPot.power : 0) + (ffx.xp || 0) + (M.xp || 0) + (M.skillXp[skill] || 0);
+  const xpMult = 1 + above(st('WIS')) * F.wisXp + (rfx.xp || 0) + (xpPot ? xpPot.power : 0) + (ffx.xp || 0) + (M.xp || 0) + (M.skillXp[skill] || 0) + (typeof dailyBoost === 'function' ? dailyBoost(now) : 0);
   const e = p => effPts(st(p));
   const out = {
     S, skill,

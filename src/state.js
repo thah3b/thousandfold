@@ -396,7 +396,7 @@ function combatTick(a, e, d, now) {
   const k0 = tierOf(ch.prof[e.id] || 0), r = resolveFight(e, d, rng);
   const g = agg[a.res] || (agg[a.res] = { kind: 'combat', wins: 0, losses: 0, xp: 0, gold: 0, loot: {}, n: 0, dmg: 0, ate: {} });
   g.n++; g.dmg += r.dmg; if (r.won) { g.wins++; g.xp += r.xp; g.gold += r.gold; for (const [k, q] of Object.entries(r.loot)) g.loot[k] = (g.loot[k] || 0) + q; a.streak++; } else g.losses++;
-  for (const l of r.rare) { const nm = ITEM(l.key).name; addLog('lucky', `Rare drop from ${e.name}: ${nm}!`); toast(`<b>Rare drop!</b> ${itemIcon(l.key, 20)} ${esc(nm)}`, 'gold'); chime(988, 1480); if (l.unique) flash(); }
+  for (const l of r.rare) { const nm = ITEM(l.key).name; addLog('lucky', `Rare drop from ${e.name}: ${nm}!`); if (l.unique) { toast(`<b>Unique drop!</b> ${itemIcon(l.key, 20)} ${esc(nm)}`, 'gold'); chime(988, 1480); flash(); } }
   if (r.died) {
     ch.hp = d.maxHP * BALANCE.combat.defeatHpFrac;
     stopAction(a.res, `${e.name} defeated you. You limp back to ${REGION_BY[ch.loc].town} to recover.`);
