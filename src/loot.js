@@ -70,14 +70,26 @@ function announceGear(key, quiet, notes, src) {
 // Crafted gear: each item rolls a grade (better quality, better odds). Below the keep setting it stays a plain stackable item.
 function addCraftOut(k, q, quiet, notes) {
   if (!k.startsWith('g:') || ITEM(k).slot === 'tool' || q <= 0) { addItem(k, q, true); return; }
-  const { base, q: ql } = parseG(k), keep = account.settings.gearKeep == null ? 1 : account.settings.gearKeep;
+  const { base, q: ql } = parseG(k), keep = account.settings.gearKeep == null ? 1 : +account.settings.gearKeep;
   let plain = 0;
   for (let i = 0; i < q; i++) {
     const g = rollGrade(GRADE_ODDS.craft, CRAFT_QUALITY_BOOST[ql] || 1);
     if (!g || g < keep) { plain++; continue; }
-    const key = makeGraded(base, ql, g); addItem(key, 1, true); announceGear(key, quiet, notes, 'Crafted');
+    const key = makeGraded(base, ql, g);
+    // Bag full: sell it on the spot instead of overfilling (each graded piece takes its own slot).
+    if (!ch.inv[key] && usedSlots() >= ch.invSlots) { addItem(key, 1, true); craftOverflow.gold += sellN(key, 1); craftOverflow.n++; continue; }
+    addItem(key, 1, true); announceGear(key, quiet, notes, 'Crafted');
   }
   if (plain) addItem(k, plain, true);
+  if (craftOverflow.n && Date.now() - craftOverflow.at > 60000) craftOverflowFlush(quiet, notes);
+}
+// Gear sold because the bag was full: reported at most once a minute.
+const craftOverflow = { n: 0, gold: 0, at: 0 };
+function craftOverflowFlush(quiet, notes) {
+  if (!craftOverflow.n) return;
+  const msg = `Bag full: sold ${N(craftOverflow.n)} crafted gear for ${N(craftOverflow.gold)} gold.`;
+  if (notes) notes.push(msg); else addLog('sys', msg);
+  craftOverflow.n = 0; craftOverflow.gold = 0; craftOverflow.at = Date.now();
 }
 // Monster kills: a small chance of a graded drop.
 function killGearDrop(e, n, quiet, notes) {
@@ -287,7 +299,7 @@ function tabDungeons() {
       <div class="row" style="gap:10px;flex-wrap:nowrap;align-items:center;margin:6px 0">${monsterIcon({ name: DUNGEONS[rid][1], boss: true }, 52)}<div class="mute" style="font-size:14px">4 floors, then ${esc(DUNGEONS[rid][1])}. Needs 2 stamina while you’re inside. Rewards on every floor you clear, even if you retreat later.</div></div>
       <div class="dgdiffs">${diffs}</div></div>`;
   }).join('');
-  const keep = account.settings.gearKeep == null ? 1 : account.settings.gearKeep;
+  const keep = account.settings.gearKeep == null ? 1 : +account.settings.gearKeep;
   return `<div class="spread"><h2>Dungeons</h2><span>Your power <b>${N(cp)}</b></span></div>
     <p class="mute" style="margin:4px 0 0">Each region has a dungeon: 4 floors and a boss, in Normal, Heroic (3 a day) and Mythic (1 a day). Beat the region’s boss to open it. Bosses always drop gear and a loot chest.</p>
     ${run}
@@ -302,8 +314,16 @@ const LOOT_HANDLERS = {
   chestopen: id => chestReveal(id),
   chestskip: () => { if (chestReveal.pending) { clearTimeout(chestReveal.pending); chestReveal.pending = null; chestReveal.done && chestReveal.done(); } },
   dig: () => digMap(),
-  sellgrade: g => { const max = +g; let n = 0, gold0 = ch.gold; for (const k of Object.keys(ch.inv)) { if (!k.startsWith('g:')) continue; const it = ITEM(k); if (it.slot === 'tool' || (it.grade || 0) > max || GEAR[it.base].unique || GEAR[it.base].ego || GEAR[it.base].growth) continue; n += sellN(k, ch.inv[k]); } toast(n ? `Sold ${N(n)} gear for ${N(ch.gold - gold0)} gold.` : 'Nothing to sell.'); renderMain(); renderTop(); },
+  sellgradeask: g => {
+    const max = +g; let n = 0, gold = 0;
+    for (const k of Object.keys(ch.inv)) { if (!sellableGear(k, max)) continue; n += ch.inv[k]; gold += sellPrice(k) * ch.inv[k]; }
+    if (!n) { toast('No unequipped gear at that grade or lower.'); return; }
+    modal(`<h3>Sell gear up to ${esc(GRADES[max])}?</h3><p>Sells <b>${N(n)}</b> unequipped piece${n === 1 ? '' : 's'} of ${GRADES.slice(0, max + 1).map(esc).join(', ')} gear for about <b>${N(Math.floor(gold))}</b> gold. Tools, uniques, special weapons and anything you have equipped are kept.</p>
+      <div class="row"><button class="pri" data-act="sellgrade" data-arg="${max}">Sell ${N(n)}</button><button data-act="close">Cancel</button></div>`);
+  },
+  sellgrade: g => { const max = +g; let n = 0, gold0 = ch.gold; closeModal(); for (const k of Object.keys(ch.inv)) { if (!sellableGear(k, max)) continue; n += sellN(k, ch.inv[k]); } toast(n ? `Sold ${N(n)} gear for ${N(ch.gold - gold0)} gold.` : 'Nothing to sell.'); renderMain(); renderTop(); },
 };
+const sellableGear = (k, max) => { if (!k.startsWith('g:') || !ch.inv[k]) return false; const it = ITEM(k); return !(it.slot === 'tool' || (it.grade || 0) > max || GEAR[it.base].unique || GEAR[it.base].ego || GEAR[it.base].growth); };
 function goStartRegion(rid) { if (ch.travel) { toast('You’re already on the road.'); return; } startTravel(rid, false); if (ch.travel) toast(`Travelling to <b>${esc(REGION_BY[rid].name)}</b>. Come back to the Dungeons tab when you arrive.`, 'verd'); renderMain(); renderActions(); renderTop(); }
 // Founders: everyone who played before v2.0 (frame shows up with the profile showcase).
 const V2_RELEASE = Date.UTC(2026, 10, 25, 23, 0, 0);

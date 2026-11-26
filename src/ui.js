@@ -365,10 +365,14 @@ function tabInv() {
     ${equipPanel()}
     <div class="row" style="margin:14px 0 8px"><input id="invq" placeholder="Search items" value="${esc(invQ)}" style="flex:1;min-width:160px" aria-label="Search items">
       <select id="invsort" aria-label="Sort">${[['rarity', 'Rarity'], ['value', 'Stack value'], ['qty', 'Quantity'], ['name', 'Name']].map(([v, n]) => `<option value="${v}" ${invSort === v ? 'selected' : ''}>${n}</option>`).join('')}</select>
-      <button class="chip ${account.settings.invGrid ? 'on' : ''}" data-act="invgrid">${account.settings.invGrid ? 'Grid view' : 'List view'}</button><button data-act="selljunk">Sell all junk</button><button data-act="sellgrade" data-arg="0" title="Sells unequipped Common gear (not tools, uniques or special weapons)">Sell Common gear</button><button class="chip ${ch.autoSellJunk ? 'on' : ''}" data-act="autojunk">Auto-sell junk: ${ch.autoSellJunk ? 'on' : 'off'}</button></div>
+      <button class="chip ${account.settings.invGrid ? 'on' : ''}" data-act="invgrid">${account.settings.invGrid ? 'Grid view' : 'List view'}</button><button data-act="selljunk">Sell all junk</button><button class="chip ${ch.autoSellJunk ? 'on' : ''}" data-act="autojunk">Auto-sell junk: ${ch.autoSellJunk ? 'on' : 'off'}</button></div>
+    <div class="row" style="margin:0 0 8px;gap:6px;align-items:center"><span class="mute" style="font-size:13px">Sell gear up to</span>${[0, 1, 2, 3].map(g => `<button class="sm" data-act="sellgradeask" data-arg="${g}" style="color:${GRADE_COLORS[g]}">${GRADES[g]}</button>`).join('')}
+      <span class="mute" style="font-size:13px;margin-left:8px">Keep crafted gear from</span>${[0, 1, 2, 3].map(g => `<button class="chip ${(account.settings.gearKeep == null ? 1 : +account.settings.gearKeep) === g ? 'on' : ''}" data-act="set" data-arg="gearKeep|${g}">${GRADES[g]}</button>`).join('')}</div>
     <div class="row" style="margin-bottom:10px">${INV_FILTERS.map(([v, n]) => `<button class="chip ${invF === v ? 'on' : ''}" data-act="invf" data-arg="${v}">${n}</button>`).join('')}</div>
-    <div class="${account.settings.invGrid ? 'igrid' : 'inv'}">${keys.length ? keys.map(account.settings.invGrid ? invTile : invRow).join('') : `<p class="mute">${invQ || invF !== 'all' ? 'Nothing matches.' : 'Empty. Gathered resources land here.'}</p>`}</div>`;
+    <div class="${account.settings.invGrid ? 'igrid' : 'inv'}">${keys.length ? keys.slice(0, invShowAll ? keys.length : INV_PAGE).map(account.settings.invGrid ? invTile : invRow).join('') + (keys.length > INV_PAGE && !invShowAll ? `<button class="sm" data-act="invmore" style="grid-column:1/-1">Show all ${N(keys.length)} items</button>` : '') : `<p class="mute">${invQ || invF !== 'all' ? 'Nothing matches.' : 'Empty. Gathered resources land here.'}</p>`}</div>`;
 }
+// Big bags: draw the first 300 items, the rest on request (keeps the page fast).
+const INV_PAGE = 300; let invShowAll = false;
 function invRow(key) {
   const it = ITEM(key), rc = RARITIES[it.rarity], m = priceMult(ch, key, Date.now());
   let acts = '';
@@ -899,11 +903,12 @@ const HANDLERS = {
     account.slots[wz.slot] = newCharacter(wz); save(); enterGame(wz.slot); secretName(wz.name);
     toast(`Welcome, <b>${esc(account.slots[wz.slot].name)}</b>. Start with Stone in Mining.`);
   },
-  tab: t => { tab = t; pend = {}; if (SKILLS[t]) profSkill = charSkill = t; renderMain(); window.scrollTo({ top: 0 }); },
+  tab: t => { tab = t; pend = {}; invShowAll = false; if (SKILLS[t]) profSkill = charSkill = t; renderMain(); window.scrollTo({ top: 0 }); },
   start: id => { startAction(id); renderMain(); renderActions(); },
   stop: id => { stopAction(id); renderMain(); renderActions(); },
   swap: a => { const [out, inn] = a.split('|'); closeModal(); stopAction(out); startAction(inn); renderMain(); renderActions(); },
   sell: a => { const i = a.lastIndexOf('|'), key = a.slice(0, i), q = a.slice(i + 1), n = q === 'all' ? ch.inv[key] : 1, g = sell(key, q); if (g || n) addLog('sys', `Sold ${N(n)} ${ITEM(key).name} for ${N(g)} gold.`); checkProgress(); renderMain(); },
+  invmore: () => { invShowAll = true; renderMain(); },
   selljunk: () => { let g = 0, n = 0; for (const k of Object.keys(ch.inv)) if (ITEM(k).type === 'junk') { n += ch.inv[k]; g += sell(k, 'all'); } addLog('sys', n ? `Sold ${n} junk for ${N(g)} gold.` : 'No junk to sell.'); checkProgress(); renderMain(); },
   drink, equip,
   use: key => { if (key === 'reforge_destiny') { reforgeModal(); return; }
