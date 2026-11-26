@@ -232,7 +232,7 @@ const SOCIAL_HANDLERS = {
   socaddname: async n => { try { const r = await rpc('tf_friend_add', { p_target: n }); closeModal(); toast(r === 'accepted' ? 'You’re now friends!' : 'Friend request sent.', 'verd'); socRefresh(); } catch (e) { toast(esc(e.message)); } },
   socdm: id => { soc.chan = 'dm:' + id; HANDLERS.tab('chat'); },
   socchan: k => { soc.chan = k; soc.err = ''; renderMain(); chatLoop(); },
-  chatsend: async () => { const el = $('#chatin'); if (!el) return; const v = el.value.trim(); if (!v) return; try { await rpc('tf_chat_send', { p_channel: soc.chan, p_body: v }); el.value = ''; soc.err = ''; await chatFetch(); el.focus(); } catch (e) { soc.err = e.message; chatPaint(false); } },
+  chatsend: async () => { const el = $('#chatin'); if (!el) return; const v = el.value.trim(); if (!v) return; try { await rpc('tf_chat_send', { p_channel: soc.chan, p_body: v }); const cur = $('#chatin'); if (cur && cur.value.trim() === v) cur.value = ''; el.value = ''; soc.err = ''; await chatFetch(); const nf = $('#chatin'); if (nf) nf.focus(); } catch (e) { soc.err = e.message; chatPaint(false); } },
   socgift: id => { soc.gift = { to: id || null, offer: { gold: 0, items: {} }, note: '' }; if (tab !== 'mail') HANDLERS.tab('mail'); else renderMain(); },
   giftto: id => { readOffer('gift', soc.gift.offer); soc.gift.to = id; renderMain(); },
   giftclose: () => { soc.gift = null; renderMain(); },
