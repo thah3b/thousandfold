@@ -368,10 +368,16 @@ function pxChibi(look, size, opt) {
   const o = opt || {}; return pxImg(k, size, () => pxChibiGrid(look), { ...o, h: o.h || Math.round(size * 36 / 32) });
 }
 // A player character's look.
+const PX_LEGACY_HAIR = [[/raven|black|jet|ebony|dark/i, '#2a2226'], [/chestnut|brown|umber|walnut|hazel/i, '#6b4426'], [/auburn|copper|ginger|red|flame|crimson/i, '#a83e2c'], [/gold|blond|honey|straw|wheat|sandy/i, '#e8c870'], [/silver|grey|gray|ash|steel/i, '#a9adb5'], [/white|snow|frost|bone|platinum/i, '#f2eee6'], [/blue|azure|sea|ocean/i, '#2b5a9a'], [/violet|purple|plum|lilac/i, '#6a4a8a'], [/pink|rose/i, '#ee9ab8'], [/green|moss|leaf/i, '#4a7a3a']];
+const PX_LEGACY_EYES = [[/amber|gold|honey/i, '#c08a2a'], [/blue|azure|sky|sea/i, '#2f5aa8'], [/green|emerald|jade/i, '#3f7a32'], [/brown|hazel|umber/i, '#6b3a1f'], [/violet|purple|amethyst/i, '#6a3a9a'], [/grey|gray|silver|steel|black/i, '#3a3a4a'], [/red|crimson|ruby/i, '#a8322a']];
+const pxLegacyColour = (v, table) => { if (typeof v !== 'string' || !v) return null; if (/^#[0-9a-f]{3,6}$/i.test(v)) return v; const m = table.find(([re]) => re.test(v)); return m ? m[1] : null; };
 function pxLookOf(c) {
   const h = pxHash(c.name || '?');
   const base = { race: c.race || 'human', gender: c.gender || 'Male', cls: c.cls || 'warrior', hair: c.race === 'undead' ? '#d9d4c8' : PX_HAIR[h % PX_HAIR.length], eye: PX_EYES[(h >>> 5) % PX_EYES.length], mark: c.mark };
-  if (c.look) return { ...base, ...c.look };
+  // Very early characters kept a text "look" from the creation screen (e.g. hair: "Raven black").
+  // Turn the colour names into palette colours and never let it block the Wardrobe.
+  const lg = c.look || {}, lgh = pxLegacyColour(lg.hair, PX_LEGACY_HAIR), lge = pxLegacyColour(lg.eyes || lg.eye, PX_LEGACY_EYES);
+  if (lgh) base.hair = lgh; if (lge) base.eye = lge;
   return typeof fashionLook === 'function' ? { ...base, ...fashionLook(c) } : base;
 }
 // NPCs: a stable look from the name, with a few role hats.

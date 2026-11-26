@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.0c';
+const GAME_VERSION = 'v2.0d';
 const PATCH_NOTES = [
+  { v: 'v2.0d', date: '2026-11-25', title: 'Wardrobe fix for early characters', notes: [
+    'Fixed: characters made in the very first versions of the game couldn\u2019t change their look in the Wardrobe. Pieces showed as \u201cWearing\u201d but your hero stayed in the class look. They now show straight away, everywhere your hero appears.',
+    'Those early characters also keep the hair and eye colours picked when they were made (for example raven black hair and amber eyes).',
+  ] },
   { v: 'v2.0c', date: '2026-11-25', title: 'Home screen and cloud sync', notes: [
     'New Home screen: a big animated scene of what you\u2019re doing, your running actions (with Stop and Stop all), active buffs, your next goal, and quick buttons for anything waiting on you.',
     'Phones get a bottom bar: Home, Skills, Adventure, Social and More. Each opens a short grid of its pages, so Settings is two taps away instead of a long scroll. On desktop, Home sits at the top of the sidebar and the sidebar groups can be folded away.',
