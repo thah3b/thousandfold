@@ -325,7 +325,7 @@ img.px{image-rendering:pixelated}
 .wdcell b{font-size:13px;line-height:1.2}.wdcell .mute{font-size:11px;line-height:1.25}
 .wdcell.on{outline:2px solid var(--gold)}.wdcell.locked{opacity:.55;cursor:default}.wdcell.locked .wdimg{filter:grayscale(.9)}
 .wdcell.buy .mute{color:var(--gold)}
-@media (max-width:720px){.wardrobe{grid-template-columns:1fr}.wdstage{position:static}}
+@media (max-width:720px){.wardrobe{display:block}.wardrobe>div+div{margin-top:12px}.wdstage{position:sticky;top:0;z-index:6;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:8px;padding:8px;box-shadow:0 8px 16px rgba(0,0,0,.4)}.wdstage .hsc{width:auto}.wdstage .wdtry{margin-top:0;width:auto;flex:1 1 160px}.wdstage .wdnote{display:none}.wdstage .wdhair{flex-basis:100%;margin-top:0!important}}
 .arenahead .chip.pvptier,.pvptier{font-weight:700}
 .pvpslots{display:grid;gap:6px;margin-top:8px}
 .pvpslot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line,rgba(255,255,255,.12));border-radius:10px}
@@ -372,10 +372,10 @@ img.px{image-rendering:pixelated}
 .eslot.dropok{outline:2px dashed var(--verd);outline-offset:2px}.eslot.dropover{outline-style:solid;background:var(--glow)}
 .presetrow{padding:6px 0;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
 /* v1.4 tour */
-.tourbox{position:fixed;z-index:55;right:16px;bottom:16px;width:min(360px,calc(100vw - 32px));background:var(--panel);border:2px solid var(--ember);border-radius:14px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.4)}
+.tourbox{position:fixed;z-index:35;right:16px;bottom:16px;width:min(360px,calc(100vw - 32px));background:var(--panel);border:2px solid var(--ember);border-radius:14px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.4)}
 .tourhi{outline:3px solid var(--ember)!important;outline-offset:3px;border-radius:10px;animation:tourpulse 1.6s ease-in-out infinite}
 @keyframes tourpulse{50%{outline-color:var(--gold)}}
-@media (max-width:900px){.tourbox{left:16px;right:16px;bottom:12px;width:auto}}
+@media (max-width:900px){.tourbox{left:16px;right:16px;bottom:84px;width:auto}}
 /* v1.4 colour themes */
 :root[data-theme=ember]{color-scheme:dark;--bg:#1a0c08;--panel:#26120c;--panel2:#331a11;--line:#5a2a1a;--ink:#ffe8d6;--mute:#d4a88c;--ember:#ff7a3d;--ember2:#ffb07a;--verd:#7ad0a0;--gold:#ffd36b;--bad:#ff7b72;--glow:rgba(255,122,61,.18)}
 :root[data-theme=forest]{color-scheme:dark;--bg:#0e1610;--panel:#152018;--panel2:#1c2b20;--line:#2e4434;--ink:#e6f2e2;--mute:#a3bba2;--ember:#8fd06a;--ember2:#c0eaa0;--verd:#6fd0c0;--gold:#e8d06a;--bad:#ff8a7a;--glow:rgba(143,208,106,.16)}
@@ -483,10 +483,41 @@ img.px{image-rendering:pixelated}
 .wdtry{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-top:10px;padding:8px;border:1px dashed var(--ember);border-radius:10px;width:100%}
 .wdstage .hsc{width:100%}
 @media (max-width:720px){
- .wdstage{position:static;padding:8px}
- .wdstage .hsc{min-height:150px;min-width:0}
- .wdstage .hsc-hero{width:110px;height:auto}
+ .wdstage{position:sticky;top:0;z-index:6;padding:8px}
+ .wdstage .hsc{min-height:0;min-width:0;width:150px}
+ .wdstage .hsc-hero{width:92px;height:auto}
  .wdstage .hsc-pet img{width:48px;height:auto}
  .wdgrid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
  .wdcell .wdimg{width:64px;height:auto}
 }
+
+/* v2.0c — Home screen, phone bottom bar, collapsible sidebar */
+nav.side button.sep{display:block;width:100%;text-align:left;font:inherit;font-size:13px;color:var(--mute);padding:12px 12px 4px;min-height:0;background:transparent;border:0;cursor:pointer}
+nav.side button.sep:hover{color:var(--text,inherit)}
+.home{display:grid;gap:12px;max-width:900px}
+.homestage .homescene{min-width:0}
+.homestage .homescene .scene{zoom:1.6;margin-top:6px;min-width:0}
+.homeneeds{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#homeact .aslot{margin-top:8px}
+.app[data-tab=home] #act{display:none}
+.bnav{display:none}
+@media (max-width:900px){
+ nav.side{display:none}
+ .bnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+ .bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:transparent;font-size:12px;padding:6px 2px;min-height:52px;border-radius:10px;color:var(--mute)}
+ .bnav button .bic{font-size:20px;line-height:1}
+ .bnav button.on{color:var(--ember);background:var(--glow);font-weight:700}
+ .bnav .dot{position:absolute;top:6px;right:calc(50% - 18px)}
+ .bnav .bcount{position:absolute;top:2px;right:calc(50% - 24px);background:var(--ember);color:#fff;border-radius:9px;font-size:11px;padding:0 5px;line-height:16px}
+ .app{padding-bottom:76px}
+ .homestage .homescene .scene{zoom:1.35}
+ .toasts{bottom:84px}
+ .modal.sheet{align-items:end;padding:0}
+ .modal.sheet .card{max-width:none;border-radius:16px 16px 0 0;max-height:80vh;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+}
+.bsh-h{font-size:13px;margin:12px 0 6px}
+.bsh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
+.bsh-grid button{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;min-height:64px;font-size:14px;text-align:center}
+.bsh-grid button.on{outline:2px solid var(--ember)}
+.bsh-grid button .dot{position:absolute;top:6px;right:6px}
+.bsh-grid button img{width:24px;height:24px}

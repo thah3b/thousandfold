@@ -63,7 +63,8 @@ function sceneKey(a) {
   return [a ? a.id : ch.travel ? 'travel:' + ch.travel.to : 'idle', ch.loc, JSON.stringify(L), pet, animOn()].join('|');
 }
 function sceneHtml(a) {
-  const L = { ...pxLookOf(ch), prop: null, pose: 'idle' }, on = animOn();
+  const L0 = pxLookOf(ch), on = animOn(), freeHands = !a || a.kind === 'explore';
+  const L = { ...L0, prop: freeHands ? L0.prop : null, pose: 'idle' };
   const hero = pxChibi(L, 72, { cls: 'sc-hero-img' });
   const pet = ch.petActive && (ch.pets || []).find(p => p.uid === ch.petActive);
   const petHtml = pet && SPECIES[pet.sp] ? `<span class="sc-pet ${SP(pet.sp).tags.includes('Flying') ? 'fly' : ''}">${pxPet(pet.sp, 30, pet)}</span>` : '';

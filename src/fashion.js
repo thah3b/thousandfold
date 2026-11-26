@@ -124,11 +124,11 @@ function tabWardrobe() {
   }
   return `<div class="spread"><h2>Wardrobe</h2><span class="chip">${owned} of ${FASHIONS.length} owned</span></div>
     <p class="mute" style="margin:4px 0 12px">Tap anything to try it on. Pieces you own go on straight away; others you can preview first, then buy or see how to earn them. Everything is cosmetic: stats never change.</p>
-    <div class="wardrobe"><div class="card wdstage">${heroShowcase(ch, 176, { look: stageLook, cls: 'wdhero' })}
+    <div class="wardrobe"><div class="card wdstage">${heroShowcase(ch, window.innerWidth <= 720 ? 92 : 176, { look: stageLook, cls: 'wdhero' })}
       ${tryBar}
-      ${wdSlot === 'hair' ? '<div class="mute" style="font-size:12px;margin-top:6px">Hat hidden so you can see the hair.</div>' : ''}
-      <div class="mute" style="font-size:13px;margin-top:8px">${esc(ch.name)} · ${esc(race().name)} ${esc(CLASSES.find(k => k.id === ch.cls).name)}${ch.petActive ? '' : ' · <a href="#" data-act="tab" data-arg="pets">Set an active pet</a> to have it join you here'}</div>
-      <div class="row" style="gap:6px;margin-top:8px;justify-content:center"><button class="sm ghost" data-act="wdreset">Reset to class look</button></div></div>
+      ${wdSlot === 'hair' ? '<div class="mute wdhair" style="font-size:12px;margin-top:6px">Hat hidden so you can see the hair.</div>' : ''}
+      <div class="mute wdnote" style="font-size:13px;margin-top:8px">${esc(ch.name)} · ${esc(race().name)} ${esc(CLASSES.find(k => k.id === ch.cls).name)}${ch.petActive ? '' : ' · <a href="#" data-act="tab" data-arg="pets">Set an active pet</a> to have it join you here'}</div>
+      <div class="row wdnote" style="gap:6px;margin-top:8px;justify-content:center"><button class="sm ghost" data-act="wdreset">Reset to class look</button></div></div>
       <div><div class="row wdtabs" style="gap:6px;margin-bottom:10px">${FASHION_SLOTS.map(([id, n]) => `<button class="chip ${wdSlot === id ? 'on' : ''}" data-act="wdslot" data-arg="${id}">${n}</button>`).join('')}</div>
       <div class="wdgrid">${cells.join('')}</div></div></div>`;
 }
@@ -145,7 +145,7 @@ const FASHION_HANDLERS = {
     const [slot, id] = a.split('|'), f = id && FASHION_BY[id];
     if (!id || (f && fashionOwned(ch, f))) { wdTry = null; FASHION_HANDLERS.wdwear(a); return; }
     wdTry = { slot, id }; renderMain();
-    const st = document.querySelector('.wdstage'); if (st && window.innerWidth <= 720) st.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    
   },
   wdtryoff: () => { wdTry = null; renderMain(); },
   wdwear: a => {

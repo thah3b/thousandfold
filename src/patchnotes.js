@@ -2,8 +2,15 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.0b';
+const GAME_VERSION = 'v2.0c';
 const PATCH_NOTES = [
+  { v: 'v2.0c', date: '2026-11-25', title: 'Home screen and cloud sync', notes: [
+    'New Home screen: a big animated scene of what you\u2019re doing, your running actions (with Stop and Stop all), active buffs, your next goal, and quick buttons for anything waiting on you.',
+    'Phones get a bottom bar: Home, Skills, Adventure, Social and More. Each opens a short grid of its pages, so Settings is two taps away instead of a long scroll. On desktop, Home sits at the top of the sidebar and the sidebar groups can be folded away.',
+    'Cloud saves across devices: when you open or come back to the game and there\u2019s a newer save from another device, you\u2019re asked whether to load it. Until you choose, that device stops uploading, so an old copy can\u2019t overwrite newer progress.',
+    'Cloud auto-save now runs every 2 minutes, and also when you switch away from or close the game. \u201cSaving too often\u201d no longer shows as an error: the game just tries again a few seconds later.',
+    'Wardrobe: on phones your hero now stays pinned at the top while you scroll, so you see every piece the moment you tap it. Your chosen prop now shows in the action scene when you\u2019re resting, travelling or exploring.',
+  ] },
   { v: 'v2.0b', date: '2026-11-25', title: 'Feedback, auto-buy and best-first lists', notes: [
     'Best first: gathering and crafting lists can now show your best unlocked resources and recipes at the top, so there\u2019s no scrolling down to the good stuff. It\u2019s on by default on phones; switch it with the button above each list (or in Settings \u2192 Automation).',
     'Send feedback: tap \u2709 Feedback at the top, or the button in Settings, to send a bug report or idea straight to the developer. Works for guests too (on the website).',

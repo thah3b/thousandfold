@@ -214,8 +214,8 @@ const NAV = [
   ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['training', 'Training'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
 ];
 function enterGame(i) {
-  account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'mining'; agg = {}; rate = {};
-  $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"><div id="actbody"></div><div id="actscene"></div></section><aside class="sidepanel" id="side"></aside></div>`;
+  account.activeSlot = i; ch = migrate(account.slots[i]); screen = 'game'; tab = 'home'; agg = {}; rate = {};
+  $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><nav class="bnav" id="bnav" aria-label="Sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"><div id="actbody"></div><div id="actscene"></div></section><aside class="sidepanel" id="side"></aside></div>`;
   renderTop(); renderMain(); renderActions();
   checkProgress(true, []); syncAcctSecrets(); markFounder(); tourMaybe();
   const away = (Date.now() - ch.last) / 1000;
@@ -228,24 +228,28 @@ function renderTop() {
   const pots = Object.entries(ch.potions).filter(([, p]) => p.until > now).map(([cat, p]) => `<span class="chip" title="${esc(ITEMS[p.id].name + ': ' + ITEMS[p.id].desc)}">${POTION_CATS[cat]} <b data-live="pot:${cat}"></b></span>`).join('');
   $('#top').innerHTML = `<span class="brand">${gameIcon(22)} Thousandfold</span>
     <div class="cur"><span class="num">Gold <b class="gold" data-live="gold"></b></span><span class="num">Shards <b data-live="shards"></b></span><span>${ch.travel ? 'Travelling to ' : ''}<b data-live="travel"></b></span><span class="mute" data-live="clock"></span>${pots}
-    ${mailChip()}${(() => { const e = worldEvent(); return `<button class="chip evchip" data-act="tab" data-arg="events" title="${esc(e.text)}">${e.holiday ? '\u2744 ' : '\u2605 '}${esc(e.name)}</button>`; })()}<button class="chip fbbtn" data-act="feedback" title="Send feedback to the developer">✉ Feedback</button></div>
+    ${cloud.held ? `<button class="chip bad" data-act="cloudheld" title="Cloud saving is paused on this device">\u2601 Newer save on ${esc(devLabel(cloud.held.device))}</button>` : ''}${mailChip()}${(() => { const e = worldEvent(); return `<button class="chip evchip" data-act="tab" data-arg="events" title="${esc(e.text)}">${e.holiday ? '\u2744 ' : '\u2605 '}${esc(e.name)}</button>`; })()}<button class="chip fbbtn" data-act="feedback" title="Send feedback to the developer">✉ Feedback</button></div>
     <div class="milestone" title="Closest upcoming milestone">Next: <b data-live="ms"></b></div>`;
   updateLive();
 }
 function renderNav() {
   const running = new Set(ch.actions.map(a => ACT(a.res).skill));
-  $('#nav').innerHTML = NAV.map(([g, items]) => `<div class="sep">${g}</div>` + items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'chat' && typeof fb !== 'undefined' && fb.unread ? ` <span class="chip" style="padding:0 6px" aria-label="new feedback">\u2709 ${fb.unread}</span>` : ''}${id === 'events' && ch.daily && !ch.daily.claimed ? ' <span class="dot" aria-label="reward ready"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')).join('')
+  const col = account.settings.navCollapsed || {};
+  $('#nav').innerHTML = `<button class="${tab === 'home' ? 'on' : ''}" data-act="tab" data-arg="home">\u2302 Home</button>` + NAV.map(([g, items]) => { const shut = col[g] && !items.some(([i]) => i === tab); return `<button class="sep" data-act="navgrp" data-arg="${g}" aria-expanded="${!shut}">${shut ? '\u25B8' : '\u25BE'} ${g}</button>` + (shut ? '' : items.filter(([id]) => id !== 'debug' || isDev()).map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}${SKILLS[id] ? ` <span class="mute num" style="font-size:13px">${ch.skills[id].level}</span>` : ''}${running.has(id) || (id === 'combat' && running.has('slaying')) || (id === 'map' && (running.has('exploration') || ch.travel)) ? ' <span class="dot" aria-label="running"></span>' : ''}${id === 'chat' && typeof fb !== 'undefined' && fb.unread ? ` <span class="chip" style="padding:0 6px" aria-label="new feedback">\u2709 ${fb.unread}</span>` : ''}${id === 'events' && ch.daily && !ch.daily.claimed ? ' <span class="dot" aria-label="reward ready"></span>' : ''}${id === 'quests' && !ch.quest.done ? ` <span class="chip" style="padding:0 6px">${ch.quest.step + 1}/10</span>` : ''}${id === 'quests' && ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need) ? ' <span class="dot"></span>' : ''}${id === 'training' && running.has('training') ? ' <span class="dot"></span>' : ''}${id === 'talents' && ch.skillPts ? ` <span class="chip" style="padding:0 6px">${ch.skillPts}</span>` : ''}${id === 'class' && ((ch.adv.quest && ch.adv.quest.step >= 1 && (ch.adv.quest.step < 4 || ch.adv.quest.tier === 2)) || (!ch.adv.quest && canAscend())) ? ' <span class="dot"></span>' : ''}${id === 'char' && ch.unspent ? ` <span class="chip" style="padding:0 6px">${ch.unspent}</span>` : ''}${socBadge(id)}</button>`).join('')); }).join('')
     + (LATER.length ? `<div class="sep">Later phases</div>` : '') + LATER.map(([id, n]) => `<button class="later ${tab === id ? 'on' : ''}" data-act="tab" data-arg="${id}">${n}</button>`).join('');
+  renderBnav();
 }
+function actSlotHtml(a) { const o = ACT(a.res); return `<div class="aslot ${a.vein > Date.now() ? 'vein' : ''} ${sceneAction() && sceneAction().id === o.id && ch.actions.length > 1 ? 'focus' : ''}" data-res="${o.id}" data-act="scenefocus" data-arg="${o.id}" title="Show in the scene">${actIcon(o)}<div><div class="spread"><b>${esc(o.name)}</b>${tierBadge(ch.prof[o.id] || 0)}</div><div class="bar" style="margin:5px 0"><i></i></div><div class="meta">${SKILLS[o.skill].name} · <span data-live="time:${o.id}"></span> each${o.inputs ? ` · <span data-live="can:${o.id}"></span> left` : ` · streak <span data-live="streak:${o.id}"></span>`}${a.vein > Date.now() ? ` · <b class="gold">${NODE_BONUS[o.skill]}</b>` : ''}</div></div><button class="sm" data-act="stop" data-arg="${o.id}" aria-label="Stop ${esc(o.name)}">Stop</button></div>`; }
 function renderActions() {
   if (!ch || !$('#act')) return;
+  const ha = document.getElementById('homeact'); if (ha) ha.innerHTML = homeActHtml();
   const d = D(), used = staminaUsed();
   const view = actView();
   if (view !== 'full') { $('#actbody').innerHTML = actHeader(view) + (view === 'compact' ? (ch.actions.length ? actChips() : '<p class="mute" style="margin:6px 0 0;font-size:14px">Nothing running.</p>') : ''); $('#act').dataset.view = view; refreshScenes(); updateLive(); return; }
   $('#act').dataset.view = view;
   $('#actbody').innerHTML = actHeader(view) + `
     <div class="pips" style="margin-top:6px" aria-label="Stamina ${used} of ${d.stamina}">${Array.from({ length: d.stamina }, (_, i) => `<i class="${i < used ? 'u' : ''}"></i>`).join('')}</div>
-    ${ch.actions.length ? ch.actions.map(a => { const o = ACT(a.res); return `<div class="aslot ${a.vein > Date.now() ? 'vein' : ''} ${sceneAction() && sceneAction().id === o.id && ch.actions.length > 1 ? 'focus' : ''}" data-res="${o.id}" data-act="scenefocus" data-arg="${o.id}" title="Show in the scene">${actIcon(o)}<div><div class="spread"><b>${esc(o.name)}</b>${tierBadge(ch.prof[o.id] || 0)}</div><div class="bar" style="margin:5px 0"><i></i></div><div class="meta">${SKILLS[o.skill].name} · <span data-live="time:${o.id}"></span> each${o.inputs ? ` · <span data-live="can:${o.id}"></span> left` : ` · streak <span data-live="streak:${o.id}"></span>`}${a.vein > Date.now() ? ` · <b class="gold">${NODE_BONUS[o.skill]}</b>` : ''}</div></div><button class="sm" data-act="stop" data-arg="${o.id}" aria-label="Stop ${esc(o.name)}">Stop</button></div>`; }).join('')
+    ${ch.actions.length ? ch.actions.map(a => actSlotHtml(a)).join('')
       : `<p class="mute" style="margin:10px 0 0">Nothing running. Pick something in any gathering or crafting skill; each running action occupies stamina.</p>`}`;
   refreshScenes(); updateLive();
 }
@@ -268,9 +272,9 @@ function renderLog() {
 function renderMain() {
   if (!ch || !$('#main')) return;
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart } : null;
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { wardrobe: tabWardrobe, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { home: tabHome, wardrobe: tabWardrobe, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
   $('#main').innerHTML = f();
-  renderNav(); renderSide();
+  renderNav(); renderSide(); const ap = document.querySelector('.app'); if (ap) ap.dataset.tab = tab;
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.s); } catch (e) { } } }
   bindMain(); updateLive(); refreshScenes();
 }
@@ -845,6 +849,7 @@ const HANDLERS = {
   ...ANIM_HANDLERS,
   ...LOOT_HANDLERS,
   ...FEEDBACK_HANDLERS,
+  ...HOME_HANDLERS,
   ...EXTRA_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },
   hatchnow: i => { checkPets(); renderMain(); },

@@ -12,7 +12,7 @@ const CLOUD_CFG = {
   supabaseUrl: 'https://tylhgokkzenqcefcrcau.supabase.co',     // project "My rpg project"
   supabaseAnonKey: 'sb_publishable_QQq8OI8DzOrsrZ8DAFMsxw_Dxo5aCeJ', // publishable key: safe to ship; RLS + RPC checks protect the data
 };
-const CLOUD = { autoMins: 5, lbCats: [
+const CLOUD = { autoMins: 2, lbCats: [
   ['prog', 'Level', e => `A${e.asc} · Lv ${e.level}`],
   ['ach', 'Achievement points', e => N(e.ach)],
   ['gold', 'Gold earned', e => N(e.gold)],
@@ -80,7 +80,11 @@ const PROVIDERS = {
     async signIn(email, pw) { const j = await sbFetch('/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email, password: pw }) }, false); sbStore(j); cloud.uid = j.user.id; cloud.state = 'ready'; cloud.canWrite = true; },
     async signOut() { try { await sbFetch('/auth/v1/logout', { method: 'POST' }); } catch (e) { } sbStore(null); cloud.uid = null; cloud.state = 'signedout'; },
     async getSave() { const j = await sbFetch(`/rest/v1/cloud_saves?select=code,saved_at,version,device,summary&user_id=eq.${cloud.uid}`); const r = j && j[0]; return r ? { code: r.code, savedAt: Date.parse(r.saved_at), ver: r.version, device: r.device, chars: r.summary || [] } : null; },
-    async putSave(d) { await sbFetch('/rest/v1/rpc/tf_put_save', { method: 'POST', body: JSON.stringify({ p_code: d.code, p_saved_at: new Date(d.savedAt).toISOString(), p_version: d.ver, p_device: d.device, p_summary: d.chars }) }); },
+    async putSave(d) {
+      const args = { p_code: d.code, p_saved_at: new Date(d.savedAt).toISOString(), p_version: d.ver, p_device: d.device, p_summary: d.chars };
+      try { await sbFetch('/rest/v1/rpc/tf_put_save2', { method: 'POST', body: JSON.stringify({ ...args, p_base: new Date(d.base || 0).toISOString(), p_force: !!d.force }) }); }
+      catch (e) { if (/Could not find the function|PGRST202|404/.test(e.message || '')) await sbFetch('/rest/v1/rpc/tf_put_save', { method: 'POST', body: JSON.stringify(args) }); else throw e; }
+    },
     async postScores(entries) { const r = await sbFetch('/rest/v1/rpc/tf_submit_scores', { method: 'POST', body: JSON.stringify({ p_entries: entries }) }); return r || []; },
     async leaderboard(cat) { const j = await sbFetch(`/rest/v1/tf_leaderboard?select=*&order=${cat}.desc&limit=100`); return (j || []).map(r => Object.assign({}, r, { mine: r.user_id === cloud.uid })); },
   },
@@ -144,27 +148,50 @@ async function cloudInit() {
 }
 async function cloudCheckRemote(onBoot) {
   try { cloud.meta = await P().getSave(); } catch (e) { cloud.msg = 'Could not reach the cloud: ' + (e.message || e); cloudRefreshUi(); return; }
-  const m = cloud.meta;
-  if (onBoot && m && m.code && m.device !== account.device && m.savedAt > (account.savedAt || 0) + 60000 && !(account.cloudSeen >= m.savedAt)) cloudOfferLoad(m);
+  if (cloudNewer(cloud.meta)) cloudOfferLoad(cloud.meta);
   cloudRefreshUi();
 }
+// ---------- Sync across devices (v2.0c) ----------
+// account.cloudSeen = the cloud save time this device last uploaded or loaded.
+// A save from a different device after that is "newer": this device stops uploading and asks.
+const devId = s => String(s || '').split(':')[0];
+const devLabel = s => String(s || '').split(':').slice(1).join(':') || 'another device';
+function deviceTag() {
+  const ua = navigator.userAgent || '', mob = /Mobi|Android|iPhone|iPad/i.test(ua) || (window.matchMedia && matchMedia('(pointer:coarse)').matches);
+  const br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : 'Browser';
+  const os = /iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : /Win/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : (mob ? 'Phone' : 'Computer');
+  return `${account.device}:${os} \u00b7 ${br}`.slice(0, 32);
+}
+const cloudNewer = m => !!(m && m.code && devId(m.device) !== account.device && m.savedAt > (account.cloudSeen || 0) + 1000);
+async function cloudSync() {
+  if (cloud.state !== 'ready') return false;
+  try { cloud.meta = await P().getSave(); } catch (e) { return false; }
+  if (cloudNewer(cloud.meta)) { if (!cloud.held || cloud.held.savedAt !== cloud.meta.savedAt) cloudOfferLoad(cloud.meta); return false; }
+  return true;
+}
 function cloudOfferLoad(m) {
-  account.cloudSeen = m.savedAt;
-  modal(`<h3>Newer cloud save found</h3><p>Your cloud save is from <b>${new Date(m.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</b>, newer than the save on this device.</p>
+  cloud.held = m; if (typeof renderTop === 'function' && screen === 'game') renderTop();
+  modal(`<h3>Newer save from ${esc(devLabel(m.device))}</h3><p>You played on <b>${esc(devLabel(m.device))}</b> at <b>${new Date(m.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</b>. Load that save here? Offline progress since then is added when you continue.</p>
+    <p class="mute" style="font-size:13px">Until you choose, this device won’t upload, so it can’t overwrite that save.</p>
     <p class="mute" style="font-size:14px">Cloud: ${esc((m.chars || []).map(c => `${c.name} (${c.asc ? 'A' + c.asc + ' · ' : ''}Lv ${c.level})`).join(', ') || 'no characters')}<br>This device: ${esc(account.slots.filter(Boolean).map(c => `${c.name} (${levelLabel(c)})`).join(', ') || 'no characters')}</p>
-    <div class="row" style="margin-top:12px"><button class="pri" data-act="cloudload">Load cloud save</button><button data-act="close">Keep this device's save</button></div>`);
+    <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:6px"><button class="pri" data-act="cloudload">Load it</button><button data-act="cloudkeep">Keep this device (replaces the cloud save)</button><button class="ghost" data-act="close">Decide later</button></div>`);
 }
 function cloudSummary() { return account.slots.filter(Boolean).map(c => ({ name: c.name, level: c.level, asc: c.ascension || 0, cls: c.cls })); }
-async function cloudUpload(manual) {
+async function cloudUpload(manual, force) {
   if (cloud.state !== 'ready' || cloud.busy || cloud.canWrite === false) return;
+  if (cloud.held && !force) { if (manual) cloudOfferLoad(cloud.held); return; }
   cloud.busy = true; cloudRefreshUi();
   try {
-    save(); const d = { code: await makeSaveCode(), savedAt: Date.now(), ver: GAME_VERSION, device: account.device, chars: cloudSummary() };
-    await P().putSave(d); cloud.meta = d; cloud.lastUp = Date.now(); cloud.canWrite = true; account.cloudSeen = d.savedAt; cloud.msg = '';
+    if (!force && !(await cloudSync())) { cloud.busy = false; cloudRefreshUi(); return; }
+    save(); const d = { code: await makeSaveCode(), savedAt: Date.now(), ver: GAME_VERSION, device: deviceTag(), chars: cloudSummary(), base: account.cloudSeen || 0, force: !!force };
+    await P().putSave(d); delete d.base; delete d.force; cloud.meta = d; cloud.lastUp = Date.now(); cloud.canWrite = true; account.cloudSeen = d.savedAt; cloud.msg = ''; cloud.held = null; cloud.retryAt = 0; save();
+    if (screen === 'game') renderTop();
     if (account.settings.lbOptOut !== true) await cloudPostScores();
     if (manual) toast('Saved to the cloud.', 'verd');
   } catch (e) {
     const code = e && e.code;
+    if (/NEWER_SAVE_ELSEWHERE/.test(e.message || '')) { cloud.busy = false; await cloudSync(); cloudRefreshUi(); return; }
+    if (/too often/i.test(e.message || '')) { cloud.retryAt = Date.now() + 15000; cloud.busy = false; if (manual) toast('Saved a moment ago. Trying again in a few seconds.'); cloudRefreshUi(); return; }
     if (code === 'invalid_argument' && cloud.provider === 'claude') { cloud.canWrite = false; cloud.msg = 'This game link lets your account read the cloud but not write to it. Cloud saves and leaderboard posting work for the game’s owner, their organization and invited Editors.'; }
     else cloud.msg = 'Cloud save failed: ' + (e.message || code || e);
     if (manual) toast(esc(cloud.msg));
@@ -183,15 +210,24 @@ async function cloudLoad() {
     const m = cloud.meta || await P().getSave(); if (!m || !m.code) { toast('No cloud save yet.'); return; }
     const a = await readSaveCode(m.code); if (!a || !Array.isArray(a.slots)) throw new Error('unreadable');
     const keep = { sbUrl: account.settings.sbUrl, sbKey: account.settings.sbKey }, dev = account.device;
+    const was = screen === 'game' ? account.activeSlot : null;
     if (ch) { ch = null; }
-    account = a; account.activeSlot = null; account.device = dev; account.cloudSeen = m.savedAt; Object.assign(account.settings, keep);
-    save(); applySettings(); renderSelect(); toast('Cloud save loaded.', 'verd');
+    account = a; account.activeSlot = null; account.device = dev; account.cloudSeen = m.savedAt; Object.assign(account.settings, keep); cloud.held = null; cloud.lastUp = Date.now();
+    save(); applySettings(); renderSelect(); if (was != null && account.slots[was]) enterGame(was); toast('Cloud save loaded.', 'verd');
   } catch (e) { toast('Could not load the cloud save: ' + esc(e.message || e)); }
 }
 function cloudTick() {
   if (cloud.state !== 'ready' || account.settings.cloudAuto === false || cloud.canWrite === false) return;
-  if (Date.now() - cloud.lastUp > (document.hidden ? 30 : CLOUD.autoMins) * 60000) cloudUpload(false);
+  if (cloud.retryAt && Date.now() >= cloud.retryAt) { cloud.retryAt = 0; cloudUpload(false); return; }
+  if (!document.hidden && Date.now() - cloud.lastUp > CLOUD.autoMins * 60000) cloudUpload(false);
 }
+// Save when you leave this device; check for a newer save when you come back.
+let cloudHiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (cloud.state !== 'ready' || account.settings.cloudAuto === false) return;
+  if (document.hidden) { cloudHiddenAt = Date.now(); if (Date.now() - cloud.lastUp > 20000) cloudUpload(false); }
+  else if (Date.now() - cloudHiddenAt > 20000) cloudSync();
+});
 function cloudRefreshUi() { if (screen === 'game' && (tab === 'account' || tab === 'leaders')) renderMain(); if (screen === 'select') { const el = document.getElementById('cloudchip'); if (el) el.outerHTML = cloudChip(); } }
 function cloudChip() {
   const ss = cloud.provider === 'supabase' && cloud.state === 'ready' ? sbSession() : null, email = ss && ss.user && ss.user.email;
@@ -242,7 +278,7 @@ function cloudPanel() {
   else {
     const ss = cloud.provider === 'supabase' ? sbSession() : null, via = ss && ss.user && ss.user.app_metadata && ss.user.app_metadata.provider === 'google' ? 'Google' : 'email';
     body = `<p style="margin:0">${ss && ss.user && ss.user.email ? `Signed in as <b>${esc(ss.user.email)}</b> <span class="mute">(${via})</span>` : `Signed in with your <b>${esc(p.label)}</b>`}.${cloud.isOwner ? ' <span class="chip">Game owner</span>' : ''}</p>
-      <p class="mute" style="font-size:14px;margin:6px 0 0">${m ? `Cloud save: ${new Date(m.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}${m.device === account.device ? ' (this device)' : ' (another device)'} · ${esc((m.chars || []).map(c => c.name).join(', ') || 'no characters')}` : 'No cloud save yet.'}</p>
+      <p class="mute" style="font-size:14px;margin:6px 0 0">${m ? `Cloud save: ${new Date(m.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}${devId(m.device) === account.device ? ' (this device)' : ` (${esc(devLabel(m.device))})`} · ${esc((m.chars || []).map(c => c.name).join(', ') || 'no characters')}` : 'No cloud save yet.'}</p>
       ${cloud.canWrite === false ? `<p class="bad" style="font-size:14px">${esc(cloud.msg)}</p>` : cloud.msg ? `<p class="bad" style="font-size:14px">${esc(cloud.msg)}</p>` : ''}
       <div class="row" style="margin-top:10px"><button class="pri" data-act="cloudup" ${cloud.busy || cloud.canWrite === false ? 'disabled' : ''}>${cloud.busy ? 'Saving…' : 'Save to cloud now'}</button><button data-act="cloudget" ${m && m.code ? '' : 'disabled'}>Load cloud save</button>${cloud.provider === 'supabase' ? '<button class="ghost" data-act="sbout">Sign out</button>' : ''}</div>
       <div class="row" style="margin-top:10px">${['cloudAuto', 'lbOptOut'].map(k => { const on = k === 'cloudAuto' ? account.settings.cloudAuto !== false : account.settings.lbOptOut !== true; return `<button class="chip ${on ? 'on' : ''}" data-act="cloudset" data-arg="${k}">${k === 'cloudAuto' ? `Auto-save (every ${CLOUD.autoMins} min while open): ${on ? 'on' : 'off'}` : `Show my characters on leaderboards: ${on ? 'on' : 'off'}`}</button>`; }).join('')}</div>`;
@@ -293,6 +329,8 @@ const CLOUD_HANDLERS = {
   acgender: g => { if (!['Male', 'Female'].includes(g)) return; ch.gender = g; save(); renderMain(); },
   cloudget: () => modal(`<h3>Load cloud save?</h3><p>This replaces every character on this device with the cloud save from ${cloud.meta ? new Date(cloud.meta.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : ''}. Copy a save code first if you want a backup.</p><div class="row" style="margin-top:12px"><button class="pri" data-act="cloudload">Load it</button><button data-act="close">Cancel</button></div>`),
   cloudload: () => cloudLoad(),
+  cloudkeep: () => { closeModal(); const m = cloud.held; cloud.held = null; if (m) account.cloudSeen = m.savedAt; cloudUpload(true, true); },
+  cloudheld: () => { if (cloud.held) cloudOfferLoad(cloud.held); },
   cloudset: k => { if (k === 'cloudAuto') account.settings.cloudAuto = account.settings.cloudAuto === false; else { account.settings.lbOptOut = account.settings.lbOptOut !== true; cloud.lastLb = ''; } save(); renderMain(); },
   sbgoogle: () => {
     save();

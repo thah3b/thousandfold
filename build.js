@@ -36,6 +36,7 @@ ${r('engine.js')}
 ${r('state.js')}
 ${r('loot.js')}
 ${r('feedback.js')}
+${r('home.js')}
 ${r('cloud.js')}
 ${r('social.js')}
 ${r('auction.js')}
