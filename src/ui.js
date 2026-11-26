@@ -141,6 +141,7 @@ function frame(t) {
 // ============================================================
 function applySettings() {
   const s = account.settings, r = document.documentElement;
+  if (typeof applyLang === 'function') applyLang();
   if (s.theme === 'auto') { if (r.dataset.mine) { r.removeAttribute('data-theme'); delete r.dataset.mine; } } else { r.dataset.theme = s.theme; r.dataset.mine = '1'; }
   document.body.classList.toggle('large', s.large); document.body.classList.toggle('reduced', s.reduced);
 }
@@ -166,7 +167,7 @@ function renderSelect() {
   $('#root').innerHTML = `<div class="screen"><div class="hero">${heroArt()}<div class="txt">${gameIcon(72)}<h1>${heroTitle()}</h1><p>Every swing counts. Ten thousand of them, and the mountain gives up its next secret.</p></div></div>
     <div class="spread" style="margin-top:22px"><h2>Choose your character</h2><span class="row" style="gap:6px">${cloudChip()}<span class="chip">Ember Shards <b class="gold">${N(account.shards)}</b></span></span></div>
     <div class="slots">${slots}${account.slot4 ? '' : `<div class="card slot empty" style="opacity:.6"><span class="fell" style="font-size:22px">Fourth slot</span><span class="mute">Find ${SECRET_CFG.slot4At} secrets to open it</span></div>`}</div>
-    <p class="bottomline">Thousandfold ${GAME_VERSION} · prototype. Saves stay in this browser and, when you are signed in, in the cloud.</p></div>`;
+    <p class="bottomline">Thousandfold ${GAME_VERSION} · prototype. Saves stay in this browser and, when you are signed in, in the cloud.</p><div class="langbar">${langButton()}</div></div>`;
 }
 
 // ---------- Wizard ----------
@@ -852,6 +853,7 @@ const HANDLERS = {
   ...LOOT_HANDLERS,
   ...FEEDBACK_HANDLERS,
   ...HOME_HANDLERS,
+  ...I18N_HANDLERS,
   ...GAMES_HANDLERS,
   ...EXTRA_HANDLERS,
   incubate: k => { incubate(k); renderMain(); },

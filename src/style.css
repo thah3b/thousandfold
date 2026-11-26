@@ -581,3 +581,9 @@ nav.side button.sep:hover{color:var(--text,inherit)}
 .rw-dist i.on{background:#3f8a3a}
 .rw-result{margin-bottom:12px}
 @media (max-width:420px){.rw-row{grid-template-columns:repeat(5,46px)}.rw-t{width:46px;height:46px;font-size:22px}.rw-k{height:48px}}
+
+/* v2.2 — languages */
+html[lang=vi] h1,html[lang=vi] h2,html[lang=vi] h3,html[lang=vi] .fell,html[lang=vi] .brand,html[lang=vi] .tier,html[lang=vi] .worldmap .nname{font-family:'Alegreya SC','Alegreya Sans',Georgia,serif;letter-spacing:0}
+.langbar{display:flex;justify-content:center;margin:10px 0 24px}
+.langbtn{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 14px;font-size:14px}
+.langbtn .globe{font-size:18px;line-height:1}

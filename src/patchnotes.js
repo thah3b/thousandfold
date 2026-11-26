@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.1';
+const GAME_VERSION = 'v2.2';
 const PATCH_NOTES = [
+  { v: 'v2.2', date: '2026-11-26', title: 'Languages: Tiếng Việt', notes: [
+    'Thousandfold now speaks Vietnamese. Tap the \u{1F310} language button at the bottom of the character select screen and pick English or Tiếng Việt. Your choice is remembered on this device.',
+    'Menus, buttons, tabs, stats, the Home screen, Daily games and most messages are translated. Names of places, monsters, items and characters stay in English, and longer texts (the Game Guide, lore and patch notes) are still in English for now.',
+  ] },
   { v: 'v2.1', date: '2026-11-26', title: 'Daily games: Runeword', notes: [
     'New: Daily games (Adventure \u2192 Daily games). The first one is Runeword: guess the day\u2019s 5-letter fantasy word in 6 tries. Everyone gets the same word on the same day, and you can copy your result to share it.',
     'Solve it for a boost to XP and yield for all your characters until midnight: +5%, plus 1% for every day of your streak after the first, up to +15%. You also get 1 to 3 shards (fewer guesses, more shards).',
