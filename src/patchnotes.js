@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.0d';
+const GAME_VERSION = 'v2.0e';
 const PATCH_NOTES = [
+  { v: 'v2.0e', date: '2026-11-25', title: 'Bigger bags', notes: [
+    'Every character now starts with 200 inventory slots instead of 100. Existing characters get +100 slots on top of everything they\u2019ve already bought or earned.',
+  ] },
   { v: 'v2.0d', date: '2026-11-25', title: 'Wardrobe fix for early characters', notes: [
     'Fixed: characters made in the very first versions of the game couldn\u2019t change their look in the Wardrobe. Pieces showed as \u201cWearing\u201d but your hero stayed in the class look. They now show straight away, everywhere your hero appears.',
     'Those early characters also keep the hair and eye colours picked when they were made (for example raven black hair and amber eyes).',
