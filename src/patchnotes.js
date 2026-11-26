@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.3b';
+const GAME_VERSION = 'v2.4';
 const PATCH_NOTES = [
+  { v: 'v2.4', date: '2026-11-26', title: 'Casino: Blackjack', notes: [
+    "Casino is open (Town \u2192 Casino). First game: Blackjack with an 8-deck shoe. Blackjack pays 3:2, dealer stands on all 17s, insurance pays 2:1, double on any two cards (also after a split), split up to 4 hands. Side bets: Perfect Pairs (up to 25:1) and 21+3 (up to 100:1). Bet gold or Thousandium.",
+    "Casino stats: a graph of your money, net result, wagered, won and lost amounts round by round, plus totals and your recent rounds. Gold and Thousandium are tracked separately. Casino winnings don't count toward the gold-earned leaderboard.",
+  ] },
   { v: 'v2.3b', date: '2026-11-26', title: 'Leaderboard profiles', notes: [
     "Leaderboard names now always open a profile. Players who haven't chosen a display name yet show a basic profile from their leaderboard info (characters, level, title) instead of \"Player not found\". The Profile tab reminds you to choose a display name so your full profile is public.",
   ] },

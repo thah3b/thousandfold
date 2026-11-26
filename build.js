@@ -40,6 +40,7 @@ ${r('i18n.js')}
 ${r('home.js')}
 ${r('words.js')}
 ${r('games.js')}
+${r('casino.js')}
 ${r('showcase.js')}
 ${r('cloud.js')}
 ${r('social.js')}
