@@ -57,7 +57,7 @@ function homeNeeds() {
 }
 function homeActHtml() {
   const d = D(), used = staminaUsed();
-  return `<div class="spread"><b>Running</b><span class="row" style="gap:6px"><span class="mute" style="font-size:14px">Stamina ${used}/${d.stamina}</span>${ch.actions.length ? '<button class="sm" data-act="stopall">Stop all</button>' : ''}</span></div>
+  return `<div class="spread"><b>Running</b><span class="row" style="gap:6px"><span class="mute" style="font-size:14px" title="${esc(d.staminaParts.map(([n, v]) => n + ' ' + v).join(' · '))}">Stamina ${used}/${d.stamina}</span>${ch.actions.length ? '<button class="sm" data-act="stopall">Stop all</button>' : ''}</span></div>
     ${ch.actions.length ? ch.actions.map(a => actSlotHtml(a)).join('')
       : '<p class="mute" style="margin:6px 0 0">Nothing running.</p>'}`;
 }

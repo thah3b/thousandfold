@@ -105,9 +105,10 @@ function statBreakdown(ch, pending) {
 }
 // v2.5a: each class advance adds a flat +5 stamina and raises the cap by 5 (16 → 21 → 26 → 31).
 const advStamina = c => c && c.adv ? BALANCE.stamina.perAdvance * Math.max(0, (c.adv.tier || 1) - 1) : 0;
+// v2.5d: the 16 cap applies to base + DEX only. Class advances, talents, perks and food add on top of it.
+const dexStamina = dex => { const a = (Math.min(dex, 100) - 10) / 10, b = clamp(dex - 100, 0, 100) / 20, c = Math.max(0, dex - 200) / 40; return Math.min(BALANCE.stamina.hardCap, BALANCE.stamina.base + Math.floor(Math.max(0, a + b + c))); };
 function maxStamina(dex, extra, adv) {
-  const a = (Math.min(dex, 100) - 10) / 10, b = clamp(dex - 100, 0, 100) / 20, c = Math.max(0, dex - 200) / 40;
-  return Math.min(BALANCE.stamina.hardCap + (adv || 0), BALANCE.stamina.base + Math.floor(Math.max(0, a + b + c)) + (extra || 0) + (adv || 0));
+  return dexStamina(dex) + (adv || 0) + (extra || 0);
 }
 function activeBuff(ch, cat, now, skill) {
   const p = ch.potions[cat]; if (!p || p.until <= now) return null;
@@ -153,6 +154,7 @@ function derive(ch, now, pending, skill) {
     speed: Math.min(BALANCE.speedBonusCap, speedRaw), speedRaw, speedParts, pool, poolRaw, yieldParts,
     lucky: Math.min(0.9, lucky), bonusFind: Math.min(0.9, bonusFind), xpMult,
     stamina: maxStamina(st('DEX'), Math.min(BALANCE.food.staminaCap, ffx.stamina || 0) + (M.stamina || 0), advStamina(ch)),
+    staminaParts: [['Base + DEX', dexStamina(st('DEX'))], ['Class advances', advStamina(ch)], ['Talents and perks', M.stamina || 0], ['Food', Math.min(BALANCE.food.staminaCap, ffx.stamina || 0)]].filter(p => p[1] > 0),
     intAbove: above(st('INT')) + (M.quality || 0) / BALANCE.craft.qualityIntShift, wisAbove: above(st('WIS')),
     discount: Math.min(F.charmDiscountCap, above(st('CHARM')) * F.charmDiscount + (M.discount || 0)),
     sell: 1 + (rfx.sell || 0) + (M.sell || 0),

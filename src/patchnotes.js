@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.5c';
+const GAME_VERSION = 'v2.5d';
 const PATCH_NOTES = [
+  { v: 'v2.5d', date: '2026-11-26', title: 'Stamina fix', notes: [
+    "Fixed: stamina from talents (Endurance, the gathering capstone), the Second Wind perk and stamina meals was swallowed by the cap. The cap of 16 now only limits base + DEX; class advances, talents, perks and food add on top. Hover the Stamina counter on Home to see where yours comes from.",
+  ] },
   { v: 'v2.5c', date: '2026-11-26', title: 'New leaderboards', notes: [
     "Leaderboards: \"Gold earned\" is replaced by Richest (the gold you hold right now), and there's a new Casino losses board: lifetime gold lost at the Casino, biggest losers on top and players in profit at the bottom.",
   ] },
