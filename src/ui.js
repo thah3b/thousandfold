@@ -225,7 +225,8 @@ function enterGame(i) {
 }
 function renderTop() {
   if (!ch) return; const now = Date.now();
-  const pots = Object.entries(ch.potions).filter(([, p]) => p.until > now).map(([cat, p]) => `<span class="chip" title="${esc(ITEMS[p.id].name + ': ' + ITEMS[p.id].desc)}">${POTION_CATS[cat]} <b data-live="pot:${cat}"></b></span>`).join('');
+  const nb = Object.values(ch.potions).filter(p => p.until > now && ITEMS[p.id]).length;
+  const pots = `<button class="chip buffbtn ${nb ? '' : 'mute'}" data-act="buffs" title="Show your active buffs" aria-label="Active buffs: ${nb}">\u2726 Buffs${nb ? ` <b>${nb}</b>` : ''}</button>`;
   $('#top').innerHTML = `<span class="brand">${gameIcon(22)} Thousandfold</span>
     <div class="cur"><span class="num">Gold <b class="gold" data-live="gold"></b></span><span class="num">Shards <b data-live="shards"></b></span><span>${ch.travel ? 'Travelling to ' : ''}<b data-live="travel"></b></span><span class="mute" data-live="clock"></span>${pots}
     ${cloud.held ? `<button class="chip bad" data-act="cloudheld" title="Cloud saving is paused on this device">\u2601 Newer save on ${esc(devLabel(cloud.held.device))}</button>` : ''}${mailChip()}${(() => { const e = worldEvent(); return `<button class="chip evchip" data-act="tab" data-arg="events" title="${esc(e.text)}">${e.holiday ? '\u2744 ' : '\u2605 '}${esc(e.name)}</button>`; })()}<button class="chip fbbtn" data-act="feedback" title="Send feedback to the developer">✉ Feedback</button></div>
@@ -362,7 +363,7 @@ function tabInv() {
 function invRow(key) {
   const it = ITEM(key), rc = RARITIES[it.rarity], m = priceMult(ch, key, Date.now());
   let acts = '';
-  if (it.type === 'potion' || it.type === 'food') acts = `<button class="sm pri" data-act="drink" data-arg="${key}">${it.type === 'food' ? 'Eat' : 'Drink'}</button>${autoUsable(key) ? `<button class="sm ${ch.autoUse && ch.autoUse[key] ? 'pri' : ''}" data-act="autouse" data-arg="${key}" title="Use one whenever its buff runs out (while something is running), until you run out">${ch.autoUse && ch.autoUse[key] ? 'Auto-use: on' : 'Auto-use'}</button>` : ''}`;
+  if (it.type === 'potion' || it.type === 'food') acts = `${(() => { const r = it.cat && (it.power || Object.keys(it.fx || {}).length) ? buffRule(key) : { mode: 'new' }; return r.mode === 'blocked' ? `<button class="sm" data-act="drink" data-arg="${key}" title="${esc(r.cur.name)} is stronger and still active">Stronger buff active</button>` : `<button class="sm pri" data-act="drink" data-arg="${key}" title="${r.mode === 'stack' ? 'Adds its time to the active buff' : r.mode === 'replace' ? 'Replaces the weaker active buff' : ''}">${it.type === 'food' ? 'Eat' : 'Drink'}${r.mode === 'stack' ? ' (+time)' : ''}</button>`; })()}${autoUsable(key) ? `<button class="sm ${ch.autoUse && ch.autoUse[key] ? 'pri' : ''}" data-act="autouse" data-arg="${key}" title="Use one whenever its buff runs out (while something is running), until you run out">${ch.autoUse && ch.autoUse[key] ? 'Auto-use: on' : 'Auto-use'}</button>` : ''}`;
   if (it.gear) acts = `<button class="sm pri" data-act="equip" data-arg="${esc(key)}">Equip</button>${it.plus < 10 ? `<button class="sm" data-act="upgrade" data-arg="${esc(key)}">Upgrade</button>` : ''}`;
   if (it.type === 'upgrade') acts = `<button class="sm pri" data-act="use" data-arg="${key}">Use</button>`;
   if (it.type === 'egg') acts = `<button class="sm pri" data-act="incubate" data-arg="${key}" ${ch.incub.length < ch.incubSlots ? '' : 'disabled'}>Incubate</button>`;
@@ -786,10 +787,10 @@ function sell(key, q) {
 function drink(key) {
   const it = ITEMS[key], now = Date.now();
   if (it.type === 'food' && !Object.keys(it.fx || {}).length) { const mh = maxHP(); takeItem(key, 1); ch.hp = Math.min(mh, (ch.hp == null ? mh : ch.hp) + it.heal); ch.counters.potions++; addLog('sys', `Ate ${it.name}: +${it.heal} HP.`); checkProgress(); renderMain(); return; }
-  const cur = activeBuff(ch, it.cat, now);
-  const strength = x => x.power || Object.values(x.fx || {}).reduce((s, v) => s + v, 0);
-  if (cur && strength(ITEMS[cur.id]) > strength(it)) { toast(`A stronger ${POTION_CATS[it.cat]} buff (${esc(cur.name)}) is already active.`); return; }
-  takeItem(key, 1); const stackable = qs('stackPotion') && cur && cur.id === key; ch.potions[it.cat] = { id: key, until: Math.min(now + 24 * 3600000, (stackable ? cur.until : now) + it.mins * 60000) }; ch.counters.potions++; if (it.heal) { const mh = maxHP(); ch.hp = Math.min(mh, (ch.hp == null ? mh : ch.hp) + it.heal); }
+  const rule = buffRule(key, now), cur = rule.cur;
+  if (rule.mode === 'blocked') { toast(`${esc(cur.name)} is stronger and still active. A weaker ${POTION_CATS[it.cat]} buff can\u2019t be added to it.`); return; }
+  if (rule.mode === 'replace' && potStrength(ITEMS[cur.id]) < potStrength(it)) addLog('sys', `${it.name} replaced the weaker ${cur.name}.`);
+  takeItem(key, 1); ch.potions[it.cat] = { id: key, until: Math.min(now + 24 * 3600000, (rule.mode === 'stack' ? cur.until : now) + it.mins * 60000) }; ch.counters.potions++; if (it.heal) { const mh = maxHP(); ch.hp = Math.min(mh, (ch.hp == null ? mh : ch.hp) + it.heal); }
   addLog('lucky', `${it.type === 'food' ? 'Ate' : 'Drank'} ${it.name}: ${it.desc}`); toast(`<b>${esc(it.name)}</b> active for ${fmtTime((ch.potions[it.cat].until - now) / 1000)}`, 'gold'); checkProgress(); renderMain(); renderTop(); renderActions();
 }
 function equip(key) {

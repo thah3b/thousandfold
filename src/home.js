@@ -69,3 +69,16 @@ const HOME_HANDLERS = {
   bgo: t => { closeModal(); HANDLERS.tab(t); },
   navgrp: g => { const c = account.settings.navCollapsed = account.settings.navCollapsed || {}; if (c[g]) delete c[g]; else c[g] = 1; save(); renderNav(); },
 };
+
+// ---------- Active buffs (top-bar button) ----------
+function buffsModal() {
+  const now = Date.now(), list = Object.entries(ch.potions).filter(([, p]) => p.until > now && ITEMS[p.id]);
+  modal(`<div class="spread"><h3>Active buffs</h3><button class="sm ghost" data-act="close" aria-label="Close">✕</button></div>
+    ${list.length ? list.map(([cat, p]) => { const it = ITEMS[p.id], have = ch.inv[p.id] || 0, au = ch.autoUse && ch.autoUse[p.id];
+      return `<div class="aslot" style="margin-top:8px">${itemIcon ? itemIcon(p.id) : ''}<div style="flex:1;min-width:0"><div class="spread"><b>${esc(it.name)}</b><b data-live="pot:${cat}"></b></div>
+        <div class="mute" style="font-size:13px">${POTION_CATS[cat]} · ${esc(it.desc)}</div>
+        <div class="row" style="gap:6px;margin-top:6px">${have ? `<button class="sm" data-act="drink" data-arg="${p.id}">${qs('stackPotion') ? 'Add time' : 'Use again'} (${N(have)} left)</button>` : '<span class="mute" style="font-size:13px">None left in your bag</span>'}${autoUsable(p.id) && have ? `<button class="sm ${au ? 'pri' : ''}" data-act="autouse" data-arg="${p.id}">${au ? 'Auto-use: on' : 'Auto-use'}</button>` : ''}</div></div></div>`; }).join('')
+      : '<p class="mute">No buffs right now. Potions and buff meals from your inventory show up here.</p>'}
+    <p class="mute" style="font-size:12px;margin:10px 0 0">One buff of each kind at a time. A stronger one replaces a weaker one, a weaker one can’t be used over a stronger one, and the same one adds its time${qs('stackPotion') ? ' (up to 24 hours)' : ' when "Stack potion time" is on'}.</p>`);
+}
+HOME_HANDLERS.buffs = () => buffsModal();

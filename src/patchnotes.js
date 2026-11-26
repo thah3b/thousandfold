@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.0e';
+const GAME_VERSION = 'v2.0f';
 const PATCH_NOTES = [
+  { v: 'v2.0f', date: '2026-11-25', title: 'Buffs button', notes: [
+    'The top bar now has a single \u2726 Buffs button instead of a row of buff timers. Tap it to see each active buff, what it does and how long it has left, and to add more time or turn on Auto-use from there.',
+    'Buffs of the same kind don\u2019t mix tiers: a stronger buff replaces a weaker one, and a weaker one can\u2019t be used while a stronger one is active (the Drink button says so). Using the same strength again still adds its time, up to 24 hours.',
+  ] },
   { v: 'v2.0e', date: '2026-11-25', title: 'Bigger bags', notes: [
     'Every character now starts with 200 inventory slots instead of 100. Existing characters get +100 slots on top of everything they\u2019ve already bought or earned.',
   ] },

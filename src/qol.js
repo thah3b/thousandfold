@@ -44,6 +44,16 @@ if (typeof window !== 'undefined') { let lastNarrow = null; window.addEventListe
 
 // ---------- Automation ----------
 const potStrength = it => it.power || Object.values(it.fx || {}).reduce((s, v) => s + v, 0);
+// One buff per kind. A stronger one replaces a weaker one; a weaker one can't be used over a stronger one;
+// the same strength adds its time (when "Stack potion time" is on), up to 24 hours.
+function buffRule(key, now) {
+  const it = ITEMS[key], cur = activeBuff(ch, it.cat, now || Date.now());
+  if (!cur) return { mode: 'new' };
+  const a = potStrength(ITEMS[cur.id]), b = potStrength(it);
+  if (a > b) return { mode: 'blocked', cur };
+  if (a < b) return { mode: 'replace', cur };
+  return { mode: qs('stackPotion') ? 'stack' : 'replace', cur };
+}
 function autoPotions() {
   if (!ch.actions.length) return;
   const now = Date.now(), running = new Set(ch.actions.map(a => ACT(a.res).skill)), best = {};
