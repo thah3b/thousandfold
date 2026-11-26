@@ -101,7 +101,7 @@ const BALANCE = {
   },
 
   // Stamina
-  stamina: { base: 2, hardCap: 16, costPerTen: 1 },
+  stamina: { base: 2, hardCap: 16, perAdvance: 5, costPerTen: 1 },
 
   // Yield additive pool soft cap (+300%)
   yieldPoolSoftCap: 3.0, yieldPoolOverflow: 0.25,

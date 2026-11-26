@@ -620,7 +620,7 @@ function promote(spec, quiet, notes) {
   if (q.tier === 2) { if (spec == null) return; ch.adv.spec = spec; }
   ch.adv.tier = q.tier; ch.adv.quest = q.tier < 4 ? { tier: q.tier + 1, step: 0, base: 0 } : null;
   const nm = tierName(ch.cls, ch.adv.spec, ch.adv.tier), cl = cls(), [p, s2] = TIER_STATS[ch.adv.tier];
-  const msg = `Class advancement! You are now a ${nm}. +${p} ${cl.pri}, +${s2} ${cl.sec}, a new talent branch and the title "${nm}".`;
+  const msg = `Class advancement! You are now a ${nm}. +${p} ${cl.pri}, +${s2} ${cl.sec}, +${BALANCE.stamina.perAdvance} stamina, a new talent branch and the title "${nm}".`;
   if (quiet) notes.push(msg); else { addLog('level', msg); toast(`<b>${esc(nm)}</b><br>${esc(msg)}`, 'gold'); flash(); chime(523, 1047); }
   fitStamina(); checkProgress(quiet, notes); dirty = true;
 }

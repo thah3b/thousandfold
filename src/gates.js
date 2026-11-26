@@ -131,7 +131,7 @@ const COACH = {
       { h: 'It keeps going on its own', p: 'Your hero gathers by themself, even while the game is closed. Each running action uses 1 stamina (the boxes here). You start with 2 stamina, so you can run 2 things at once.', target: () => q1('#act .pips, #homeact, #act'), next: true },
       goTab(s2, `Open ${SKILLS[s2].name}`, `Use your second stamina point. ${nm(t.res2)} comes from ${SKILLS[s2].name}.`),
       { h: `${SKILLS[s2].verb} ${nm(t.res2)}`, p: 'Two actions now run side by side.', target: () => q1(`#main [data-act=start][data-arg="${t.res2}"]`), done: () => ch.actions.some(a => a.res === t.res2) },
-      { h: 'How to get more stamina', p: 'More stamina means more actions at once. Dexterity (DEX) gives it: +1 stamina for every 10 DEX up to 100, then +1 for every 20 DEX up to 200. The cap is 16. Tip: early on, put your stat points into DEX until you reach the cap. It is the fastest way to grow.', next: true },
+      { h: 'How to get more stamina', p: 'More stamina means more actions at once. Dexterity (DEX) gives it: +1 stamina for every 10 DEX up to 100, then +1 for every 20 DEX up to 200. The cap is 16, and each class advance later adds +5 stamina and raises the cap by 5. Tip: early on, put your stat points into DEX until you reach the cap. It is the fastest way to grow.', next: true },
       goTab('quests', 'Your quests', 'Open Quests to see what to do next.'),
       { h: 'Follow the quests', p: 'These 10 quests teach the game and give a permanent stat point each. Finish them to open the world map. Other sections unlock as you grow: locked ones show a 🔒 and what they need.', target: () => q1('#main .card.quest.cur, #main .card'), next: true },
     ];
