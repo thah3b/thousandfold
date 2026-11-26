@@ -46,6 +46,7 @@ const BALANCE = {
     stoneFor: ['lesser_stone','lesser_stone','lesser_stone','greater_stone','greater_stone','greater_stone','grand_stone','grand_stone','grand_stone','mythic_stone'],
     goldCost: lvl => Math.round(50 * Math.pow(2.2, lvl)),
     wisBonus: 0.001,
+    levelGapCap: 10,
   },
   food: { staminaCap: 3 },
 

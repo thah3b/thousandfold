@@ -469,7 +469,8 @@ function tabAch() {
 // ---------- Shop ----------
 const shopPrice = (key, d) => { const it = ITEM(key), base = (it.cost || it.value * 4) * (1 - d.discount) * REGION_BY[ch.loc].priceMult; return it.type === 'supply' ? Math.ceil(base * Math.pow(BALANCE.economy.supplyGrowth, gateLevel(ch) - 1)) : Math.max(Math.ceil((it.value || 0) * 1.5), scaled(ch, base, 1)); };
 const hgCost = () => { const c = BALANCE.offline.upgradeCost[ch.offlineUpgrades]; return c ? scaled(ch, c, 1) : 0; }, invUpCost = () => { const S = BALANCE.storage; return Math.round(S.invFirst * Math.pow(S.invStep, ch.invUps || 0)); }, bankUpCost = () => { const c = BALANCE.storage.bankCost[ch.bankUps]; return c ? scaled(ch, c, 1) : 0; };
-const enchantGold = it => scaled(ch, BALANCE.enchant.goldCost(it.plus), it.lvl);
+// Upgrade gold grows with how far your level is above the item's, but only up to levelGapCap levels (old low-level gear stays affordable).
+const enchantGold = it => Math.ceil(BALANCE.enchant.goldCost(it.plus) * Math.pow(BALANCE.economy.priceGrowth, Math.min(BALANCE.enchant.levelGapCap, Math.max(0, gateLevel(ch) - Math.max(1, it.lvl || 1)))));
 function merchantOffers() {
   const day = Math.floor(Date.now() / 864e5);
   if (ch.merchant.day !== day) ch.merchant = { day, bought: {} };
@@ -826,6 +827,7 @@ function upgradeModal(key) {
   modal(`<h3>Upgrade ${esc(it.name)}</h3><p class="mute">${esc(statLine(it))}<br>→ <span class="up">${esc(statLine(next))}</span></p>
     <div class="kv" style="font-size:16px"><span>Success chance</span><span><b>${pct(chance)}</b></span><span>Cost</span><span>1 ${esc(ITEMS[stone].name)} (have ${have}) + ${N(gold)}g</span><span>On failure</span><span>${lvl >= E.dropFrom ? '<span class="bad">drops to +' + (lvl - 1) + '</span>' : 'materials lost, item safe'}</span></div>
     <p class="mute" style="font-size:14px">Enchant stones come from Enchanting. Wisdom improves the odds.</p>
+    ${!have ? `<p class="bad" style="margin:6px 0 0">You need a ${esc(ITEMS[stone].name)} (crafted in Enchanting).</p>` : ch.gold < gold ? `<p class="bad" style="margin:6px 0 0">Not enough gold: you need ${N(gold)}.</p>` : ''}
     <div class="row" style="margin-top:10px"><button class="pri" data-act="doupgrade" data-arg="${esc(key)}" ${have && ch.gold >= gold ? '' : 'disabled'}>Upgrade</button><button data-act="close">Cancel</button></div>`);
 }
 function doUpgrade(key) {
