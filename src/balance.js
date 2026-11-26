@@ -71,7 +71,7 @@ const BALANCE = {
   market: { saturation: 2500, floor: 0.15, halfLifeH: 2, dailySwing: 0.06 },
   // Prices rise with your level so gold stays meaningful as gathering income grows (~1.21x per level).
   // Shop items grow by priceGrowth per level from level 1 (never below 1.5x their sell value); upgrades/fees use the same index.
-  economy: { priceGrowth: 1.19, supplyGrowth: 1.04, autoSellKeep: [0, 100, 1000, 10000],
+  economy: { priceGrowth: 1.19, supplyGrowth: 1.04, autoSellKeep: [0, 100, 1000, 10000, 100000],
     // Potion price at level 1 = unit x power^exp x hours. Stronger tiers cost disproportionately more,
     // so cheaper tiers stay worth buying. Then the level index above applies.
     potionUnit: { yield: 40000, xp: 40000, proc: 1500000, luck: 1200000, skill: 15000 }, potionExp: 1.8,

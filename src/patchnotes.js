@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.4a';
+const GAME_VERSION = 'v2.4b';
 const PATCH_NOTES = [
+  { v: 'v2.4b', date: '2026-11-26', title: 'Auto-sell: keep 100,000', notes: [
+    "Auto-sell for gathering resources has a new option: Keep 100,000.",
+  ] },
   { v: 'v2.4a', date: '2026-11-26', title: 'Blackjack table redesign', notes: [
     "Blackjack table redesigned in the style of online live-dealer tables: type your main and side bets (2500, 25k, 1.5m all work) with \u00bd, 2\u00d7 and Max buttons, then Bet. Keyboard: H hit, S stand, D double, P split, Space or Enter to bet.",
     "No table limits: bet up to what you hold.",
