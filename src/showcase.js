@@ -8,6 +8,8 @@
 const sxAcc = () => { account.mg = account.mg || {}; return account; };
 const sxPvp = () => account.pvpBest || 0; // 0 Bronze … 2 Gold … 4 Diamond … 5 Champion
 const sxDg = (c, diff) => Object.values(c.dgClear || {}).filter(v => v >= diff).length;
+// Unlock a style with an achievement, looked up by name.
+function sxAch(name) { return [c => { const a = ACHIEVEMENTS.find(x => x.name === name); return !!(a && c.ach && c.ach[a.id]); }, 'Achievement: ' + name]; }
 const TITLE_STYLES = [
   { id: 'gold', name: 'Classic Gold', pal: ['#e8c15a', '#f6dc8a', '#e8c15a'], free: true },
   { id: 'silver', name: 'Moonsilver', pal: ['#f4f4f6', '#b9c0cc', '#8c95a3', '#b9c0cc'], free: true },
@@ -19,6 +21,27 @@ const TITLE_STYLES = [
   { id: 'eighties', name: "80's Riff", pal: ['#ff4fd8', '#c04dff', '#6a5cff', '#3ec6ff', '#6a5cff', '#c04dff'], price: 30, earn: [() => ((account.mg || {}).rw || {}).best >= 7, 'Reach a 7-day Runeword streak'] },
   { id: 'artist', name: "Artist's Talent", pal: ['#ff4d4d', '#ff9f40', '#ffe14d', '#5ee65e', '#4de0ff', '#4d7bff', '#b04dff'], price: 40, earn: [c => (c.counters.fashions || 0) >= 30, 'Own 30 Wardrobe pieces'] },
   { id: 'rainbow', name: 'Rainbow God', pal: ['#3ee0ff', '#4d6bff', '#9a4dff', '#ff4dd8', '#9a4dff', '#4d6bff'], price: 80, earn: [() => sxPvp() >= 4, 'Reach Diamond in the Arena'] },
+  // v2.3a: 20 more styles. Earned ones unlock with an achievement (or buy them).
+  { id: 'ocean', name: 'Ocean Breeze', pal: ['#0a6e8a', '#13a8c2', '#5fe0e6', '#bdf6ff', '#5fe0e6'], price: 20, earn: sxAch('Well Travelled') },
+  { id: 'forest', name: 'Forest Spirit', pal: ['#2a7a34', '#4fb04a', '#9be070', '#dbf7a8', '#9be070'], price: 20, earn: sxAch('Menagerie') },
+  { id: 'sakura', name: 'Sakura', pal: ['#ffd1e1', '#ff9ec4', '#fff0f5', '#ffb7d0'], price: 20 },
+  { id: 'lavender', name: 'Lavender Dream', pal: ['#efe3ff', '#c4a5ff', '#a07cff', '#c4a5ff'], price: 15 },
+  { id: 'bee', name: 'Bumblebee', pal: ['#ffd400', '#ffc400', '#555555'], price: 15 },
+  { id: 'mintchip', name: 'Mint Chip', words: [['#c4f7de', '#7be0b0', '#4fc895'], ['#8a5233', '#b97a4f', '#6b3e26']], price: 20 },
+  { id: 'sunset', name: 'Sunset Boulevard', pal: ['#ff5e62', '#ff7f5e', '#ff9966', '#ffc371', '#ff9966'], price: 25 },
+  { id: 'peppermint', name: 'Peppermint', pal: ['#ff2d55', '#ffffff'], price: 25, earn: sxAch('Never Miss a Party') },
+  { id: 'bloodmoon', name: 'Blood Moon', pal: ['#5a0000', '#a10f0f', '#ff2a1f', '#a10f0f'], price: 25, earn: sxAch('Monster Hunter') },
+  { id: 'icequeen', name: 'Ice Queen', pal: ['#f2fdff', '#a8e8ff', '#5ab4ff', '#a8e8ff'], price: 25, earn: sxAch('Cartographer') },
+  { id: 'toxic', name: 'Toxic', pal: ['#4f7a00', '#7bd400', '#c8ff00', '#7bd400'], price: 30, earn: sxAch('Mad Science') },
+  { id: 'cyber', name: 'Cyberpunk', pal: ['#00ffd5', '#00b3ff', '#ff00c8', '#00b3ff'], price: 30, earn: sxAch('Juggler') },
+  { id: 'aurora', name: 'Aurora', pal: ['#2bd9a0', '#25b6c9', '#6a6bff', '#b44dff', '#25b6c9'], price: 35, earn: sxAch('Seen It All') },
+  { id: 'abyss', name: 'Deep Abyss', pal: ['#0b2a4a', '#145b85', '#1fa3c7', '#7fe3ff', '#145b85'], price: 35, earn: sxAch('Treasure Hunter') },
+  { id: 'midas', name: 'Midas Touch', pal: ['#b8860b', '#ffd700', '#fff6b8', '#ffd700'], price: 40, earn: sxAch('Gold Rush') },
+  { id: 'molten', name: 'Molten Core', pal: ['#7a1400', '#c2260a', '#ff5a00', '#ffb300', '#ff5a00'], price: 45, earn: sxAch('Mountain Mover') },
+  { id: 'galaxy', name: 'Galaxy', pal: ['#4b3bd1', '#8a3bd1', '#d14dff', '#ffffff', '#3a7bff'], price: 50, earn: sxAch('Mythic Delver') },
+  { id: 'royal', name: 'Royal Velvet', pal: ['#7b2cbf', '#9d4edd', '#d4af37', '#f5d76e', '#9d4edd'], price: 60, earn: sxAch('Living Legend') },
+  { id: 'prism', name: 'Prismatic Diamond', pal: ['#ffffff', '#b9f2ff', '#ffd6ff', '#fff6b3', '#c6ffd9'], price: 60, earn: sxAch('Perfectly Honed') },
+  { id: 'phoenix', name: 'Phoenix', pal: ['#ff3d00', '#ff9100', '#ffd600', '#fff59d', '#ff9100'], price: 70, earn: sxAch('Legend of the Wilds') },
 ];
 const STYLE_BY = Object.fromEntries(TITLE_STYLES.map(s => [s.id, s]));
 const PROFILE_BGS = [
@@ -104,7 +127,7 @@ function tabShowcase() {
       <div class="grid sxgrid">${[null, ...titles].map(t => `<button class="card sxopt ${sc.title === t ? 'on' : ''}" data-act="sxtitle" data-arg="${esc(t || '')}">${t ? styledTitle(t, sc.style) : '<span class="mute">No title</span>'}${sc.title === t ? '<span class="mute" style="font-size:12px">Title</span>' : ''}</button>`).join('')}</div>
       <h4 style="margin:14px 0 6px">Subtitle</h4><div class="row" style="gap:6px;flex-wrap:wrap">${[null, ...titles.filter(t => t !== sc.title)].map(t => `<button class="chip ${sc.sub === t || (!sc.sub && !t) ? 'on' : ''}" data-act="sxsub" data-arg="${esc(t || '')}">${t ? esc(t) : 'None'}</button>`).join('')}</div>`
     : '<p class="mute">You haven’t earned a title yet. Titles come from gathering and crafting totals (see the Titles tab), and from secrets.</p>';
-  if (sxView === 'style') body = `<p class="mute" style="font-size:14px;margin:0 0 8px">Styles are yours on every character once bought. Earned ones unlock by playing.</p><div class="grid sxgrid">${TITLE_STYLES.map(s => { const own = styleOwned(s.id, ch), on = sc.style === s.id;
+  if (sxView === 'style') body = `<p class="mute" style="font-size:14px;margin:0 0 8px">${TITLE_STYLES.filter(x => styleOwned(x.id, ch)).length} of ${TITLE_STYLES.length} unlocked. Styles are yours on every character once bought. Earned ones unlock by playing.</p><div class="grid sxgrid">${[...TITLE_STYLES].sort((a, b) => styleOwned(b.id, ch) - styleOwned(a.id, ch)).map(s => { const own = styleOwned(s.id, ch), on = sc.style === s.id;
       return `<div class="card sxopt ${on ? 'on' : ''} ${own ? '' : 'locked'}">${styledTitle(sc.title || s.name, s.id, { size: 'lg' })}<div class="spread" style="margin-top:6px"><b style="font-size:13px">${esc(s.name)}</b>${on ? '<span class="chip on">Using</span>' : own ? `<button class="sm" data-act="sxstyle" data-arg="${s.id}">Use</button>` : ''}</div>
         ${own ? '' : `<div class="mute" style="font-size:12px;margin-top:4px">${s.earn ? lockLine(s) + (s.price ? ' · or' : '') : ''}${s.price ? ` <button class="sm" data-act="sxbuy" data-arg="${s.id}" ${account.shards >= s.price ? '' : 'disabled'}>Buy · ${s.price} Thousandium</button>` : ''}</div>`}</div>`; }).join('')}</div>`;
   if (sxView === 'bg') body = `<div class="grid sxgrid">${PROFILE_BGS.map(b => { const own = bgOwned(b.id, ch), on = sc.bg === b.id;

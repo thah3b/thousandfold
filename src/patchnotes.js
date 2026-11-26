@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.3';
+const GAME_VERSION = 'v2.3a';
 const PATCH_NOTES = [
+  { v: 'v2.3a', date: '2026-11-26', title: '20 more title styles', notes: [
+    "20 new title styles: Ocean Breeze, Forest Spirit, Sakura, Lavender Dream, Bumblebee, Mint Chip, Sunset Boulevard, Peppermint, Blood Moon, Ice Queen, Toxic, Cyberpunk, Aurora, Deep Abyss, Midas Touch, Molten Core, Galaxy, Royal Velvet, Prismatic Diamond and Phoenix. Most unlock with an achievement (it says which); all can be bought with Thousandium. Styles you own are listed first.",
+  ] },
   { v: 'v2.3', date: '2026-11-26', title: "Profile showcase", notes: [
     "New Profile page (You → Profile): dress up your public profile with a styled title, a subtitle, a background and a frame, with a live preview.",
     "Styled titles: 10 animated colour styles for your earned titles, from Classic Gold and Moonsilver to Heatwave, Candy Floss, Watermelon Heaven, Christmas Spirit, Reaper, 80's Riff, Artist's Talent and Rainbow God. Earn them by playing or buy them with Thousandium; they're yours on every character. Your styled title shows on your profile, next to your name in chat, on the leaderboards and in your sidebar.",
