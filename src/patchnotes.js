@@ -2,8 +2,14 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.2';
+const GAME_VERSION = 'v2.2a';
 const PATCH_NOTES = [
+  { v: 'v2.2a', date: '2026-11-26', title: 'Vietnamese, reviewed by a native speaker', notes: [
+    'The Vietnamese translation has been reviewed and corrected by a native speaker, with more natural gamer wording (for example Chức nghiệp, Nhân vật phụ, Thú nuôi, Lực hành động, Mini game).',
+    'Much more is now in Vietnamese: places, races and classes, items and their descriptions, Wardrobe pieces, achievements, NPC titles (the name stays, the title is translated: Granny Hollis becomes Bà Hollis) and all the patch notes. Boss and monster names stay as they are.',
+    'Ember Shards are called Đá trắng in Vietnamese.',
+    'Removed the tagline under the title on the character select screen.',
+  ] },
   { v: 'v2.2', date: '2026-11-26', title: 'Languages: Tiếng Việt', notes: [
     'Thousandfold now speaks Vietnamese. Tap the \u{1F310} language button at the bottom of the character select screen and pick English or Tiếng Việt. Your choice is remembered on this device.',
     'Menus, buttons, tabs, stats, the Home screen, Daily games and most messages are translated. Names of places, monsters, items and characters stay in English, and longer texts (the Game Guide, lore and patch notes) are still in English for now.',

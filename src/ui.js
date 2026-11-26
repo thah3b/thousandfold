@@ -164,7 +164,7 @@ function renderSelect() {
       <div class="mute" style="font-size:14px">${esc(START_REGIONS.find(r => r.id === c.region).name)} · last played ${new Date(c.last).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</div>
       <div class="row"><button class="pri" data-act="play" data-arg="${i}">Play</button><button class="ghost" data-act="delete" data-arg="${i}">Delete</button><button class="ghost sm" disabled title="Rename tokens come in a later phase">Rename</button></div></div>`
     : `<button class="card slot empty" data-act="new" data-arg="${i}"><span class="fell" style="font-size:26px">New character</span><span class="mute">Slot ${i + 1} is empty</span></button>`).join('');
-  $('#root').innerHTML = `<div class="screen"><div class="hero">${heroArt()}<div class="txt">${gameIcon(72)}<h1>${heroTitle()}</h1><p>Every swing counts. Ten thousand of them, and the mountain gives up its next secret.</p></div></div>
+  $('#root').innerHTML = `<div class="screen"><div class="hero">${heroArt()}<div class="txt">${gameIcon(72)}<h1>${heroTitle()}</h1></div></div>
     <div class="spread" style="margin-top:22px"><h2>Choose your character</h2><span class="row" style="gap:6px">${cloudChip()}<span class="chip">Ember Shards <b class="gold">${N(account.shards)}</b></span></span></div>
     <div class="slots">${slots}${account.slot4 ? '' : `<div class="card slot empty" style="opacity:.6"><span class="fell" style="font-size:22px">Fourth slot</span><span class="mute">Find ${SECRET_CFG.slot4At} secrets to open it</span></div>`}</div>
     <p class="bottomline">Thousandfold ${GAME_VERSION} · prototype. Saves stay in this browser and, when you are signed in, in the cloud.</p><div class="langbar">${langButton()}</div></div>`;
@@ -415,7 +415,7 @@ function tabChar() {
     <div style="margin-top:14px">${presetCard()}</div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));margin-top:14px;align-items:start">
     <div class="card"><div class="spread"><h3>Stats</h3><span>Unspent <b class="ember">${left}</b></span></div>
-      ${STATS.map(s => { const b = d1.S[s.id], nb = nextBreak(b.total); return `<div class="srow"><div><b>${s.name}</b> <span class="mute">${s.id}</span><div class="d" title="${esc(s.long)}">${esc(s.short)}</div>
+      ${STATS.map(s => { const b = d1.S[s.id], nb = nextBreak(b.total); return `<div class="srow"><div><b>${s.name}</b> <span class="mute" data-noi18n>${s.id}</span><div class="d" title="${esc(s.long)}">${esc(s.short)}</div>
         <div class="d">${esc(statEffect(s.id, b.total))}${nb ? ` · soft cap at ${nb.at}` : ''}</div><div class="d" style="font-size:12px">${b.parts.map(p => `${p[0]} ${p[1]}`).join(' · ')}</div></div>
         <b class="num" style="font-size:20px;text-align:right">${b.total}${pend[s.id] ? `<span class="up" style="font-size:14px"> +${pend[s.id]}</span>` : ''}</b>
         <div class="statbtns"><button data-act="pend" data-arg="${s.id}|-1" ${pend[s.id] ? '' : 'disabled'} aria-label="Remove a point from ${s.name}">−</button><button data-act="pend" data-arg="${s.id}|1" ${left > 0 ? '' : 'disabled'} aria-label="Add a point to ${s.name}">+</button><button data-act="pend" data-arg="${s.id}|5" ${left >= 5 ? '' : 'disabled'} aria-label="Add five points to ${s.name}">+5</button></div></div>`; }).join('')}
