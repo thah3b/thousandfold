@@ -345,7 +345,9 @@ function nextMilestone() {
 // WORLD STATE — location, combat, exploration, travel, events, quests (Phase 4)
 // ============================================================
 const regionOfBand = b => REGIONS[b];
-function availableHere(res) { return res.band === 0 || (!ch.travel && (REGIONS[res.band].id === ch.loc || (REGION_BY[ch.loc].secret && REGION_BY[ch.loc].band === res.band))); }
+// v2.5b: once you've gathered something at least once, you can gather it from anywhere (region only matters for combat).
+const gatheredOnce = res => (ch.prof[res.id] || 0) > 0;
+function availableHere(res) { return res.band === 0 || gatheredOnce(res) || (!ch.travel && (REGIONS[res.band].id === ch.loc || (REGION_BY[ch.loc].secret && REGION_BY[ch.loc].band === res.band))); }
 function cantStart(a) {
   if (a.kind === 'gather' && !availableHere(a)) return ch.travel ? `You can't start new gathering while travelling.` : `${a.name} is only found in ${REGIONS[a.band].name}.`;
   if (a.kind === 'combat') {

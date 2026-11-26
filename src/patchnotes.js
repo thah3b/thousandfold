@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.5a';
+const GAME_VERSION = 'v2.5b';
 const PATCH_NOTES = [
+  { v: 'v2.5b', date: '2026-11-26', title: 'Gather anywhere', notes: [
+    "Gathering no longer depends on where you are: once you've gathered a resource at least once, you can gather it from any region. Your location now only matters for combat (and the first time you gather something).",
+  ] },
   { v: 'v2.5a', date: '2026-11-26', title: 'Stamina from class advances', notes: [
     "Class advances now add stamina: each advance gives +5 stamina and raises the stamina cap by 5 (tier 2: 21, tier 3: 26, tier 4: 31). It doesn't need more DEX.",
   ] },
