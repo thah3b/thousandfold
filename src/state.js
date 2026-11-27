@@ -700,14 +700,16 @@ function autoSellTick(quiet) {
   return gold;
 }
 const canAscend = () => ch.adv.tier >= BALANCE.ascension.needTier && ch.level >= BALANCE.ascension.needLevel;
-function ascend() {
+function ascend(auto) {
   if (!canAscend()) return;
   const A = BALANCE.ascension;
   ch.ascGrowth = (ch.ascGrowth || 0) + (ch.level - 1) * BALANCE.level.classGrowthPerLevel;
   ch.ascension++; ch.level = 1; ch.xp = 0; account.shards += A.shards; ch.counters.shardsEarned += A.shards;
   const msg = `Ascension ${ch.ascension}! Your level starts again at 1. Stats, skills, talents, items and class all stay. Permanent bonus now: +${pct(A.xp * ch.ascension)} XP, +${pct(A.yield * ch.ascension)} yield, +${pct(A.power * ch.ascension)} attack and HP. +${A.shards} Thousandium.`;
-  addLog('level', msg); toast(`<b>A${ch.ascension}</b> · ${esc(msg)}`, 'gold'); flash(); chime(523, 1568); dirty = true;
+  addLog('level', (auto ? 'Auto-ascend: ' : '') + msg); if (!auto) { toast(`<b>A${ch.ascension}</b> · ${esc(msg)}`, 'gold'); flash(); chime(523, 1568); } dirty = true;
 }
+// v3.0b: auto-ascend, on unless the player turned it off (ch.autoAscend === false). Log only, no pop-up.
+function autoAscendTick() { if (ch.autoAscend !== false && canAscend()) ascend(true); }
 
 // ============================================================
 // COMPANIONS, EGO & GROWTH WEAPONS (Phase 6)
@@ -739,6 +741,7 @@ function checkCompanions(quiet, notes) {
     quiet ? notes.push(msg) : (addLog('level', msg), toast(esc(msg), 'gold')); dirty = true; } }
 }
 function bondTick(sec, quiet, notes) {
+  autoAscendTick();
   const active = ch.actions.length > 0 || sec > 1;
   if (ch.comp && active) {
     const before = ch.comp.bond; ch.comp.bond = Math.min(compCap(), ch.comp.bond + sec / 600);

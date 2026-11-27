@@ -160,7 +160,7 @@ main{grid-area:main;padding:18px max(16px,1.6vw) 40px}
 .irow{display:grid;grid-template-columns:34px minmax(0,1fr) 80px 80px auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .srow{display:grid;grid-template-columns:minmax(0,1fr) 64px auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dotted var(--line)}
 .srow .d{font-size:14px;color:var(--mute)}
-.statbtns{display:flex;gap:4px}
+.statbtns{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:220px}
 .statbtns button{min-width:40px;padding:4px 8px}
 .diff{font-size:14px}.up{color:var(--verd)}.down{color:var(--bad)}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
@@ -782,3 +782,5 @@ body.reduced .pframe[class*=pf-]{animation:none}
 .relpanel{border-color:var(--bad)}
 .petstack{border-style:dashed}
 .petstackopen{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;padding:8px;border:1px dashed var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
+/* v3.0b: stat buttons wrap under the stat on phones */
+@media (max-width:720px){.srow{grid-template-columns:1fr auto}.srow .statbtns{grid-column:1/-1;max-width:none;justify-content:flex-start;margin-top:4px}.statbtns button{flex:1;min-width:44px}}

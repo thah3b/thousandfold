@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v3.0a';
+const GAME_VERSION = 'v3.0b';
 const PATCH_NOTES = [
+  { v: 'v3.0b', date: '2026-11-27', title: 'Auto-ascend and faster stat points', notes: [
+    "Auto-ascend: once you're in your final class tier, your character ascends by itself as soon as it reaches level 99. It's on by default; switch it off on the Class tab. It only writes to the log, no pop-up.",
+    "Stat points: new +50, +100 and All buttons next to each stat, so thousands of points take a few taps. You still see the preview and press Apply.",
+  ] },
   { v: 'v3.0a', date: '2026-11-27', title: 'Easier pet management', notes: [
     "Release several pets at once: tap \"Release several…\" on the Pets tab, then pick pets or use a quick pick (spares that keep the best of each species, all of one rarity, or everything not kept). One confirmation releases them all.",
     "Pets stack: identical pets now share one card (\"Ember Fox ×7\"). Tap it to see them, or release the spares straight from there.",
