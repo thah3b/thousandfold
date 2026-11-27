@@ -11,6 +11,7 @@ const sxDg = (c, diff) => Object.values(c.dgClear || {}).filter(v => v >= diff).
 // Unlock a style with an achievement, looked up by name.
 function sxAch(name) { return [c => { const a = ACHIEVEMENTS.find(x => x.name === name); return !!(a && c.ach && c.ach[a.id]); }, 'Achievement: ' + name]; }
 const TITLE_STYLES = [
+  { id: 'pioneer', name: 'Pioneer', pal: ['#ffe9a0', '#5ad0c8', '#ffd23a', '#e8fbff'], font: true, earn: [() => !!account.pioneer, 'One of the first 10 players'] },
   { id: 'gold', name: 'Classic Gold', pal: ['#e8c15a', '#f6dc8a', '#e8c15a'], free: true },
   { id: 'silver', name: 'Moonsilver', pal: ['#f4f4f6', '#b9c0cc', '#8c95a3', '#b9c0cc'], free: true },
   { id: 'candy', name: 'Candy Floss', pal: ['#ffb3d9', '#e6b8ff', '#b3dcff', '#e6b8ff'], price: 15 },
@@ -53,6 +54,7 @@ const PROFILE_BGS = [
   { id: 'frost', name: 'Frost kingdom', earn: [c => ((c.dgClear || {}).frost ?? -1) >= 0, 'Clear the Hall of the Frozen Jarl'] },
   { id: 'void', name: 'Void', earn: [c => sxDg(c, 2) >= 1, 'Clear a Mythic dungeon'] },
   // v3.0: 18 more. Earn them, or buy with Thousandium (account-wide).
+  { id: 'pioneerbg', name: 'Pioneer’s Dawn', earn: [() => !!account.pioneer, 'One of the first 10 players'] },
   { id: 'meadow', name: 'Sunny Meadow', free: true },
   { id: 'dawn', name: 'Dawn', free: true },
   { id: 'clouds', name: 'Above the Clouds', price: 15, earn: [c => c.level >= 25 || (c.ascension || 0) > 0, 'Reach level 25'] },
@@ -78,6 +80,7 @@ const PROFILE_FRAMES = [
   { id: 'mythic', name: 'Mythic', color: '#4d9bff', earn: [c => sxDg(c, 2) >= 1, 'Clear a Mythic dungeon'] },
   { id: 'gladiator', name: 'PvP Gladiator', color: '#a65cff', earn: [() => sxPvp() >= 2, 'Reach Gold in the Arena'] },
   { id: 'founder', name: "Founder's", color: '#ff8a2a', earn: [() => !!account.founder, 'Played before Thousandfold 2.0'] },
+  { id: 'pioneerf', name: 'Pioneer', color: '#5ad0c8', pal: ['#ffe9a0', '#5ad0c8', '#ffd23a', '#2a8a88', '#ffe9a0'], anim: true, earn: [() => !!account.pioneer, 'One of the first 10 players'] },
   // v3.0: 17 more. pal = several colours (anim = flowing); earn them or buy with Thousandium.
   { id: 'bronze', name: 'Bronze', color: '#c8864a', earn: [c => c.level >= 20 || (c.ascension || 0) > 0, 'Reach level 20'] },
   { id: 'silver', name: 'Silver', color: '#c9d1dc', earn: [c => c.level >= 40 || (c.ascension || 0) > 0, 'Reach level 40'] },
@@ -143,6 +146,7 @@ function styledTitle(text, styleId, opt) {
   for (const s of TITLE_STYLES) {
     if (s.words) s.words.forEach((p, w) => { css += kf(`st-${s.id}-${w}`, p) + `.st-${s.id} .w${w} i{animation:st-${s.id}-${w} ${(p.length * 0.45).toFixed(2)}s linear infinite}`; });
     else css += kf(`st-${s.id}`, s.pal) + `.st-${s.id} i{animation:st-${s.id} ${(s.pal.length * 0.45).toFixed(2)}s linear infinite}`;
+    if (s.font) css += `.st-${s.id}{font-family:'Cinzel Decorative','IM Fell English SC',serif;font-weight:700;letter-spacing:.02em;text-shadow:0 0 6px rgba(90,208,200,.55)}`;
   }
   for (const f of PROFILE_FRAMES) if (f.pal) css += `.pframe.pf-${f.id}{background:linear-gradient(135deg,${f.pal.join(',')});background-size:${f.anim ? '300% 300%' : '100% 100%'}${f.anim ? ';animation:pfflow 5s linear infinite' : ''}}`;
   const el = document.createElement('style'); el.id = 'sxcss'; el.textContent = css; document.head.appendChild(el);

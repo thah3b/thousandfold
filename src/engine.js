@@ -76,10 +76,11 @@ function nextBreak(p) { for (const [th, m] of BALANCE.softCaps) if (p < th) retu
 
 function earnedTitleBonuses(ch) {
   const out = { global: 0, bySkill: {}, stats: {}, list: [] };
-  const add = (name, y, stat, amt, skill) => { if (skill) out.bySkill[skill] = (out.bySkill[skill] || 0) + y; else out.global += y; out.stats[stat] = (out.stats[stat] || 0) + amt; out.list.push({ name, y, stat, amt, skill }); };
+  const add = (name, y, stat, amt, skill) => { if (skill) out.bySkill[skill] = (out.bySkill[skill] || 0) + y; else out.global += y; if (amt) out.stats[stat] = (out.stats[stat] || 0) + amt; out.list.push({ name, y, stat, amt, skill }); };
   for (const [skill, def] of Object.entries(SKILL_TITLES)) { const total = ch.totals[skill] || 0; for (const [n, name, y, s] of def.line) if (total >= n) add(name, y, def.stat, s, skill); }
   for (const r of RES) if ((ch.prof[r.id] || 0) >= BALANCE.tierThresholds[9]) add(r.grandTitle, GRANDMASTER_BONUS.yield, GRANDMASTER_BONUS.stat, GRANDMASTER_BONUS.statAmt);
   for (const s of SECRET_TITLES) if (ch.secretTitles[s.id]) add(s.name, s.yield, s.stat, s.amt);
+  if (typeof FUN_TITLES !== 'undefined') for (const t of FUN_TITLES) if ((ch.funTitles || {})[t.id]) add(t.name, t.y || 0, t.stat || 'LUCK', t.amt || 0);
   if (ch.adv) { const cl = CLASSES.find(c => c.id === ch.cls); for (let t = 2; t <= ch.adv.tier; t++) add(tierName(ch.cls, ch.adv.spec, t), 0.02, cl.pri, 5); }
   return out;
 }
@@ -173,12 +174,16 @@ function isUnlocked(ch, a) {
   if (a.kind === 'combat' || a.kind === 'explore' || a.kind === 'train') return true;
   if (a.inputs) return ch.skills[a.skill].level >= (a.need || a.lvl);
   if (a.index === 1) return true;
+  if (a.asc && (ch.ascension || 0) < a.asc) return false; // v3.1 gate resources
   const prev = CHAIN[a.skill][a.index - 2];
   return (ch.prof[prev.id] || 0) >= BALANCE.unlockAt && ch.skills[a.skill].level >= a.reqLevel;
 }
+// v3.1: regions behind an ascension (Hell's Gate A5, Heaven's Gate A10).
+const regionAscOk = (ch, r) => !r.asc || (ch.ascension || 0) >= r.asc;
 function lockReason(ch, a) {
   if (a.inputs) return `${SKILLS[a.skill].name} level ${a.need || a.lvl}`;
   const prev = CHAIN[a.skill][a.index - 2], need = [];
+  if (a.asc && (ch.ascension || 0) < a.asc) need.push(`Ascension ${a.asc}`);
   if ((ch.prof[prev.id] || 0) < BALANCE.unlockAt) need.push(`${BALANCE.unlockAt.toLocaleString()} ${prev.name} (${Math.floor(ch.prof[prev.id] || 0).toLocaleString()} so far)`);
   if (ch.skills[a.skill].level < a.reqLevel) need.push(SKILLS[a.skill].name + ' level ' + a.reqLevel);
   return need.join(' and ');
@@ -307,10 +312,10 @@ const ENEMIES = [], ENEMY_BY = {};
 for (const [key, list] of Object.entries(ENEMY_DEFS)) {
   const hamlet = key.startsWith('hamlet_') ? key.slice(7) : null, region = hamlet ? START_TO_REGION[hamlet] : key;
   let normal = 0;
-  list.forEach(([name, L, flavor, trophy, hide, role]) => {
-    role = role || ''; const id = slug(name), C = BALANCE.combat, a = archetype(L), boss = role === 'boss' || role === 'tboss';
+  list.forEach(([name, L, flavor, trophy, hide, role, ext]) => {
+    role = role || ''; const id = slug(name), C = BALANCE.combat, a = archetype(ext ? ext.pl : L), boss = role === 'boss' || role === 'tboss', rw = ext ? ext.rw : 1;
     const tid = slug(trophy);
-    ITEMS[tid] = ITEMS[tid] || { name: trophy, type: 'trophy', rarity: Math.min(5, Math.floor(L / 17)), value: Math.max(2, Math.round(C.goldBase * Math.pow(C.goldGrowth, L - 1) * (boss ? 6 : 2))), desc: `Taken from a ${name}. Sells well; collectors love them.` };
+    ITEMS[tid] = ITEMS[tid] || { name: trophy, type: 'trophy', rarity: Math.min(5, Math.floor(L / 17)), value: Math.max(2, Math.round(C.goldBase * Math.pow(C.goldGrowth, L - 1) * (boss ? 6 : 2) * rw)), desc: `Taken from a ${name}. Sells well; collectors love them.` };
     const area = hamlet ? 'hamlet' : role === 'boss' ? 2 : role === 'hidden' ? 'hidden' : (normal++ < 2 ? 0 : 1);
     const loot = [{ key: tid, chance: boss ? 1 : 0.5, min: 1, max: boss ? 3 : 1 }];
     if (hide) loot.push({ key: hide, chance: 0.35, min: 1, max: 2 });
@@ -320,8 +325,8 @@ for (const [key, list] of Object.entries(ENEMY_DEFS)) {
       rec: Math.round(a.cp * (role === 'tboss' ? C.recTutorialBoss : boss ? C.recBoss : role === 'hidden' ? C.recHidden : C.recNormal)),
       dps: C.dpsFrac * a.hp, baseTime: Math.round(((boss ? C.bossBase : C.baseTime) + L * 0.04) * 100) / 100,
       stamina: 1 + Math.floor(L / 25), mech: BOSS_MECH[id] || null,
-      xp: Math.round(C.xpBase * Math.pow(C.xpGrowth, L - 1) * (boss ? C.bossXp : 1) * 10) / 10,
-      gold: [C.goldBase * Math.pow(C.goldGrowth, L - 1) * (boss ? C.bossGold : 1) * 0.7, C.goldBase * Math.pow(C.goldGrowth, L - 1) * (boss ? C.bossGold : 1) * 1.3], loot };
+      xp: Math.round(C.xpBase * Math.pow(C.xpGrowth, L - 1) * (boss ? C.bossXp : 1) * rw * 10) / 10,
+      gold: [C.goldBase * Math.pow(C.goldGrowth, L - 1) * (boss ? C.bossGold : 1) * 0.7 * rw, C.goldBase * Math.pow(C.goldGrowth, L - 1) * (boss ? C.bossGold : 1) * 1.3 * rw], loot, asc: ext ? REGION_BY[region].asc : 0 };
     ENEMIES.push(e); ENEMY_BY[e.id] = e;
   });
 }

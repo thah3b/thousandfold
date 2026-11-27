@@ -2,8 +2,16 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v3.0c';
+const GAME_VERSION = 'v3.1';
 const PATCH_NOTES = [
+  { v: 'v3.1', date: '2026-11-27', title: 'Hell’s Gate, Heaven’s Gate, 20 pets and fun titles', notes: [
+    "New region: Hell’s Gate (opens at Ascension 5), past Worldheart Chasm. Seven new enemies from 8.6k to 22.8k recommended power, ending with Malphas, Duke of Cinders, plus a hidden three-headed hound. Two uniques, a Brimstone Egg, a dungeon, a region story, a lore page and local talk.",
+    "New region: Heaven’s Gate (opens at Ascension 10), past Frostspire. Seven enemies from 26k to 71k recommended power, ending with the Arbiter of Dawn, plus a hidden Sky Leviathan. Two uniques, a Celestial Egg, a dungeon, a region story, a lore page and local talk.",
+    "24 new gathering resources past each god-tier (two per skill in each gate), with two new feasts (Hellfire Chili, Feast of Manna) and two combat foods.",
+    "20 new pets: ten from Hell’s Gate (Hell Pup, Imp Familiar, Nightmare Foal, Three-Headed Pup → Cerberus…) and ten from Heaven’s Gate (Cloud Lamb, Winged Kitten, Unicorn Foal, Seraph Hatchling → Seraphim…), with two new pet types: Infernal and Holy.",
+    "20 fun titles for things you do (or that happen to you): The Unlucky, Woke Up on the Wrong Side of the Bed, Unluckiest Man Alive, Broke Boy, Lazy Hobo, Card Shark, Butterfingers, Speedrunner and more. See them on the Titles tab. They don’t pop up; they go to the log.",
+    "The Pioneers: the first 10 players on the leaderboards get the Pioneer title plus its own title style (with its own font), frame, profile background and cape.",
+  ] },
   { v: 'v3.0c', date: '2026-11-27', title: 'Arena NPCs, higher ascension levels, talent points to Thousandium', notes: [
     "Fixed: after ascending (especially with auto-ascend), the leaderboard stopped accepting your character and the Arena said \"Arena entry doesn't match your character\". The leaderboard's speed check now allows fast ascension climbs.",
     "Arena: five fixed NPC opponents, always available: Hobo (1k battle power, +15 rating), City Guard (5k, +30), Street Mage (10k, +60), Royal Paladin (20k, +120) and Demon King (40k, +250). Losing to one costs a fifth of its points. Real players near your rating are still listed first.",

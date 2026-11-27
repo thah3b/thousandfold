@@ -151,6 +151,7 @@ function checkProgress(quiet, notes) {
   checkAdvance(quiet, notes);
   checkCompanions(quiet, notes);
   checkStories(quiet, notes);
+  if (typeof funTitlesCheck === 'function') funTitlesCheck(quiet, notes);
   ch.counters.titlesEarned = earnedTitleBonuses(ch).list.length;
   const C = ch.counters;
   C.regionsVisited = Object.keys(ch.visited).length;
@@ -468,6 +469,7 @@ function startTravel(to, fast) {
   if (ch.travel || ch.loc === to) return;
   if (ch.dungeon && !ch.dungeon.done) { toast('Finish or leave your dungeon first.'); return; }
   if (gateLevel(ch) < r.lvl) { toast(`${r.name} needs character level ${r.lvl}.`); return; }
+  if (!regionAscOk(ch, r)) { toast(`${r.name} opens at Ascension ${r.asc}.`); return; }
   for (const a of [...ch.actions]) { const k = ACT(a.res).kind; if (k === 'combat' || k === 'explore') stopAction(a.res); }
   if (fast) { const c = fastTravelCost(to, ch); if (ch.gold < c) { toast('Not enough gold.'); return; } ch.gold -= c; addLog('sys', `Paid ${N(c)} gold for a fast carriage.`); arrive(to); return; }
   const mins = travelMinutes(ch.loc, to) * (1 - travelBonus(d)), start = Date.now(), end = start + mins * 60000;
@@ -704,6 +706,7 @@ function ascend(auto) {
   if (!canAscend()) return;
   const A = BALANCE.ascension;
   ch.ascGrowth = (ch.ascGrowth || 0) + (ch.level - 1) * BALANCE.level.classGrowthPerLevel;
+  if (ch.lastAscAt && Date.now() - ch.lastAscAt < 3600e3) ch.counters.speedAsc = 1; ch.lastAscAt = Date.now();
   ch.ascension++; ch.level = 1; ch.xp = 0; account.shards += A.shards; ch.counters.shardsEarned += A.shards;
   const msg = `Ascension ${ch.ascension}! Your level starts again at 1. Stats, skills, talents, items and class all stay. Permanent bonus now: +${pct(A.xp * ch.ascension)} XP, +${pct(A.yield * ch.ascension)} yield, +${pct(A.power * ch.ascension)} attack and HP. +${A.shards} Thousandium.`;
   addLog('level', (auto ? 'Auto-ascend: ' : '') + msg); if (!auto) { toast(`<b>A${ch.ascension}</b> · ${esc(msg)}`, 'gold'); flash(); chime(523, 1568); } dirty = true;
@@ -742,6 +745,7 @@ function checkCompanions(quiet, notes) {
 }
 function bondTick(sec, quiet, notes) {
   autoAscendTick();
+  if (typeof funTick === 'function') funTick(sec, quiet);
   const active = ch.actions.length > 0 || sec > 1;
   if (ch.comp && active) {
     const before = ch.comp.bond; ch.comp.bond = Math.min(compCap(), ch.comp.bond + sec / 600);
@@ -1063,7 +1067,7 @@ function buyCosmetic(kind, id) {
 }
 function dressPet(uid, kind, id) { const p = petById(ch, uid); if (!p) return; if (kind === 'hat') p.hat = p.hat === id ? null : id; else p.aura = p.aura === id ? null : id; dirty = true; }
 function renamePet(uid, name) { const p = petById(ch, uid); if (!p) return; name = String(name || '').trim().slice(0, 16); if (PROFANITY.some(w => name.toLowerCase().includes(w))) { toast('Pick a different name.'); return; } p.name = name; secretPetName(name); dirty = true; }
-function releasePet(uid) { if (ch.petActive === uid) ch.petActive = null; ch.petSupport = ch.petSupport.filter(u => u !== uid); ch.daycare = ch.daycare.filter(d => d.uid !== uid); ch.pets = ch.pets.filter(p => p.uid !== uid); dirty = true; }
+function releasePet(uid) { ch.counters.released = (ch.counters.released || 0) + 1; if (ch.petActive === uid) ch.petActive = null; ch.petSupport = ch.petSupport.filter(u => u !== uid); ch.daycare = ch.daycare.filter(d => d.uid !== uid); ch.pets = ch.pets.filter(p => p.uid !== uid); dirty = true; }
 
 // ---------- Discovery pop-ups (v0.9b) ----------
 let discQ = [];

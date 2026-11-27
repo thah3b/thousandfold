@@ -178,7 +178,7 @@ function csSettle() {
     else if (d > 21 || t > d) { res = 'win'; pay += h.bet * 2; }
     else if (t === d) { res = 'push'; pay += h.bet; }
     else res = 'lose';
-    h.res = res; S.hands++;
+    h.res = res; S.hands++; if (typeof funHand === 'function') funHand(res);
     if (res === 'win' || res === 'bj') S.wins++; else if (res === 'push') S.pushes++; else S.losses++;
   }
   csPay(r.cur, pay); r.back += pay;
@@ -189,7 +189,7 @@ function csSettle() {
   S.best = Math.max(S.best, net); S.worst = Math.min(S.worst, net);
   S.hist.push([Math.round(Date.now() / 1000), csBal(r.cur), r.staked, net]);
   if (S.hist.length > CS.histMax) { const o = S.hist.shift(); S.base.w += o[2]; if (o[3] > 0) S.base.won += o[3]; else S.base.lost -= o[3]; }
-  r.net = net; r.phase = 'done'; csCheckBigWin(r);
+  r.net = net; r.phase = 'done'; csCheckBigWin(r); if (typeof funRound === 'function') funRound(r);
   const cn = r.cur === 'th' ? 'Thousandium' : 'gold';
   if (r.hands.some(h => h.res === 'bj')) addLog('lucky', `Blackjack! Won ${N(Math.floor(r.bet * 3 / 2))} ${cn} at the Casino.`);
   for (const [k, s] of r.notes) if ((k === 'pp' || k === 't3') && / pays (1[2-9]|[2-9]\d|\d{3}):1/.test(s)) addLog('lucky', `Casino: ${s.replace(/ \(\+.*\)$/, '')}`);

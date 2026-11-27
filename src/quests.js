@@ -32,6 +32,8 @@ const TRAIN_CFG = { baseTime: 5, perCompletion: 0.01, dailyCap: 5 };
 
 // Region story chains: 3 quests each. Goal types: explore (fraction), hunt (wins vs any normal enemy here), boss.
 const REGION_STORY = {
+  hell: ['VIT', ['Behind the Gate', 'The doorman wants the Burning Stair mapped. He has never been past the first step.'], ['Imps in the Paperwork', 'Imps keep stealing the Waystation’s ledgers. Teach them manners.'], ['The Duke of Cinders', 'Malphas has built another tower out of regrets. Knock it down.']],
+  heaven: ['WIS', ['The Pearl Steps', 'The keeper of the Rest wants every cloud step counted.'], ['Overzealous Guards', 'The sentinels have started arresting pilgrims for blinking. Calm them down.'], ['Judgement Day', 'The Arbiter of Dawn has started weighing the guests. Weigh it back.']],
   emberfall: ['STR', ['The Smoke on the Hill', 'Elder Brannoch wants the hollow mapped before the next ash storm.'], ['Hogs and Highwaymen', 'Farmers are losing pigs and purses. Thin out the wilds.'], ['The Burning Ram', 'Cinderhorn has come down from the hollow. End it before it reaches the forge.']],
   woods: ['WIS', ['Lanterns in the Dark', 'Warden Ilsabet asks you to relight the path lanterns deep in the forest.'], ['Too Many Teeth', 'The wolves have grown bold. Remind them who walks these woods.'], ['Tears of the Glade', 'The Weeping Dryad heals every wound but her own. Put her to rest.']],
   ironpeak: ['VIT', ['The Ringing Mountain', 'Foreman Dagna needs the deep galleries charted.'], ['Goblin Trouble', 'Goblins are stealing ore carts. Make them stop.'], ['The King Under Stone', 'Gorrak claims the whole mountain. Disagree with him, firmly.']],

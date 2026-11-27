@@ -39,7 +39,7 @@ const SKILL_SCENE = {
   tailoring: ['loom', 'needle', 'stir'], enchanting: ['pedestal', 'wand', 'cast'], jewelcrafting: ['gembench', 'hammer', 'swing'],
   training: ['dummy', 'dumbbell', 'lift'],
 };
-const SCENE_SKY = { emberfall: ['#f6c48a', '#a8603a'], woods: ['#b8e0c0', '#4f8a3a'], ironpeak: ['#c8d0dc', '#6a6a72'], marsh: ['#b0c8b0', '#4a6a3a'], desert: ['#f8dca0', '#d9b26a'], frost: ['#dcefff', '#e8f4f8'], void: ['#4a3a6a', '#2a2040'], chasm: ['#6a4030', '#3a2420'], glade: ['#3a4a7a', '#3f6a4a'], undercity: ['#6a5a4a', '#4a3a2a'], starfall: ['#2a2a5a', '#5a4a6a'] };
+const SCENE_SKY = { emberfall: ['#f6c48a', '#a8603a'], woods: ['#b8e0c0', '#4f8a3a'], ironpeak: ['#c8d0dc', '#6a6a72'], marsh: ['#b0c8b0', '#4a6a3a'], desert: ['#f8dca0', '#d9b26a'], frost: ['#dcefff', '#e8f4f8'], void: ['#4a3a6a', '#2a2040'], chasm: ['#6a4030', '#3a2420'], glade: ['#3a4a7a', '#3f6a4a'], undercity: ['#6a5a4a', '#4a3a2a'], starfall: ['#2a2a5a', '#5a4a6a'], hell: ['#5a1a10', '#2a0a08'], heaven: ['#fff6e0', '#e8eef8'] };
 const sceneSky = (loc, indoor) => indoor ? ['#8a6a4a', '#5a3e28'] : (SCENE_SKY[loc] || ['#9ccfe8', '#6aa84a']);
 
 function stationImg(kind, color, size) { return pxImg(`st:${kind}:${color}`, size, () => { const g = new PxGrid(32, 32); PX_STATIONS[kind](g, pxPal(color)); return g.outline(); }, { cls: 'sc-st' }); }

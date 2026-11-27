@@ -19,10 +19,15 @@ const REGIONS = [
     desc:'Where the sky has a crack in it, and the crack is listening.', areas:['The Edge','Unmade Fields','The Hollow Court'] },
   { id:'chasm', name:'Worldheart Chasm', band:7, lvl:74, x:430, y:420, town:'Deepforge', priceMult:1.2, perReq:170,
     desc:'A wound in the world that goes down to its beating heart.', areas:['Magma Steps','The Root Halls','The Heartchamber'] },
+  // v3.1: ascension regions. asc = ascensions needed to travel there (and to gather its resources).
+  { id:'hell', name:'Hell’s Gate', band:8, lvl:99, asc:5, x:560, y:470, town:'The Brimstone Waystation', priceMult:1.3, perReq:250,
+    desc:'A cracked iron gate at the bottom of the world, held shut by a very tired doorman.', areas:['The Ashen Threshold','The Burning Stair','The Throne of Cinders'] },
+  { id:'heaven', name:'Heaven’s Gate', band:9, lvl:99, asc:10, x:90, y:10, town:'The Pearl Gate Rest', priceMult:1.4, perReq:320,
+    desc:'Pearl steps above the clouds, where the light hums and the guards never blink.', areas:['The Cloud Steps','The Choir Fields','The Radiant Throne'] },
 ];
 const REGION_BY = Object.fromEntries(REGIONS.map(r => [r.id, r]));
 // Travel graph: [a, b, minutes]
-const ROUTES = [['emberfall','woods',2],['emberfall','marsh',2],['emberfall','desert',4],['woods','ironpeak',3],['woods','frost',5],['ironpeak','frost',4],['ironpeak','desert',4],['marsh','desert',4],['marsh','chasm',8],['desert','void',6],['frost','void',7],['void','chasm',8],['desert','chasm',6]];
+const ROUTES = [['emberfall','woods',2],['emberfall','marsh',2],['emberfall','desert',4],['woods','ironpeak',3],['woods','frost',5],['ironpeak','frost',4],['ironpeak','desert',4],['marsh','desert',4],['marsh','chasm',8],['desert','void',6],['frost','void',7],['void','chasm',8],['desert','chasm',6],['chasm','hell',10],['frost','heaven',10]];
 // Starting hamlets live inside a world region.
 const START_TO_REGION = { emberfall:'emberfall', woods:'woods', ironpeak:'ironpeak', marsh:'marsh', oasis:'desert', frost:'frost' };
 
@@ -42,6 +47,21 @@ const ENEMY_DEFS = {
   desert: [['Scorpion Brute',37,'A tail like a spear and a shell like a shield.','Scorpion Stinger',''],['Sand Wyrm',40,'Swims through dunes like water.','Wyrm Scale','wyvern_scale'],['Mummified Guard',43,'Still on duty after a thousand years.','Ancient Linen',''],['Dust Djinn',46,'Grants no wishes. Lots of sandstorms.','Djinn Smoke',''],['Sun-Touched Sphinx',48,'Asks a riddle. Attacks if you are wrong. Attacks if you are right.','Sphinx Riddle Stone','manticore_hide','hidden'],['The Sandbound King',51,'A king who refused to die and a curse that agreed.','Sandbound Sceptre Shard','','boss']],
   frost: [['Frost Wolf',49,'White as the field and twice as cold.','Frost Fang','wolf_pelt'],['Ice Troll',52,'Its blood freezes the axe that cuts it.','Rime Tusk','troll_hide'],['Yeti',55,'Shy. Large. Extremely large.','Yeti Fur',''],['Frost Giant',59,'Born from a glacier, and still growing.','Giant’s Rime','frost_giant_hide'],['Rime Wyvern',60,'Breathes frost and hoards icicles.','Rime Wyvern Scale','wyvern_scale','hidden'],['Hrimvald the Frost Jarl',65,'The giant king of the spire, crowned in ice.','Jarl’s Frozen Heart','','boss']],
   void: [['Void Stalker',61,'You see it only when it blinks.','Void Shard',''],['Rift Horror',65,'Too many eyes, all of them yours.','Horror Eye',''],['Null Wraith',69,'Erases sounds. And then people.','Null Essence',''],['Star Eater',73,'Swallowed a star once. Still hungry.','Star Ember','',],['Shattered Seraph',75,'A fallen messenger, still trying to deliver.','Seraph Feather','phoenix_plume','hidden'],['The Hollow Sovereign',79,'A crown with nothing under it, ruling nothing, very angrily.','Hollow Crown Fragment','','boss']],
+  // v3.1 gate enemies: the 7th field sets battle power (pl = archetype level) and rewards (rw = × a level-99 enemy).
+  hell: [['Imp Swarm',99,'A cloud of giggling imps. They bite, then apologise, then bite.','Imp Wing','',  '', { pl:300, rw:3 }],
+    ['Hellhound',99,'Smells of sulphur and wet dog. Mostly sulphur.','Hellhound Fang','hellhound_hide','', { pl:330, rw:3.5 }],
+    ['Brimstone Golem',99,'A heap of burning rock that someone taught to hold a grudge.','Brimstone Heart','','', { pl:370, rw:4 }],
+    ['Pit Fiend',99,'Horns, wings, and a tax ledger nobody wants to read.','Fiend Horn','imp_leather','', { pl:410, rw:4.5 }],
+    ['Infernal Knight',99,'Armour that glows from the inside. It never takes the helmet off.','Infernal Sigil','','', { pl:450, rw:5 }],
+    ['The Gatekeeper’s Hound',99,'Three heads, one appetite. Only the watchful ever see it.','Three-Headed Collar','hellhound_hide','hidden', { pl:480, rw:7 }],
+    ['Malphas, Duke of Cinders',99,'A crow-winged duke who builds towers out of other people’s regrets.','Duke’s Cinder Crown','','boss', { pl:520, rw:8 }]],
+  heaven: [['Cherub Archer',99,'Chubby, smug, and never misses. Not even once.','Cherub Arrow','','', { pl:700, rw:10 }],
+    ['Halo Wisp',99,'A ring of light that hums the same note forever.','Halo Shard','','', { pl:750, rw:11 }],
+    ['Celestial Lion',99,'Its mane is made of sunrise. Its roar is made of thunder.','Sunmane Lock','pegasus_down','', { pl:810, rw:12 }],
+    ['Throne Warden',99,'A wheel of wings and eyes that guards the steps. Do not stare back.','Wheel of Eyes','','', { pl:860, rw:14 }],
+    ['Archon Sentinel',99,'Marble armour, a spear of light, and absolutely no sense of humour.','Archon Spearhead','seraph_plume','', { pl:920, rw:16 }],
+    ['Sky Leviathan',99,'A whale of cloud that swims between the pillars. The watchful spot its shadow.','Leviathan Pearl Shard','','hidden', { pl:980, rw:22 }],
+    ['The Arbiter of Dawn',99,'It weighs every soul at the gate. Yours is next.','Dawnscale','','boss', { pl:1050, rw:30 }]],
   chasm: [['Magma Colossus',76,'Walks through lava like a puddle.','Molten Core',''],['Elder Wyrm',82,'Old enough to remember the first fire.','Elder Wyrm Scale','hydra_scale'],['Primordial Titan',88,'Older than the gods. Grumpier, too.','Titan’s Shard',''],['World Serpent Spawn',93,'A small part of something that circles the world.','Serpent Scale','jormungandr_scale'],['Phoenix of the Deep',90,'Born again in magma every dawn.','Deep Phoenix Plume','phoenix_plume','hidden'],['The Worldheart Warden',99,'Keeper of the world’s heart. Will not let you pass without a fight.','Warden’s Heartstone','','boss']],
 };
 // Boss mechanics: a countering stat threshold; if unmet, the penalty applies.
@@ -59,6 +79,8 @@ const BOSS_MECH = {
   the_sandbound_king: { name:'Curse of Ages', text:'Withers the weak-willed. Wisdom 120+ resists.', stat:'WIS', need:120, rec:1.25 },
   hrimvald_the_frost_jarl: { name:'Deep Freeze', text:'Freezes you in place. Agility 150+ keeps you moving.', stat:'AGI', need:150, time:1.6 },
   the_hollow_sovereign: { name:'Soul Drain', text:'Drains your life. Wisdom 180+ holds on.', stat:'WIS', need:180, dmg:1.8 },
+  malphas_duke_of_cinders: { name:'Tower of Regrets', text:'Burns everything near him. Vitality 400+ walks through the fire.', stat:'VIT', need:400, dmg:1.8 },
+  the_arbiter_of_dawn: { name:'Final Judgement', text:'Weighs your soul each turn. Wisdom 600+ passes the test.', stat:'WIS', need:600, rec:1.4 },
   the_worldheart_warden: { name:'Heartfire Enrage', text:'Grows stronger the longer it lasts. Strength 250+ ends it fast.', stat:'STR', need:250, rec:1.4 },
 };
 // Unique gear: [id, name, slot, region drop source (enemy id), stats, chance]
@@ -79,6 +101,10 @@ const UNIQUES = [
   ['seraph_feather','Seraph’s Feather','amulet','shattered_seraph',{ WIS:40, LUCK:16 },0.05],
   ['worldheart_aegis','Worldheart Aegis','offhand','the_worldheart_warden',{ VIT:80, STR:30 },0.03],
   ['phoenix_ring','Phoenix Ember Ring','ring','phoenix_of_the_deep',{ STR:20, DEX:20, VIT:20, LUCK:20 },0.05],
+  ['cinder_crown','Crown of Cinders','head','malphas_duke_of_cinders',{ STR:120, VIT:80 },0.03],
+  ['gatekeeper_collar','Gatekeeper’s Collar','amulet','the_gatekeepers_hound',{ LUCK:70, AGI:50 },0.05],
+  ['dawnbringer','Dawnbringer','weapon','the_arbiter_of_dawn',{ STR:160, WIS:100 },0.03],
+  ['leviathan_pearl','Leviathan Pearl','ring','sky_leviathan',{ WIS:90, LUCK:70 },0.05],
 ];
 const SECRET_DROPS = { grumbo_the_bog_ogre: [['jacks_bean', 0.01]] };
 

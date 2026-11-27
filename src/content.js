@@ -263,9 +263,35 @@ function buildResources(B) {
       });
     });
   }
+  // v3.1: four resources past each chain's god-tier, gathered in Hell's Gate (A5) and Heaven's Gate (A10).
+  for (const [skill, list] of Object.entries(GATE_RES)) {
+    const chain = out.filter(r => r.skill === skill), last = chain[chain.length - 1];
+    list.forEach(([name, color, flavor], k) => {
+      const hell = k < 2, m = [[3, 2], [6, 3], [14, 5], [30, 8]][k];
+      out.push({ id: slug(name), name, color, flavor, skill, index: last.index + 1 + k, chainLen: last.chainLen + 4,
+        baseTime: Math.round(last.baseTime * (1.1 + 0.1 * k) * 100) / 100, stamina: last.stamina + 1 + Math.floor(k / 2), baseYield: 1,
+        value: Math.round(last.value * m[0]), xp: Math.round(last.xp * m[1] * 10) / 10, reqLevel: 99,
+        band: hell ? 8 : 9, region: hell ? 'Hell’s Gate' : 'Heaven’s Gate', rarity: 5, type: 'resource', asc: hell ? 5 : 10 });
+    });
+  }
   for (const r of out) r.grandTitle = GRANDMASTER_TITLES[r.id] || (r.name + ' Grandmaster');
   return out;
 }
+// Name|colour|flavour: two Hell's Gate, then two Heaven's Gate, per gathering skill.
+const GATE_RES = {
+  mining: [['Brimstone', '#e8b020', 'Yellow stone that smokes when you look at it. The doorman sells it by the bucket.'], ['Infernal Obsidian', '#3a1020', 'Black glass with a red heartbeat inside.'],
+    ['Seraphite', '#e8f4ff', 'A pale crystal that rings like a choir when struck.'], ['Halo Gold', '#ffe27a', 'Gold so pure it floats a finger above your palm.']],
+  woodcutting: [['Charwood', '#4a2a1a', 'Trees that grow already burnt. They never stop smouldering.'], ['Hellbark', '#8a2a1a', 'Bark as hard as iron and twice as angry.'],
+    ['Cloudwood', '#f2f4fa', 'Light enough to float. Tie your logs down.'], ['Seraph Willow', '#c8e8d8', 'Its branches bow to everyone who passes.']],
+  farming: [['Ember Pepper', '#e8302a', 'Hot enough to light a candle. The imps eat them like sweets.'], ['Brimstone Squash', '#d8781a', 'Grows in ash, tastes of smoke, keeps for a hundred years.'],
+    ['Manna Wheat', '#f8e8a8', 'Falls from the sky each morning. You just have to catch it.'], ['Golden Nectarine', '#ffb84a', 'One bite and you forget you were ever hungry.']],
+  fishing: [['Lava Eel', '#ff6a1a', 'Swims through molten rock and complains about the cold.'], ['Cinder Koi', '#c0302a', 'A fish of living embers. Do not hold it for long.'],
+    ['Cloud Carp', '#d8ecff', 'Swims through the sky above the steps. Bring a long line.'], ['Starlight Ray', '#b8a8ff', 'Glides on light. Its tail leaves a little comet behind.']],
+  herbalism: [['Hellbloom', '#a8102a', 'A flower that blooms only when somebody is grumpy nearby.'], ['Sulfur Thistle', '#d8c020', 'Smells terrible. Heals wonderfully.'],
+    ['Halo Lily', '#fffbe8', 'A lily with a tiny ring of light above each petal.'], ['Seraph Sage', '#a8e8c8', 'One sniff and you feel forgiven for something.']],
+  skinning: [['Hellhound Hide', '#5a1a1a', 'Warm to the touch, forever. Great for winter boots.'], ['Imp Leather', '#7a2a4a', 'Thin, tough and covered in tiny rude tattoos.'],
+    ['Pegasus Down', '#f8f8ff', 'Soft as a cloud and just as hard to keep in a bag.'], ['Seraph Plume', '#ffe8a0', 'A feather of light. It casts no shadow.']],
+};
 
 // ---- Plain items (materials, consumables, supplies, junk, keepsakes)
 const ITEMS = {
@@ -416,8 +442,10 @@ const FOODS = [
   ['swordfish_steak','Swordfish Steak',{ swordfish:2, spice:1 },{ xp:0.15 },30], ['sunberry_tart','Sunberry Tart',{ sunberry:2, wheat:2 },{ gyield:0.15 },30],
   ['starfruit_sorbet','Starfruit Sorbet',{ starfruit:2, frostberry:2 },{ proc:0.03 },30], ['deep_feast','Feast of the Deep',{ sea_serpent:1, rice:3, goldenwheat:2 },{ stamina:2, gyield:0.10 },60],
   ['ambrosial_banquet','Ambrosial Banquet',{ ambrosia:1, golden_apple:1, salmon_of_knowledge:1 },{ stamina:3, xp:0.25 },60],
+  ['hellfire_chili','Hellfire Chili',{ ember_pepper:2, lava_eel:1, brimstone_squash:1 },{ stamina:3, gyield:0.15 },60],
+  ['manna_feast','Feast of Manna',{ manna_wheat:2, cloud_carp:1, golden_nectarine:1 },{ stamina:4, xp:0.30 },60],
 ];
-const HEAL_FOODS = [['cooked_shrimp','Cooked Shrimp','shrimp'],['cooked_trout','Cooked Trout','trout'],['cooked_pike','Cooked Pike','pike'],['cooked_salmon','Cooked Salmon','salmon'],['cooked_tuna','Seared Tuna','tuna'],['cooked_lobster','Boiled Lobster','lobster'],['cooked_swordfish','Grilled Swordfish','swordfish'],['cooked_shark','Shark Steak','shark'],['cooked_angler','Anglerfish Stew','anglerfish'],['cooked_frostfin','Frostfin Fillet','frostfin'],['cooked_abyssal','Abyssal Eel Roast','abyssal_eel'],['cooked_kraken','Kraken Calamari','kraken_spawn']];
+const HEAL_FOODS = [['cooked_shrimp','Cooked Shrimp','shrimp'],['cooked_trout','Cooked Trout','trout'],['cooked_pike','Cooked Pike','pike'],['cooked_salmon','Cooked Salmon','salmon'],['cooked_tuna','Seared Tuna','tuna'],['cooked_lobster','Boiled Lobster','lobster'],['cooked_swordfish','Grilled Swordfish','swordfish'],['cooked_shark','Shark Steak','shark'],['cooked_angler','Anglerfish Stew','anglerfish'],['cooked_frostfin','Frostfin Fillet','frostfin'],['cooked_abyssal','Abyssal Eel Roast','abyssal_eel'],['cooked_kraken','Kraken Calamari','kraken_spawn'],['roast_lava_eel','Roast Lava Eel','lava_eel'],['cloud_carp_fillet','Cloud Carp Fillet','cloud_carp']];
 const fxText = f => Object.entries(f).map(([k, v]) => k === 'stamina' ? `+${v} Stamina` : k === 'xp' ? `+${Math.round(v * 100)}% XP` : k === 'gyield' ? `+${Math.round(v * 100)}% gathering yield` : `+${Math.round(v * 100)}% Lucky Strike`).join(', ');
 FOODS.forEach(([id, name, ins, fx, mins], k) => {
   item(id, { name, type:'food', cat:'food', fx, mins, rarity: Math.min(5, Math.floor(k / 2.6)), desc:`${fxText(fx)} for ${mins} minutes.` });

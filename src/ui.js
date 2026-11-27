@@ -224,7 +224,7 @@ function enterGame(i) {
   $('#root').innerHTML = `<div class="app"><header class="top" id="top"></header><nav class="side" id="nav" aria-label="Game sections"></nav><nav class="bnav" id="bnav" aria-label="Sections"></nav><main id="main"></main><section class="act" id="act" aria-label="Active actions"><div id="actbody"></div><div id="actscene"></div></section><aside class="sidepanel" id="side"></aside></div>`;
   renderTop(); renderMain(); renderActions();
   checkProgress(true, []); syncAcctSecrets(); markFounder(); tourMaybe(); setTimeout(() => { if (typeof sxSync === 'function') sxSync(true); }, 3000);
-  const away = (Date.now() - ch.last) / 1000;
+  const away = (Date.now() - ch.last) / 1000; ch.counters.longestAway = Math.max(ch.counters.longestAway || 0, away);
   if (away >= 8 * 3600 && ch.cls === 'monk') setTimeout(() => unlockSecret('cls_monk'), 500);
   if (away > 60) runOffline(away, true);
   lastT = 0; save();
@@ -450,7 +450,8 @@ function tabTitles() {
       <div class="grid" style="gap:4px">${line.map(([n, name, y, st]) => { const got = ch.totals[s] >= n; return `<div class="spread" style="font-size:14px;${got ? '' : 'opacity:.55'}"><span><b class="${got ? 'gold' : ''}">${name}</b> <span class="mute">${N(n)}</span></span><span class="num">+${pct(y)} · +${st} ${SKILL_TITLES[s].stat}</span></div>`; }).join('')}</div></div>`; }).join('')}</div>
     <div class="card" style="margin-top:12px"><h3>Grandmaster titles</h3><p class="mute" style="margin:4px 0 8px">One per resource at 100,000: +2% yield everywhere and +2 PER each.</p>
       <div class="row">${RES.filter(r => (ch.prof[r.id] || 0) >= 1e5 || isUnlocked(ch, r)).map(r => (ch.prof[r.id] || 0) >= 1e5 ? `<span class="chip on">${esc(r.grandTitle)}</span>` : `<span class="chip" style="opacity:.5">${esc(r.grandTitle)}</span>`).join('')}<span class="chip" style="opacity:.5">…and more as you unlock resources</span></div></div>
-    <div class="card" style="margin-top:12px"><h3>Secret titles</h3><div class="grid" style="margin-top:8px">${(() => { const mine = SECRET_TITLES.filter(s => !(SECRET_BY[s.id] && SECRET_BY[s.id].cls && SECRET_BY[s.id].cls !== ch.cls)), got = mine.filter(s => ch.secretTitles[s.id]), left = mine.length - got.length; return got.map(s => `<div><b class="gold">${s.name}</b> <span class="mute">${SECRET_BY[s.id] ? '' : s.desc + ' '}+${pct(s.yield)} yield, +${s.amt} ${s.stat}</span></div>`).join('') + (left ? `<div class="mute">${got.length ? '' : 'None yet. '}${left} more secret title${left > 1 ? 's' : ''} to find. Most come from secrets: see the <button class="linkbtn" data-act="tab" data-arg="secrets">Secrets</button> tab.</div>` : ''); })()}</div></div>`;
+    <div class="card" style="margin-top:12px"><h3>Secret titles</h3><div class="grid" style="margin-top:8px">${(() => { const mine = SECRET_TITLES.filter(s => !(SECRET_BY[s.id] && SECRET_BY[s.id].cls && SECRET_BY[s.id].cls !== ch.cls)), got = mine.filter(s => ch.secretTitles[s.id]), left = mine.length - got.length; return got.map(s => `<div><b class="gold">${s.name}</b> <span class="mute">${SECRET_BY[s.id] ? '' : s.desc + ' '}+${pct(s.yield)} yield, +${s.amt} ${s.stat}</span></div>`).join('') + (left ? `<div class="mute">${got.length ? '' : 'None yet. '}${left} more secret title${left > 1 ? 's' : ''} to find. Most come from secrets: see the <button class="linkbtn" data-act="tab" data-arg="secrets">Secrets</button> tab.</div>` : ''); })()}</div></div>
+    <div class="card" style="margin-top:12px"><h3>Fun titles</h3><p class="mute" style="margin:4px 0 8px">For the things you do (and the things that happen to you). Most are just for show.</p><div class="grid funtitles">${FUN_TITLES.map(t => { const got = (ch.funTitles || {})[t.id]; return `<div class="spread" style="font-size:14px;${got ? '' : 'opacity:.55'}"><span><b class="${got ? 'gold' : ''}">${esc(t.name)}</b> <span class="mute">${esc(t.desc)}</span></span><span class="num">${t.y ? `+${pct(t.y)} · +${t.amt} ${t.stat}` : got ? '✓' : ''}</span></div>`; }).join('')}</div></div>`;
 }
 function tabAch() {
   const pts = ACHIEVEMENTS.filter(a => ch.ach[a.id]).reduce((s, a) => s + a.pts, 0), max = ACHIEVEMENTS.reduce((s, a) => s + a.pts, 0);
@@ -531,14 +532,14 @@ function regionState(r) {
   return adj ? 'near' : 'fog';
 }
 function mapSvg() {
-  const W = 720, H = 470, px = r => r.x + 40, py = r => r.y + 25;
+  const W = 720, H = 545, px = r => r.x + 40, py = r => r.y + 25;
   const edges = openRoutes().map(([a, b, m]) => { const A = REGION_BY[a], B = REGION_BY[b], sa = regionState(A), sb = regionState(B), dim = sa === 'fog' || sb === 'fog' || sa === 'sealed' || sb === 'sealed';
     return `<line x1="${px(A)}" y1="${py(A)}" x2="${px(B)}" y2="${py(B)}" class="route ${dim ? 'dim' : ''}"/>${dim ? '' : `<text x="${(px(A) + px(B)) / 2}" y="${(py(A) + py(B)) / 2 - 4}" class="rmin">${m}m</text>`}`; }).join('');
-  const nodes = REGIONS.filter(regionOpen).map(r => { const st = regionState(r), here = r.id === ch.loc, to = ch.travel && ch.travel.to === r.id, sel = mapSel === r.id, lock = gateLevel(ch) < r.lvl;
+  const nodes = REGIONS.filter(regionOpen).map(r => { const st = regionState(r), here = r.id === ch.loc, to = ch.travel && ch.travel.to === r.id, sel = mapSel === r.id, lock = gateLevel(ch) < r.lvl || !regionAscOk(ch, r);
     const label = st === 'fog' ? '???' : r.name;
     return `<g class="node ${st} ${here ? 'here' : ''} ${sel ? 'sel' : ''} ${to ? 'to' : ''}" data-act="selregion" data-arg="${r.id}" tabindex="0" role="button" aria-label="${esc(label)}">
-      <circle cx="${px(r)}" cy="${py(r)}" r="${here ? 24 : 20}" /><text x="${px(r)}" y="${py(r) + 5}" class="nlv">${st === 'fog' ? '?' : r.lvl}</text>
-      <text x="${px(r)}" y="${py(r) + 40}" class="nname">${esc(label)}</text>${lock && st !== 'fog' ? `<text x="${px(r)}" y="${py(r) + 56}" class="nreq">Level ${r.lvl}</text>` : ''}</g>`; }).join('');
+      <circle cx="${px(r)}" cy="${py(r)}" r="${here ? 24 : 20}" /><text x="${px(r)}" y="${py(r) + 5}" class="nlv">${st === 'fog' ? '?' : r.asc ? 'A' + r.asc : r.lvl}</text>
+      <text x="${px(r)}" y="${py(r) + 40}" class="nname">${esc(label)}</text>${lock && st !== 'fog' ? `<text x="${px(r)}" y="${py(r) + 56}" class="nreq">${r.asc && !regionAscOk(ch, r) ? 'Ascension ' + r.asc : 'Level ' + r.lvl}</text>` : ''}</g>`; }).join('');
   let trav = '';
   if (ch.travel) { const A = REGION_BY[ch.travel.from], B = REGION_BY[ch.travel.to]; trav = `<circle id="traveller" r="7" cx="${px(A)}" cy="${py(A)}" data-ax="${px(A)}" data-ay="${py(A)}" data-bx="${px(B)}" data-by="${py(B)}"/>`; }
   return `<svg class="worldmap" viewBox="0 0 ${W} ${H}" role="img" aria-label="World map"><defs><radialGradient id="mapglow" cx=".45" cy=".5" r=".7"><stop offset="0" class="mg0"/><stop offset="1" class="mg1"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#mapglow)" rx="14"/>${edges}${nodes}${trav}</svg>`;
@@ -557,6 +558,7 @@ function tabMap() {
   else if (ch.travel) travelBox = `<p class="mute" style="margin:0">On the road to ${esc(REGION_BY[ch.travel.to].name)}.</p><div class="bar" style="margin-top:6px"><i data-w="travel"></i></div>`;
   else if (st === 'sealed') travelBox = `<p class="mute" style="margin:0">Finish your tasks in ${esc(regionName())} before you leave (Quests tab).</p>`;
   else if (gateLevel(ch) < sel.lvl) travelBox = `<p class="bad" style="margin:0">Needs character level ${sel.lvl} (you are ${ch.level}).</p>`;
+  else if (!regionAscOk(ch, sel)) travelBox = `<p class="bad" style="margin:0">Opens at Ascension ${sel.asc} (you are A${ch.ascension || 0}).</p>`;
   else travelBox = `<div class="row"><button class="pri" data-act="travel" data-arg="${sel.id}">Travel · ${fmtTime(mins * 60)}</button><button data-act="fasttravel" data-arg="${sel.id}" ${ch.gold >= fc ? '' : 'disabled'}>Fast carriage · ${N(fc)}g</button></div><p class="mute" style="font-size:14px;margin:6px 0 0">The road may bring encounters. Gathering keeps running while you travel; fighting and exploring stop. Agility shortens trips${travelBonus(d) ? ` (now −${pct(travelBonus(d))})` : ''}.</p>`;
   return `<div class="spread"><div><h2>World map</h2><p class="mute" style="margin:4px 0 0">You are ${ch.travel ? 'travelling to' : 'in'} <b data-live="travel"></b>. Exploration level <b data-live="slvl:exploration"></b>.</p></div></div>
     <div class="mapwrap">${mapSvg()}</div>
@@ -836,8 +838,9 @@ function doUpgrade(key) {
   if (!ch.inv[key] || !ch.inv[stone] || ch.gold < gold) return;
   takeItem(stone, 1); ch.gold -= gold;
   const chance = Math.min(1, E.success[lvl] + D().wisAbove * E.wisBonus + (D().M.enchant || 0));
-  if (rng() < chance) { takeItem(key, 1); const nk = withPlus(key, lvl + 1); addItem(nk, 1, true); ch.counters.upgrades++; ch.counters.maxPlus = Math.max(ch.counters.maxPlus, lvl + 1); addLog('lucky', `Upgrade succeeded: ${ITEM(nk).name}`); toast(`<b>Success!</b> ${esc(ITEM(nk).name)}`, 'gold'); chime(784, 1175); closeModal(); if (lvl + 1 < 10) upgradeModal(nk); }
-  else if (lvl >= E.dropFrom) { takeItem(key, 1); const nk = withPlus(key, lvl - 1); addItem(nk, 1, true); addLog('sys', `Upgrade failed: ${it.name} dropped to +${lvl - 1}.`); toast(`Upgrade failed. ${esc(it.name)} dropped to +${lvl - 1}.`); closeModal(); }
+  ch.counters.upFail = rng() < chance ? -1 : (ch.counters.upFail || 0); // decided below; -1 marks success
+  if (ch.counters.upFail === -1) { ch.counters.upFail = 0; takeItem(key, 1); const nk = withPlus(key, lvl + 1); addItem(nk, 1, true); ch.counters.upgrades++; ch.counters.maxPlus = Math.max(ch.counters.maxPlus, lvl + 1); addLog('lucky', `Upgrade succeeded: ${ITEM(nk).name}`); toast(`<b>Success!</b> ${esc(ITEM(nk).name)}`, 'gold'); chime(784, 1175); closeModal(); if (lvl + 1 < 10) upgradeModal(nk); }
+  else if ((ch.counters.upFail = ch.counters.upFail + 1, ch.counters.upFailMax = Math.max(ch.counters.upFailMax || 0, ch.counters.upFail), lvl >= E.dropFrom)) { takeItem(key, 1); const nk = withPlus(key, lvl - 1); addItem(nk, 1, true); addLog('sys', `Upgrade failed: ${it.name} dropped to +${lvl - 1}.`); toast(`Upgrade failed. ${esc(it.name)} dropped to +${lvl - 1}.`); closeModal(); }
   else { addLog('sys', `Upgrade failed: ${it.name} is unharmed.`); toast(`Upgrade failed. The stone crumbles; ${esc(it.name)} is fine.`); upgradeModal(key); }
   checkProgress(); renderMain();
 }

@@ -210,6 +210,7 @@ const DUNGEONS = {
   emberfall: ['The Old Kiln', 'Kilnmother Ashka'], woods: ['Rootdeep Hollow', 'The Gnarled Warden'], ironpeak: ['Hammerfall Mine', 'Foreman Grudge the Golem'],
   marsh: ['The Drowned Chapel', 'Bishop Bogwater'], desert: ['Tomb of the Sun-King', 'Sun-King Razul'], frost: ['Hall of the Frozen Jarl', 'Jarl Hrimgrim'],
   void: ['The Unmade Spire', 'The Hollow Prince'], chasm: ['Heart of the World', 'The World-Eater Wyrm'],
+  hell: ['The Cinder Tower', 'Baron Ashmaw'], heaven: ['The Hall of Scales', 'The First Choir'],
 };
 const DG_DIFF = [{ name: 'Normal', mult: 1, lvl: 0, gold: 1, chest: 'chest_iron', drop: 0.3 }, { name: 'Heroic', mult: 1.7, lvl: 10, gold: 2, chest: 'chest_gold', drop: 0.45, daily: 3 }, { name: 'Mythic', mult: 2.8, lvl: 20, gold: 4, chest: 'chest_myth', drop: 0.6, daily: 1 }];
 const DG_FLOORS = [0.85, 0.95, 1.05, 1.15, 1.35];

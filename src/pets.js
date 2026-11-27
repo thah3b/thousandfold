@@ -4,7 +4,7 @@
 const PET_RARITY = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
 const PET_RARITY_MULT = [1, 1.5, 2.2, 3, 4];
 const PET_SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge'];
-const PET_TAG_COLOR = { Fire:'#e8572e', Water:'#3b82c4', Flying:'#9ec9ef', Ground:'#9a7b4f', Beast:'#b07a4a', Mystic:'#a77be0', Frost:'#a7e3f2' };
+const PET_TAG_COLOR = { Fire:'#e8572e', Water:'#3b82c4', Flying:'#9ec9ef', Ground:'#9a7b4f', Beast:'#b07a4a', Mystic:'#a77be0', Frost:'#a7e3f2', Infernal:'#b8202a', Holy:'#ffe9a0' };
 const PERSONALITIES = [
   ['Brave', { atk:.02 }], ['Lazy', { offlineH:1 }], ['Greedy', { gold:.04 }], ['Curious', { explore:.04 }],
   ['Playful', { xp:.02 }], ['Proud', { hp:.03 }], ['Lucky', { luckStrike:.003 }], ['Diligent', { gyield:.02 }],
@@ -57,6 +57,28 @@ const SPECIES = {
   great_turtle: ['World Turtle', 4, 4, ['Ground', 'Water'], null, { hp:.10, offlineH:3 }, { dmgTaken:-.10, regen:.20 }, null, 'Some say the world rests on one like it.'],
   star_serpent: ['Star Serpent', 4, 2, ['Mystic', 'Flying'], 'void', { xp:.05, gyield:.04 }, { crit:.02, loot:.04 }, ['celestial_serpent', 40], 'Its scales hold constellations.'],
   celestial_serpent: ['Celestial Serpent', 4, 4, ['Mystic', 'Flying'], null, { xp:.08, gyield:.06 }, { crit:.03, loot:.06 }, null, 'Coils around the moon when no one is watching.'],
+  // v3.1: Hell's Gate
+  hell_pup: ['Hell Pup', 0, 1, ['Infernal', 'Beast'], 'hell', { atk:.04 }, { atk:.03 }, ['hellhound_pet', 25], 'Chews on brimstone like a bone. Very good boy.'],
+  hellhound_pet: ['Loyal Hellhound', 0, 2, ['Infernal', 'Beast'], null, { atk:.06, def:.02 }, { atk:.05, crit:.01 }, null, 'Warm enough to sleep against on cold nights.'],
+  magma_slug: ['Magma Slug', 0, 0, ['Fire', 'Ground'], 'hell', { skillYield:{ mining:.06 } }, { regen:.10 }, null, 'Leaves a glowing trail. Slowly.'],
+  brimstone_bat: ['Brimstone Bat', 1, 0, ['Infernal', 'Flying'], 'hell', { explore:.06 }, { dodge:.02 }, null, 'Hangs upside down and smells of matches.'],
+  imp_familiar: ['Imp Familiar', 1, 0, ['Infernal', 'Mystic'], 'hell', { gold:.06 }, { crit:.02 }, ['archimp', 30], 'Steals coins for you. Keeps a small fee.'],
+  archimp: ['Archimp', 1, 1, ['Infernal', 'Mystic'], null, { gold:.09, loot:.03 }, { crit:.03, critDmg:.10 }, null, 'Wears a tiny crown it definitely did not steal.'],
+  nightmare_foal: ['Nightmare Foal', 2, 2, ['Infernal', 'Beast'], 'hell', { travel:.07, atk:.03 }, { atk:.04 }, ['nightmare_steed', 35], 'Its mane is smoke and its hooves are sparks.'],
+  nightmare_steed: ['Nightmare Steed', 2, 3, ['Infernal', 'Beast'], null, { travel:.11, atk:.05 }, { atk:.06, fightSpeed:.02 }, null, 'Gallops through fire and leaves none behind.'],
+  threehead_pup: ['Three-Headed Pup', 3, 2, ['Infernal', 'Beast'], 'hell', { loot:.06, def:.04 }, { atk:.05, crit:.02 }, ['cerberus', 40], 'Three heads, three opinions about dinner.'],
+  cerberus: ['Cerberus', 4, 4, ['Infernal', 'Beast'], null, { loot:.10, def:.08, atk:.05 }, { atk:.09, crit:.03, dmgTaken:-.05 }, null, 'The gate’s own guard dog. It chose you.'],
+  // v3.1: Heaven's Gate
+  cloud_lamb: ['Cloud Lamb', 0, 1, ['Holy', 'Flying'], 'heaven', { offlineH:1 }, { regen:.10 }, null, 'Made of the fluffiest cloud. Rains a little when sad.'],
+  halo_sparrow: ['Halo Sparrow', 0, 0, ['Holy', 'Flying'], 'heaven', { xp:.04 }, { dodge:.015 }, null, 'Sings one perfect note, then forgets the rest.'],
+  winged_kitten: ['Winged Kitten', 1, 0, ['Holy', 'Beast'], 'heaven', { luckStrike:.004 }, { crit:.015 }, ['seraph_cat', 30], 'Knocks things off clouds on purpose.'],
+  seraph_cat: ['Seraph Cat', 1, 1, ['Holy', 'Beast'], null, { luckStrike:.006, loot:.03 }, { crit:.025 }, null, 'Six wings, nine lives, zero regrets.'],
+  dawn_fawn: ['Dawn Fawn', 1, 1, ['Holy', 'Beast'], 'heaven', { gyield:.04 }, { regen:.12 }, ['dawn_stag', 30], 'Sunrise follows it around like a puppy.'],
+  dawn_stag: ['Dawn Stag', 1, 3, ['Holy', 'Beast'], null, { gyield:.06, xp:.03 }, { regen:.18, hp:.03 }, null, 'Its antlers hold the first light of every day.'],
+  unicorn_foal: ['Unicorn Foal', 2, 2, ['Holy', 'Mystic'], 'heaven', { enchant:.03, xp:.03 }, { regen:.15 }, ['unicorn', 35], 'The horn is still soft. Do not tell it.'],
+  unicorn: ['Unicorn', 2, 3, ['Holy', 'Mystic'], null, { enchant:.05, xp:.05 }, { regen:.25, dmgTaken:-.03 }, null, 'Heals what it touches. Mostly feelings.'],
+  seraph_hatchling: ['Seraph Hatchling', 3, 1, ['Holy', 'Flying'], 'heaven', { xp:.06, gyield:.04 }, { regen:.20, crit:.02 }, ['seraphim', 40], 'A small ball of wings and light. It hums.'],
+  seraphim: ['Seraphim', 4, 3, ['Holy', 'Flying'], null, { xp:.09, gyield:.07 }, { regen:.30, crit:.03, hp:.05 }, null, 'Six wings of fire and a voice like the morning.'],
   // Hybrids (breeding only)
   steam_kit: ['Steam Kit', 2, 1, ['Fire', 'Water'], null, { regen:.10, atk:.03 }, { regen:.15 }, null, 'A hissing, cheerful little cloud with paws.', true],
   rimecat: ['Rimecat', 2, 2, ['Frost', 'Beast'], null, { crit:.015, dodge:.015 }, { crit:.02, dodge:.02 }, null, 'Purrs like cracking ice.', true],
@@ -85,7 +107,7 @@ const COLLECTION_STEPS = [0.25, 0.5, 0.75, 1];
 const COLLECTION_BONUS = { pets: { gyield:.02 }, monsters: { loot:.02 }, items: { xp:.02 }, regions: { travel:.04 } };
 
 for (const [id, e] of Object.entries(EGGS)) ITEMS[id] = { name: e.name, type: 'egg', rarity: e.rarity, value: [200, 2000, 15000, 80000, 400000][e.rarity], desc: `Hatches in an incubator after ${e.mins >= 60 ? e.mins / 60 + ' hours' : e.mins + ' minutes'} or ${e.actions.toLocaleString()} of your actions, whichever comes first.` };
-for (const r of ['emberfall', 'woods', 'ironpeak', 'marsh', 'desert', 'frost', 'void', 'chasm']) ITEMS['egg_' + r] = { name: `${r === 'emberfall' ? 'Emberfall' : r === 'woods' ? 'Woodland' : r === 'ironpeak' ? 'Mountain' : r === 'marsh' ? 'Marsh' : r === 'desert' ? 'Desert' : r === 'frost' ? 'Frost' : r === 'void' ? 'Void' : 'Chasm'} Egg`, type: 'egg', rarity: 1, value: 3000, region: r, desc: 'Hatches into a creature from its region. Usually common, sometimes not.' };
+for (const r of ['emberfall', 'woods', 'ironpeak', 'marsh', 'desert', 'frost', 'void', 'chasm', 'hell', 'heaven']) ITEMS['egg_' + r] = { name: `${r === 'emberfall' ? 'Emberfall' : r === 'woods' ? 'Woodland' : r === 'ironpeak' ? 'Mountain' : r === 'marsh' ? 'Marsh' : r === 'desert' ? 'Desert' : r === 'frost' ? 'Frost' : r === 'void' ? 'Void' : r === 'hell' ? 'Brimstone' : r === 'heaven' ? 'Celestial' : 'Chasm'} Egg`, type: 'egg', rarity: 1, value: 3000, region: r, desc: 'Hatches into a creature from its region. Usually common, sometimes not.' };
 for (const [id, s] of Object.entries(SPECIES)) if (s[9]) ITEMS['egg_h_' + id] = { name: `${s[0]} Egg`, type: 'egg', rarity: s[1], value: 20000, species: id, desc: `A hybrid egg. It will hatch into a ${s[0]}.` };
 SHOP.eggs = ['egg_common', 'egg_rare'];
 ITEMS.egg_common.cost = 2000; ITEMS.egg_rare.cost = 20000;

@@ -10,7 +10,7 @@ const html=`<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Thousandfold ${VER}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English+SC&family=Alegreya+SC:wght@400;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=IM+Fell+English+SC&family=Alegreya+SC:wght@400;700&family=Silkscreen:wght@400;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
 <style>
 ${r('style.css')}
 </style></head><body>
@@ -44,6 +44,7 @@ ${r('gates.js')}
 ${r('words.js')}
 ${r('games.js')}
 ${r('casino.js')}
+${r('funtitles.js')}
 ${r('showcase.js')}
 ${r('cloud.js')}
 ${r('social.js')}

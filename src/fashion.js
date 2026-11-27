@@ -56,6 +56,7 @@ const FASHIONS = [
   F('hat_antenna', 'hat', 'Bobble Antennae', 'antenna', { gold: 2000 }), F('hat_starwizard', 'hat', 'Starry Wizard Hat', 'starwizard', { secrets: 6 }),
   F('cape_ocean', 'cape', 'Ocean Cape', '#2a6aa8', { gold: 1500 }), F('cape_rose', 'cape', 'Rose Cape', '#d85a8a', { gold: 1500 }), F('cape_snow', 'cape', 'Snow Cape', '#f2ece0', { gold: 2000 }),
   F('cape_mint', 'cape', 'Mint Cape', '#5ad0a8', { gold: 2000 }), F('cape_ash', 'cape', 'Ash Cape', '#6a6a74', { gold: 1500 }), F('cape_night', 'cape', 'Velvet Night (red lining)', '#1a1a2a|#a8202a', { gold: 5000 }),
+  F('cape_pioneer', 'cape', 'Pioneer’s Mantle', '#2a8a88|#ffe9a0', { pioneer: true }),
   F('cape_regal', 'cape', 'Regal Duo', '#5a3aa8|#e8c15a', { gold: 6000 }), F('cape_leaf', 'cape', 'Leafy Two-tone', '#2f7a3a|#c9e07a', { gold: 4000 }), F('cape_sunset', 'cape', 'Sunset Two-tone', '#e8572e|#ffd23a', { lvl: 40 }),
   F('back_none', 'back', 'Nothing on your back', null), F('back_backpack', 'back', 'Backpack', 'backpack', { gold: 1000 }), F('back_quiver', 'back', 'Quiver', 'quiver', { gold: 1200 }),
   F('back_balloons', 'back', 'Bunch of Balloons', 'balloons', { gold: 1500 }), F('back_kite', 'back', 'Kite', 'kite', { gold: 1500 }), F('back_shell', 'back', 'Turtle Shell', 'shell', { gold: 2500 }),
@@ -102,7 +103,8 @@ function fashionReq(c, f) {
   if (s.free) return null;
   if (s.gold) return (c.wardrobe || {})[f.id] ? null : `${N(fashionPrice(c, f))} gold`;
   if (s.lvl) return c.level >= s.lvl ? null : `Reach level ${s.lvl}`;
-  if (s.asc) return (c.ascension || 0) >= s.asc ? null : 'Ascend once';
+  if (s.asc) return (c.ascension || 0) >= s.asc ? null : s.asc > 1 ? `Reach Ascension ${s.asc}` : 'Ascend once';
+  if (s.pioneer) return account.pioneer ? null : 'One of the first 10 players';
   if (s.secrets) return Object.keys(c.secrets || {}).length >= s.secrets ? null : `Find ${s.secrets} secrets`;
   if (s.species) return Object.keys(c.petDex || {}).length >= s.species ? null : `Collect ${s.species} pet species`;
   if (s.events) return (K.eventsJoined || 0) >= s.events ? null : `Take part in ${s.events} world event${s.events > 1 ? 's' : ''}`;

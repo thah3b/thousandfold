@@ -10,6 +10,8 @@ const REGION_TALK = {
   desert: 'Three wells feed Glassmarket. The third keeps strange hours, and the night fishermen who sit beside it never explain why.',
   frost: 'Footprints lead into the ice wall and don’t come out. Only the very nimble, who know every corner of the spire, ever follow them.',
   void: 'The watchers keep a log of the crack in the sky, one line at the stroke of every midnight. The lucky ones have seen something fall.',
+  hell: 'The doorman at the Brimstone Waystation has worked the gate for a thousand years. He says the duke is all bark, and that his dog has three of them.',
+  heaven: 'The guards on the pearl steps never blink. Pilgrims say a whale swims between the pillars, but only for those with very sharp eyes.',
   chasm: 'Deepforge children sing that the world has a heartbeat, and that only the sturdy, who know every step of the chasm, ever hear it.',
 };
 const regionTalk = r => r.hint || REGION_TALK[r.id] || '';
