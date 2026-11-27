@@ -938,11 +938,11 @@ function petActions(n, quiet, notes) {
   for (let i = 0; i < Math.min(eggs, 25); i++) { const k = ['egg_common', 'egg_rare', 'egg_epic', 'egg_legendary', 'egg_mythic'][rollRarity()]; addItem(k, 1, true); const msg = `You found a ${ITEMS[k].name}!`; quiet ? notes.push(msg) : (addLog('lucky', msg), toast(`<b>${esc(ITEMS[k].name)}</b> found!`, 'gold'), chime(880, 1320)); }
   checkPets(quiet, notes);
 }
-function incubate(key) {
+function incubate(key, quiet) {
   if (!ch.inv[key] || ITEMS[key].type !== 'egg') return;
   if (ch.incub.length >= ch.incubSlots) { toast('All incubators are busy. Buy another one on the Pets tab.'); return; }
   takeItem(key, 1); const e = ITEMS[key], E = EGGS['egg_' + ['common', 'rare', 'epic', 'legendary', 'mythic'][e.rarity]];
-  ch.incub.push({ egg: key, start: Date.now(), mins: E.mins, need: E.actions, actions: 0 }); addLog('sys', `Placed a ${e.name} in an incubator.`); dirty = true;
+  ch.incub.push({ egg: key, start: Date.now(), mins: E.mins, need: E.actions, actions: 0 }); if (!quiet) addLog('sys', `Placed a ${e.name} in an incubator.`); dirty = true;
 }
 const incubFrac = s => Math.min(1, Math.max((Date.now() - s.start) / (s.mins * 60000), s.actions / s.need));
 const isEvolved = id => Object.values(SPECIES).some(s => s[7] && s[7][0] === id);
@@ -955,6 +955,15 @@ function pickSpecies(key) {
   else { pool = base.filter(id => SPECIES[id][1] === e.rarity); const local = pool.filter(id => SPECIES[id][4] === ch.loc); if (local.length && rng() < 0.5) pool = local; }
   return pool[Math.floor(rng() * pool.length)];
 }
+// v3.0a: auto-hatch fills empty incubators from the bag, rarest egg first.
+function autoIncubate() {
+  let placed = 0;
+  while (ch.incub.length < ch.incubSlots) {
+    const eggs = Object.keys(ch.inv).filter(k => ch.inv[k] > 0 && ITEMS[k] && ITEMS[k].type === 'egg').sort((a, b) => ITEMS[b].rarity - ITEMS[a].rarity || ITEMS[b].value - ITEMS[a].value);
+    if (!eggs.length) break; incubate(eggs[0], true); placed++;
+  }
+  return placed;
+}
 function hatch(i, quiet, notes) {
   const s = ch.incub[i]; if (!s) return;
   const sp = pickSpecies(s.egg), S = SP(sp);
@@ -964,7 +973,7 @@ function hatch(i, quiet, notes) {
   if (!ch.petActive) ch.petActive = p.uid;
   addXp('beastmastery', [20, 60, 200, 600, 2000][S.rarity], quiet, notes);
   const msg = `Your egg hatched: a ${PERSONALITIES[p.pers][0]} ${S.name} (${PET_RARITY[S.rarity]})!${isNew ? ' New species!' : ''}`; if (isNew) discover('New species', S.name, `${PET_RARITY[S.rarity]} ${PET_SIZES[S.size].toLowerCase()} pet (${S.tags.join(', ')}). ${S.desc} Added to your Collection.`, 'Pets', sp);
-  if (quiet) notes.push(msg); else { addLog('lucky', msg); toast(`<b>It hatched!</b> ${esc(S.name)} · ${PET_RARITY[S.rarity]}${isNew ? '<br>New species for your collection!' : ''}`, 'gold'); flash(); chime(784, 1568); }
+  if (quiet) notes.push(msg); else { addLog('lucky', msg); if (isNew) chime(784, 1568); } // v3.0a: no hatch toasts; a new species still gets its discovery card
   dirty = true;
 }
 const petName = p => p.name || SP(p.sp).name;
@@ -987,6 +996,7 @@ function petXpShare(xp, quiet, notes) {
 function checkPets(quiet, notes) {
   if (!ch.pets) return;
   for (let i = ch.incub.length - 1; i >= 0; i--) if (incubFrac(ch.incub[i]) >= 1) hatch(i, quiet, notes);
+  if (ch.autoHatch) autoIncubate();
   for (const c of activeCombos(ch)) if (!ch.combosSeen[c.id]) { ch.combosSeen[c.id] = 1; ch.counters.combos = Object.keys(ch.combosSeen).length; const msg = `Pet combo discovered: ${c.name}! ${c.text}`; discover('Secret pet combo', c.name, c.text + ' It stays active while both pets are slotted.', 'Pets'); quiet ? notes.push(msg) : (addLog('lucky', msg), toast(`<b>Secret combo: ${esc(c.name)}</b><br>${esc(c.text)}`, 'gold'), flash()); }
   const a = petById(ch, ch.petActive); if (a && isMount(a)) ch.counters.mounted = 1;
   const C = collectionPct(ch); ch.counters.collMin = Math.floor(Math.min(...Object.values(C)) * 100);

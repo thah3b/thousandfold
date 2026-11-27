@@ -774,3 +774,11 @@ body.reduced .pframe[class*=pf-]{animation:none}
 .sxbg.pbg-meadow,.sxbg.pbg-clouds,.sxbg.pbg-sakura,.sxbg.pbg-candy,.sxbg.pbg-dunes,.sxbg.pbg-rainbow,.sxbg.pbg-autumn{color:#2a1d12;text-shadow:0 1px 0 rgba(255,255,255,.5)}
 .sxbg button{color:var(--text,#f4ecdf)}
 .sxbg .mute{display:inline-block;background:rgba(0,0,0,.5);color:#f4ecdf!important;text-shadow:none!important;padding:2px 6px;border-radius:6px}
+/* v3.0a: release several pets */
+.petcard{position:relative}.petcard.relpick{outline:2px solid var(--bad);background:rgba(232,48,42,.08)}
+.petcard.rellock{opacity:.5;cursor:not-allowed}
+.relbox{position:absolute;top:4px;right:6px;width:18px;height:18px;border:1px solid var(--line);border-radius:4px;display:grid;place-items:center;font-size:12px;background:var(--panel2)}
+.petcard.relpick .relbox{background:var(--bad);color:#fff;border-color:var(--bad)}
+.relpanel{border-color:var(--bad)}
+.petstack{border-style:dashed}
+.petstackopen{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;padding:8px;border:1px dashed var(--line);border-radius:10px;background:rgba(255,255,255,.02)}

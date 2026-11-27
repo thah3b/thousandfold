@@ -2,8 +2,16 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v3.0';
+const GAME_VERSION = 'v3.0a';
 const PATCH_NOTES = [
+  { v: 'v3.0a', date: '2026-11-27', title: 'Easier pet management', notes: [
+    "Release several pets at once: tap \"Release several…\" on the Pets tab, then pick pets or use a quick pick (spares that keep the best of each species, all of one rarity, or everything not kept). One confirmation releases them all.",
+    "Pets stack: identical pets now share one card (\"Ember Fox ×7\"). Tap it to see them, or release the spares straight from there.",
+    "Mark a pet ⭐ Keep and it's never picked for release. Pets in your slots, at daycare or picked for breeding are protected too.",
+    "Show only one rarity with the new filter above your pets.",
+    "Auto-hatch: switch it on in Incubators and eggs from your bag go into empty incubators by themselves (rarest first), even while you're offline.",
+    "Hatching no longer pops up a message; it goes to the log. A brand-new species still shows its discovery card.",
+  ] },
   { v: 'v3.0', date: '2026-11-27', title: 'Wardrobe+, Costumes and Profile', notes: [
     "Wardrobe+: change your body as well as your clothes. New free sections for Hair style (14 styles), Hair colour (5 new), Beard (from clean-shaven to braided; dwarves can finally trim theirs), Skin (16 tones) and Eyes (14 colours, even for races that had fixed eyes).",
     "New Wardrobe pieces: a Wings & back section (bat, angel, fairy, butterfly, dragon, frost and phoenix wings, balloons, a jetpack, a kite and more), a Face section (glasses, sunglasses, eyepatch, monocle, masks, stickers), 8 new hats, 9 new capes (including two-tone ones), 16 new held items and 11 new poses (Victory, Salute, Thinking, Sleepy, Smitten, Grumpy, Starstruck…).",

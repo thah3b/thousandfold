@@ -892,7 +892,31 @@ const HANDLERS = {
   petrename: u => { const p = petById(ch, u); modal(`<h3>Rename ${esc(petName(p))}</h3><input id="petname" maxlength="16" value="${esc(p.name || '')}" aria-label="Pet name"><div class="row" style="margin-top:12px"><button class="pri" data-act="dorename" data-arg="${u}">Save</button><button data-act="close">Cancel</button></div>`); },
   dorename: u => { renamePet(u, $('#petname').value); closeModal(); renderMain(); },
   petrelease: u => { const p = petById(ch, u); modal(`<h3>Release ${esc(petName(p))}?</h3><p>They will return to the wild. Your collection keeps the species.</p><div class="row" style="margin-top:12px"><button class="pri" data-act="dorelease" data-arg="${u}">Release</button><button data-act="close">Keep</button></div>`); },
-  dorelease: u => { releasePet(u); petSel = null; closeModal(); renderMain(); },
+  dorelease: u => { releasePet(u); relSel.delete(u); petSel = null; closeModal(); renderMain(); },
+  petkeep: u => { const p = petById(ch, u); if (!p) return; p.keep = !p.keep; if (p.keep) relSel.delete(u); dirty = true; save(); renderMain(); },
+  petfilter: r => { petFilter = +r; renderMain(); },
+  petstack: sp => { petOpen[sp] = !petOpen[sp]; renderMain(); },
+  relspecies: sp => { const best = petBestPerSpecies(); relSel = new Set(ch.pets.filter(p => p.sp === sp && !petKeep(p) && !p.name && !best.has(p.uid)).map(p => p.uid)); HANDLERS.relask(); },
+  autohatch: () => { ch.autoHatch = !ch.autoHatch; let n = 0; if (ch.autoHatch) n = autoIncubate(); addLog('sys', ch.autoHatch ? `Auto-hatch on${n ? `: placed ${n} egg${n === 1 ? '' : 's'}` : ''}.` : 'Auto-hatch off.'); dirty = true; save(); renderMain(); },
+  relmode: on => { relMode = on === '1'; relSel = new Set(); renderMain(); },
+  relpick: u => { const p = petById(ch, u); if (!p || petKeep(p)) return; relSel.has(u) ? relSel.delete(u) : relSel.add(u); renderMain(); },
+  relquick: k => {
+    const best = k === 'dupes' ? petBestPerSpecies() : null;
+    relSel = new Set(k === 'none' ? [] : ch.pets.filter(p => !petKeep(p) && !p.name && (k === 'all' || (k === 'dupes' ? !best.has(p.uid) : SP(p.sp).rarity === +k.slice(1)))).map(p => p.uid));
+    renderMain();
+  },
+  relask: () => {
+    const list = ch.pets.filter(p => relSel.has(p.uid) && !petKeep(p)); if (!list.length) return;
+    const by = PET_RARITY.map((r, i) => [r, list.filter(p => SP(p.sp).rarity === i).length]).filter(([, n]) => n), top = Math.max(...list.map(p => p.lvl));
+    modal(`<h3>Release ${list.length} pet${list.length === 1 ? '' : 's'}?</h3><p>${by.map(([r, n]) => `${n} ${r}`).join(', ')}. Highest level among them: ${top}.</p><p class="mute">They return to the wild and can't be brought back. Your collection keeps every species.</p>
+      <div class="row" style="margin-top:12px;gap:6px;justify-content:flex-end"><button data-act="close">Keep them</button><button class="pri bad" data-act="relgo">Release ${list.length}</button></div>`);
+  },
+  relgo: () => {
+    const list = ch.pets.filter(p => relSel.has(p.uid) && !petKeep(p)); closeModal();
+    for (const p of list) releasePet(p.uid);
+    if (petSel && !petById(ch, petSel)) petSel = null;
+    relSel = new Set(); relMode = false; addLog('sys', `Released ${list.length} pet${list.length === 1 ? '' : 's'}.`); save(); renderMain();
+  },
   colltab: t => { collTab = t; renderMain(); },
   close: () => closeModal(),
   new: i => startWizard(+i),
@@ -1011,6 +1035,39 @@ if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude
 
 // ---------- Pets (Phase 8) ----------
 let petSel = null, breedSel = [null, null], collTab = 'pets';
+// v3.0a: release several pets at once (player feedback). relMode = picking; relSel = chosen uids.
+let relMode = false, relSel = new Set(), petFilter = -1, petOpen = {};
+const petBusy = p => p.uid === ch.petActive || ch.petSupport.includes(p.uid) || ch.daycare.some(d => d.uid === p.uid) || breedSel.includes(p.uid);
+const petKeep = p => !!p.keep || petBusy(p);
+function petBestPerSpecies() { const best = {}; for (const p of ch.pets) { const b = best[p.sp]; if (!b || p.lvl > b.lvl || (p.lvl === b.lvl && (p.xp || 0) > (b.xp || 0))) best[p.sp] = p; } return new Set(Object.values(best).map(p => p.uid)); }
+// v3.0a: identical pets stack into one card (unslotted, unnamed, not kept); tap to open.
+function petStackCard(sp, list) {
+  const S = SP(sp), lo = Math.min(...list.map(p => p.lvl)), hi = Math.max(...list.map(p => p.lvl)), open = petOpen[sp];
+  return `<button class="petcard petstack ${open ? 'on' : ''}" data-act="petstack" data-arg="${sp}">${petGlyph(sp, 56)}<div style="text-align:left;min-width:0"><b>${esc(S.name)} <span class="chip" style="font-size:12px">×${list.length}</span></b><div class="mute" style="font-size:12px">${PET_RARITY[S.rarity]} ${PET_SIZES[S.size]} · Lv ${lo === hi ? lo : lo + '–' + hi}</div><div class="mute" style="font-size:11px">${open ? 'Tap to close' : 'Tap to see them'}</div></div></button>`;
+}
+function petRosterHtml(roster) {
+  if (relMode) return roster.map(p => petCard(p, '')).join('');
+  const plain = p => !petKeep(p) && !p.name, groups = {};
+  for (const p of roster) if (plain(p)) (groups[p.sp] = groups[p.sp] || []).push(p);
+  const out = [], done = new Set();
+  for (const p of roster) {
+    const g = groups[p.sp];
+    if (!plain(p) || !g || g.length < 2) { out.push(petCard(p, p.uid === ch.petActive ? 'Active' : ch.petSupport.includes(p.uid) ? 'Support' : '')); continue; }
+    if (done.has(p.sp)) continue; done.add(p.sp);
+    out.push(petStackCard(p.sp, g));
+    if (petOpen[p.sp]) { const best = petBestPerSpecies(), spare = g.filter(x => !best.has(x.uid)).length;
+      out.push(`<div class="petstackopen">${g.map(x => petCard(x, '')).join('')}${spare ? `<div class="row" style="grid-column:1/-1;justify-content:flex-end"><button class="sm" data-act="relspecies" data-arg="${p.sp}">Release ${spare} spare${spare === 1 ? '' : 's'} (keep the best)</button></div>` : ''}</div>`); }
+  }
+  return out.join('');
+}
+function releasePanel() {
+  const rar = [...new Set(ch.pets.map(p => SP(p.sp).rarity))].sort((a, b) => a - b), n = relSel.size;
+  const free = ch.pets.filter(p => !petKeep(p) && !p.name).length;
+  return `<div class="card relpanel" style="margin-top:8px"><div class="spread"><b>Release several pets</b><button class="sm ghost" data-act="relmode" data-arg="0">Done</button></div>
+    <p class="mute" style="margin:4px 0 8px;font-size:13px">Tap pets to pick them, or use a quick pick. Pets in your active or support slots, at daycare, picked for breeding, or marked ⭐ Keep are never picked, and quick picks skip pets you've named. Your collection keeps every species you've had.</p>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="chip" data-act="relquick" data-arg="dupes">Spares (keep the best of each species)</button>${rar.map(r => `<button class="chip" data-act="relquick" data-arg="r${r}">All ${PET_RARITY[r]}</button>`).join('')}<button class="chip" data-act="relquick" data-arg="all">Everything not kept (${free})</button><button class="chip" data-act="relquick" data-arg="none">Clear picks</button></div>
+    <div class="spread" style="margin-top:10px"><span><b>${n}</b> picked</span><button class="sm ${n ? 'bad' : ''}" data-act="relask" ${n ? '' : 'disabled'}>Release ${n} pet${n === 1 ? '' : 's'}</button></div></div>`;
+}
 function petGlyph(sp, size, p) {
   return pxPet(sp, size, p);
 }
@@ -1018,7 +1075,8 @@ const eggGlyph = (key, size) => pxEgg(key, size);
 const tagChips = S => S.tags.map(t => `<span class="chip" style="font-size:12px;border-color:${PET_TAG_COLOR[t]}">${t}</span>`).join(' ');
 function petCard(p, slot) {
   const S = SP(p.sp), sel = petSel === p.uid, away = ch.daycare.some(d => d.uid === p.uid), cost = petCost(p.lvl);
-  return `<button class="petcard ${sel ? 'on' : ''} ${slot ? 'slotted' : ''}" data-act="petsel" data-arg="${p.uid}">${petGlyph(p.sp, 56, p)}<div style="text-align:left;min-width:0"><b>${esc(petName(p))}</b>${slot ? ` <span class="chip" style="font-size:11px">${slot}</span>` : ''}${away ? ' <span class="chip" style="font-size:11px">Daycare</span>' : ''}<div class="mute" style="font-size:12px">${PET_RARITY[S.rarity]} ${PET_SIZES[S.size]} · Lv ${p.lvl}</div>
+  const pick = relMode && relSel.has(p.uid), locked = relMode && petKeep(p);
+  return `<button class="petcard ${sel && !relMode ? 'on' : ''} ${slot ? 'slotted' : ''} ${pick ? 'relpick' : ''} ${locked ? 'rellock' : ''}" data-act="${relMode ? 'relpick' : 'petsel'}" data-arg="${p.uid}" ${locked ? 'disabled' : ''}>${relMode ? `<span class="relbox">${pick ? '✓' : locked ? '🔒' : ''}</span>` : ''}${petGlyph(p.sp, 56, p)}<div style="text-align:left;min-width:0"><b>${p.keep ? '⭐ ' : ''}${esc(petName(p))}</b>${slot ? ` <span class="chip" style="font-size:11px">${slot}</span>` : ''}${away ? ' <span class="chip" style="font-size:11px">Daycare</span>' : ''}<div class="mute" style="font-size:12px">${PET_RARITY[S.rarity]} ${PET_SIZES[S.size]} · Lv ${p.lvl}</div>
     <div class="bar xp" style="height:4px;margin-top:3px"><i style="width:${p.lvl >= PET_CFG.maxLevel ? 100 : Math.min(100, p.xp / cost * 100).toFixed(1)}%"></i></div><div class="bar" style="height:4px;margin-top:2px" title="Hunger"><i style="width:${p.hunger}%;background:${p.hunger < 20 ? 'var(--bad)' : '#8bc34a'}"></i></div></div></button>`;
 }
 function petDetail(p) {
@@ -1026,7 +1084,7 @@ function petDetail(p) {
   const m = petMult(ch, p, slot === 'support'), pers = PERSONALITIES[p.pers], foods = Object.keys(ch.inv).filter(k => ITEM(k) && ITEM(k).type === 'food').slice(0, 6);
   const ev = S.evolve ? `Evolves into <b>${ch.petDex[S.evolve[0]] ? esc(SP(S.evolve[0]).name) : '???'}</b> at level ${S.evolve[1]}.` : 'Final form.';
   return `<div class="card" style="margin-top:12px"><div class="row" style="align-items:flex-start">${petGlyph(p.sp, 96, p)}<div style="flex:1;min-width:200px">
-      <div class="spread"><h3>${esc(petName(p))}${p.name ? ` <span class="mute">${esc(S.name)}</span>` : ''}</h3><span class="row" style="gap:4px"><button class="sm ghost" data-act="petrename" data-arg="${p.uid}">Rename</button><button class="sm ghost" data-act="petrelease" data-arg="${p.uid}">Release</button></span></div>
+      <div class="spread"><h3>${esc(petName(p))}${p.name ? ` <span class="mute">${esc(S.name)}</span>` : ''}</h3><span class="row" style="gap:4px"><button class="sm ghost" data-act="petkeep" data-arg="${p.uid}">${p.keep ? '⭐ Kept' : '☆ Keep'}</button><button class="sm ghost" data-act="petrename" data-arg="${p.uid}">Rename</button><button class="sm ghost" data-act="petrelease" data-arg="${p.uid}">Release</button></span></div>
       <div class="row" style="gap:4px;margin:4px 0">${tagChips(S)} <span class="chip" style="font-size:12px">${PET_RARITY[S.rarity]}</span> <span class="chip" style="font-size:12px">${PET_SIZES[S.size]}${isMount(p) ? ' · Mount' : ''}</span> <span class="chip" style="font-size:12px">${esc(pers[0])}</span></div>
       <p class="mute" style="margin:2px 0 6px;font-size:14px">${esc(S.desc)} ${ev}</p>
       <div class="spread" style="font-size:14px"><span>Level ${p.lvl} / ${PET_CFG.maxLevel}</span><span class="mute num">${p.lvl >= PET_CFG.maxLevel ? 'Max' : `${N(p.xp)} / ${N(petCost(p.lvl))} XP`}</span></div>
@@ -1052,9 +1110,12 @@ function tabPets() {
   return `<div class="spread"><h2>Pets</h2><span class="chip">Beastmastery <b>${bl.level}</b></span></div>
     <div class="bar xp" style="margin:6px 0 2px"><i style="width:${lx.need ? (lx.into / lx.need * 100).toFixed(1) : 100}%"></i></div>
     <p class="mute" style="margin:0;font-size:14px">One active pet at full strength (it also fights beside you), and ${sl} support slot${sl === 1 ? '' : 's'} at ${pct(PET_CFG.supportMult)} strength${nextSlot ? `; the next opens at Beastmastery ${nextSlot}` : ''}${ch.cls === 'beastmaster' ? ' (Beastmaster: +1 slot, +25% strength)' : ''}. Pets earn ${pct(PET_CFG.activeXp)} of your XP when active, ${pct(PET_CFG.supportXp)} in support. Keep them fed: a hungry pet works at half strength.</p>
-    <div class="card" style="margin-top:12px"><div class="spread"><h3>Incubators</h3>${incubCost() ? `<button class="sm ${ch.gold >= incubCost() ? 'pri' : ''}" data-act="buyincub" ${ch.gold >= incubCost() ? '' : 'disabled'}>Another incubator · ${N(incubCost())}g</button>` : '<span class="chip">Max</span>'}</div>
+    <div class="card" style="margin-top:12px"><div class="spread"><h3>Incubators</h3><span class="row" style="gap:6px"><button class="sm ${ch.autoHatch ? 'pri' : ''}" data-act="autohatch" title="Puts eggs from your bag into empty incubators by itself, rarest first">Auto-hatch: ${ch.autoHatch ? 'On' : 'Off'}</button>${incubCost() ? `<button class="sm ${ch.gold >= incubCost() ? 'pri' : ''}" data-act="buyincub" ${ch.gold >= incubCost() ? '' : 'disabled'}>Another incubator · ${N(incubCost())}g</button>` : '<span class="chip">Max</span>'}</span></div>
       <p class="mute" style="margin:4px 0 8px;font-size:14px">Eggs hatch after their time or after enough of your actions, whichever comes first. They keep going while you are offline.</p><div class="incubs">${incub}</div></div>
-    ${ch.pets.length ? `<div class="spread" style="margin-top:14px"><h3>Your pets (${ch.pets.length})</h3><button class="sm" data-act="petfeedall">Feed slotted pets</button></div><div class="petgrid">${roster.map(p => petCard(p, p.uid === ch.petActive ? 'Active' : ch.petSupport.includes(p.uid) ? 'Support' : '')).join('')}</div>${sel ? petDetail(sel) : '<p class="mute">Pick a pet to see it up close.</p>'}` : `<div class="card" style="margin-top:12px"><p style="margin:0">No pets yet. Eggs turn up rarely from anything you do, from region bosses, weekly quests and the shop. Characters who finished the tutorial get a starter egg.</p></div>`}
+    ${ch.pets.length ? `<div class="spread" style="margin-top:14px"><h3>Your pets (${ch.pets.length})</h3><span class="row" style="gap:6px">${relMode ? '' : '<button class="sm" data-act="relmode" data-arg="1">Release several…</button>'}<button class="sm" data-act="petfeedall">Feed slotted pets</button></span></div>
+      ${relMode ? releasePanel() : ''}
+      ${ch.pets.length > 12 ? `<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><span class="mute" style="font-size:12px">Show</span>${[-1, ...[...new Set(ch.pets.map(p => SP(p.sp).rarity))].sort((a, b) => a - b)].map(r => `<button class="chip ${petFilter === r ? 'on' : ''}" data-act="petfilter" data-arg="${r}">${r < 0 ? 'All' : PET_RARITY[r]} (${r < 0 ? ch.pets.length : ch.pets.filter(p => SP(p.sp).rarity === r).length})</button>`).join('')}</div>` : ''}
+      <div class="petgrid">${petRosterHtml(roster.filter(p => petFilter < 0 || SP(p.sp).rarity === petFilter))}</div>${sel ? petDetail(sel) : '<p class="mute">Pick a pet to see it up close.</p>'}` : `<div class="card" style="margin-top:12px"><p style="margin:0">No pets yet. Eggs turn up rarely from anything you do, from region bosses, weekly quests and the shop. Characters who finished the tutorial get a starter egg.</p></div>`}
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));margin-top:14px;align-items:start">
       <div class="card"><h3>Daycare</h3><p class="mute" style="margin:4px 0 8px;font-size:14px">Send an unslotted pet away for 1, 4 or 8 hours. It comes back with pet XP and resources from the region it left. ${PET_CFG.daycareSlots} places.</p>
         ${ch.daycare.length ? ch.daycare.map(d => { const p = petById(ch, d.uid); return p ? `<div class="prow"><span>${esc(petName(p))} · ${d.hours}h</span><span class="mute num">${fmtTime(Math.max(0, (d.end - Date.now()) / 1000))}</span></div>` : ''; }).join('') : '<p class="mute" style="margin:0">Nobody away.</p>'}</div>
