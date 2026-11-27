@@ -741,3 +741,36 @@ nav.side button.locked,.bsh-grid button.locked{opacity:.5}
 .coachbox.attop{bottom:auto;top:16px}
 @media (max-width:900px){.coachbox{left:12px;right:12px;width:auto;bottom:84px}.coachbox.attop{top:12px;bottom:auto}}
 @media (prefers-reduced-motion:reduce){.coachspot{animation:none;transition:none}}
+/* ---- v3.0: Costumes ---- */
+.cosgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.coscard{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:10px 8px;margin:0}
+.coscard b{font-size:14px}.coscard.on{outline:2px solid var(--gold)}
+.coscard .cosimg{image-rendering:pixelated}
+.wdcos{margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
+@media (max-width:720px){.cosgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+/* ---- v3.0: more profile backgrounds ---- */
+@keyframes pfflow{to{background-position:300% 0}}
+body.reduced .pframe[class*=pf-]{animation:none}
+.profchar.pbg-meadow,.sxbg.pbg-meadow{background:radial-gradient(circle at 85% 18%,#fff6b0 0 9px,transparent 10px),radial-gradient(ellipse at 25% 100%,#5e9a44 0 40%,transparent 41%),linear-gradient(#8fd0f0 0 56%,#7ac85a 56% 76%,#5a9a40 76%)}
+.profchar.pbg-dawn,.sxbg.pbg-dawn{background:radial-gradient(circle at 50% 95%,#fff0b0 0 14px,transparent 30px),linear-gradient(#5a4ab0,#b05a9a 45%,#ff8a6a 75%,#ffc07a)}
+.profchar.pbg-clouds,.sxbg.pbg-clouds{background:radial-gradient(ellipse 60px 18px at 20% 70%,#fff 60%,transparent 62%),radial-gradient(ellipse 80px 22px at 75% 85%,#fff 60%,transparent 62%),radial-gradient(ellipse 50px 14px at 65% 30%,#ffffffd0 60%,transparent 62%),linear-gradient(#6ab4ec,#bfe2fa)}
+.profchar.pbg-sakura,.sxbg.pbg-sakura{background:radial-gradient(3px 2px at 15% 25%,#ff7aa8,transparent),radial-gradient(3px 2px at 45% 60%,#ff9ec4,transparent),radial-gradient(3px 2px at 80% 30%,#ff7aa8,transparent),radial-gradient(3px 2px at 65% 80%,#ffb7d0,transparent),radial-gradient(3px 2px at 30% 85%,#ff9ec4,transparent),linear-gradient(#ffe8f2,#f6b0cc)}
+.profchar.pbg-autumn,.sxbg.pbg-autumn{background:radial-gradient(4px 3px at 20% 30%,#c0302a,transparent),radial-gradient(4px 3px at 70% 20%,#e8902a,transparent),radial-gradient(4px 3px at 50% 70%,#a8401a,transparent),radial-gradient(4px 3px at 85% 65%,#ffb03a,transparent),linear-gradient(#f6c07a,#c8642a)}
+.profchar.pbg-dunes,.sxbg.pbg-dunes{background:radial-gradient(circle at 80% 22%,#fff6c4 0 10px,transparent 12px),radial-gradient(ellipse at 30% 110%,#c8863a 0 45%,transparent 46%),linear-gradient(#ffd8a0 0 45%,#e8b060 45% 72%,#d09040 72%)}
+.profchar.pbg-candy,.sxbg.pbg-candy{background:repeating-linear-gradient(135deg,#ffd1e6 0 14px,#fff6fb 14px 28px,#c9f5e6 28px 42px,#fff6fb 42px 56px)}
+.profchar.pbg-ocean,.sxbg.pbg-ocean{background:radial-gradient(3px 3px at 20% 60%,#ffffff80,transparent),radial-gradient(2px 2px at 25% 45%,#ffffff80,transparent),radial-gradient(3px 3px at 75% 70%,#ffffff70,transparent),radial-gradient(2px 2px at 78% 52%,#ffffff70,transparent),repeating-linear-gradient(90deg,transparent 0 30px,rgba(255,255,255,.04) 30px 40px),linear-gradient(#1fa3c7,#0e5a8a 60%,#0b2a4a)}
+.profchar.pbg-jungle,.sxbg.pbg-jungle{background:repeating-linear-gradient(80deg,transparent 0 26px,rgba(20,60,20,.5) 26px 29px),radial-gradient(ellipse at 10% 0,#7ad04a 0 25%,transparent 45%),radial-gradient(ellipse at 90% 10%,#4fa83a 0 25%,transparent 45%),linear-gradient(#2f7a3a,#173f1f)}
+.profchar.pbg-lantern,.sxbg.pbg-lantern{background:radial-gradient(5px 7px at 15% 30%,#ffb040,transparent),radial-gradient(5px 7px at 40% 18%,#ff8a3a,transparent),radial-gradient(5px 7px at 62% 40%,#ffc860,transparent),radial-gradient(5px 7px at 85% 22%,#ff9a3a,transparent),radial-gradient(5px 7px at 75% 70%,#ffb040,transparent),linear-gradient(#0b1638,#2a1a4a)}
+.profchar.pbg-crystal,.sxbg.pbg-crystal{background:conic-gradient(from 200deg at 20% 100%,transparent 0 20deg,#6fd0e8a0 20deg 32deg,transparent 32deg),conic-gradient(from 160deg at 80% 100%,transparent 0 18deg,#b08affa0 18deg 30deg,transparent 30deg),radial-gradient(circle at 50% 50%,#3a2a6a,transparent 70%),linear-gradient(#1a1030,#2a1a4a)}
+.profchar.pbg-graveyard,.sxbg.pbg-graveyard{background:radial-gradient(circle at 80% 20%,#f2f0d8 0 9px,transparent 11px),repeating-linear-gradient(90deg,transparent 0 40px,#4a5048 40px 52px,transparent 52px 80px) bottom/100% 22% no-repeat,linear-gradient(#1a2028,#2f3a3a 75%,#26302a 75%)}
+.profchar.pbg-casino,.sxbg.pbg-casino{background:radial-gradient(ellipse at 50% 40%,#1f8a4a,#0f5a2a 70%,#0a3a1c),#0f5a2a;box-shadow:inset 0 0 0 3px #c89a2a}
+.profchar.pbg-runes,.sxbg.pbg-runes{background:repeating-linear-gradient(60deg,transparent 0 22px,rgba(63,198,255,.18) 22px 24px),repeating-linear-gradient(-60deg,transparent 0 22px,rgba(63,198,255,.12) 22px 24px),linear-gradient(#0e1424,#1a2238)}
+.profchar.pbg-aurora,.sxbg.pbg-aurora{background:radial-gradient(ellipse 70% 30% at 30% 30%,#2bd9a080,transparent),radial-gradient(ellipse 60% 25% at 70% 40%,#b44dff70,transparent),radial-gradient(1.5px 1.5px at 20% 80%,#fff,transparent),radial-gradient(1.5px 1.5px at 80% 75%,#fff,transparent),linear-gradient(#06142a,#0e2a3a)}
+.profchar.pbg-nebula,.sxbg.pbg-nebula{background:radial-gradient(circle at 30% 40%,#d14dff90,transparent 40%),radial-gradient(circle at 70% 60%,#3a7bff90,transparent 45%),radial-gradient(circle at 60% 25%,#ff4d8a70,transparent 35%),radial-gradient(1.5px 1.5px at 15% 20%,#fff,transparent),radial-gradient(1.5px 1.5px at 85% 15%,#fff,transparent),radial-gradient(1px 1px at 50% 85%,#fff,transparent),#0b0620}
+.profchar.pbg-rainbow,.sxbg.pbg-rainbow{background:linear-gradient(180deg,#ff6b6b,#ffb36b,#ffe66b,#7be07b,#6bd5ff,#7b8bff,#c07bff)}
+.profchar.pbg-royal,.sxbg.pbg-royal{background:repeating-linear-gradient(45deg,transparent 0 18px,rgba(232,193,90,.25) 18px 20px),repeating-linear-gradient(-45deg,transparent 0 18px,rgba(232,193,90,.25) 18px 20px),linear-gradient(#7a1028,#3a0814);box-shadow:inset 0 0 0 3px #e8c15a}
+/* light backgrounds: dark text */
+.profchar.pbg-meadow h3,.profchar.pbg-meadow .mute,.profchar.pbg-clouds h3,.profchar.pbg-clouds .mute,.profchar.pbg-sakura h3,.profchar.pbg-sakura .mute,.profchar.pbg-candy h3,.profchar.pbg-candy .mute,.profchar.pbg-dunes h3,.profchar.pbg-dunes .mute,.profchar.pbg-rainbow h3,.profchar.pbg-rainbow .mute{color:#2a1d12!important;text-shadow:0 1px 0 rgba(255,255,255,.6)!important}
+.sxbg.pbg-meadow,.sxbg.pbg-clouds,.sxbg.pbg-sakura,.sxbg.pbg-candy,.sxbg.pbg-dunes,.sxbg.pbg-rainbow,.sxbg.pbg-autumn{color:#2a1d12;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.sxbg button{color:var(--text,#f4ecdf)}
+.sxbg .mute{display:inline-block;background:rgba(0,0,0,.5);color:#f4ecdf!important;text-shadow:none!important;padding:2px 6px;border-radius:6px}

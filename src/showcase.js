@@ -52,6 +52,25 @@ const PROFILE_BGS = [
   { id: 'pirate', name: 'Pirate map', earn: [c => (c.counters.digs || 0) >= 1, 'Dig up a treasure map'] },
   { id: 'frost', name: 'Frost kingdom', earn: [c => ((c.dgClear || {}).frost ?? -1) >= 0, 'Clear the Hall of the Frozen Jarl'] },
   { id: 'void', name: 'Void', earn: [c => sxDg(c, 2) >= 1, 'Clear a Mythic dungeon'] },
+  // v3.0: 18 more. Earn them, or buy with Thousandium (account-wide).
+  { id: 'meadow', name: 'Sunny Meadow', free: true },
+  { id: 'dawn', name: 'Dawn', free: true },
+  { id: 'clouds', name: 'Above the Clouds', price: 15, earn: [c => c.level >= 25 || (c.ascension || 0) > 0, 'Reach level 25'] },
+  { id: 'sakura', name: 'Cherry Blossom', price: 20, earn: [c => Object.keys(c.petDex || {}).length >= 10, 'Collect 10 pet species'] },
+  { id: 'autumn', name: 'Autumn Leaves', price: 20, earn: [c => (c.counters.gathered || 0) >= 10000, 'Gather 10,000 times'] },
+  { id: 'dunes', name: 'Desert Dunes', price: 20, earn: [c => c.level >= 30 || (c.ascension || 0) > 0, 'Reach level 30'] },
+  { id: 'candy', name: 'Candy Stripes', price: 25 },
+  { id: 'ocean', name: 'Under the Sea', price: 25, earn: [c => ((c.skills || {}).fishing || {}).level >= 30, 'Reach Fishing 30'] },
+  { id: 'jungle', name: 'Deep Jungle', price: 25, earn: [c => ((c.skills || {}).herbalism || {}).level >= 30, 'Reach Herbalism 30'] },
+  { id: 'lantern', name: 'Lantern Festival', price: 30, earn: [c => (c.counters.eventsJoined || 0) >= 5, 'Take part in 5 world events'] },
+  { id: 'crystal', name: 'Crystal Cave', price: 30, earn: [c => (c.counters.mined || 0) >= 5000, 'Mine 5,000 times'] },
+  { id: 'graveyard', name: 'Moonlit Graveyard', price: 30, earn: [c => (c.counters.kills || 0) >= 5000, 'Win 5,000 fights'] },
+  { id: 'casino', name: 'Casino Felt', price: 30, earn: [c => { const S = (c.casino || {}).stats || {}; return ((S.gold || {}).rounds || 0) + ((S.th || {}).rounds || 0) >= 100; }, 'Play 100 rounds of Blackjack'] },
+  { id: 'runes', name: 'Glowing Runes', price: 35, earn: [c => (c.counters.crafted || 0) >= 5000, 'Craft 5,000 items'] },
+  { id: 'aurora', name: 'Northern Lights', price: 40, earn: [c => (c.ascension || 0) >= 1, 'Ascend once'] },
+  { id: 'nebula', name: 'Nebula', price: 45, earn: [c => Object.keys(c.secrets || {}).length >= 10, 'Find 10 secrets'] },
+  { id: 'rainbow', name: 'Rainbow Road', price: 50, earn: [() => Object.keys(account.costumes || {}).length >= 10, 'Own 10 costumes'] },
+  { id: 'royal', name: 'Royal Hall', price: 60, earn: [c => c.level >= 99 || (c.ascension || 0) > 0, 'Reach level 99'] },
 ];
 const PROFILE_FRAMES = [
   { id: 'none', name: 'No frame', free: true },
@@ -59,12 +78,30 @@ const PROFILE_FRAMES = [
   { id: 'mythic', name: 'Mythic', color: '#4d9bff', earn: [c => sxDg(c, 2) >= 1, 'Clear a Mythic dungeon'] },
   { id: 'gladiator', name: 'PvP Gladiator', color: '#a65cff', earn: [() => sxPvp() >= 2, 'Reach Gold in the Arena'] },
   { id: 'founder', name: "Founder's", color: '#ff8a2a', earn: [() => !!account.founder, 'Played before Thousandfold 2.0'] },
+  // v3.0: 17 more. pal = several colours (anim = flowing); earn them or buy with Thousandium.
+  { id: 'bronze', name: 'Bronze', color: '#c8864a', earn: [c => c.level >= 20 || (c.ascension || 0) > 0, 'Reach level 20'] },
+  { id: 'silver', name: 'Silver', color: '#c9d1dc', earn: [c => c.level >= 40 || (c.ascension || 0) > 0, 'Reach level 40'] },
+  { id: 'goldf', name: 'Gold', color: '#e8c15a', earn: [c => c.level >= 60 || (c.ascension || 0) > 0, 'Reach level 60'] },
+  { id: 'rose', name: 'Rose', color: '#ff8ab8', price: 15 },
+  { id: 'emerald', name: 'Emerald', color: '#2fbf71', price: 20 },
+  { id: 'ruby', name: 'Ruby', color: '#e0304a', price: 20 },
+  { id: 'sapphire', name: 'Sapphire', color: '#2f6fe8', price: 20 },
+  { id: 'amethyst', name: 'Amethyst', color: '#9a5ae8', price: 20 },
+  { id: 'obsidian', name: 'Obsidian', color: '#5a5068', price: 25, earn: [c => (c.counters.bossWins || 0) >= 50, 'Win 50 boss fights'] },
+  { id: 'leaf', name: 'Evergreen', color: '#4fa84a', pal: ['#c9e07a', '#4fa84a', '#2a6a2a', '#4fa84a'], price: 25, earn: [c => (c.counters.gathered || 0) >= 50000, 'Gather 50,000 times'] },
+  { id: 'oceanf', name: 'Tide', color: '#13a8c2', pal: ['#bdf6ff', '#13a8c2', '#0a4a6a', '#13a8c2'], anim: true, price: 25 },
+  { id: 'icef', name: 'Glacier', color: '#7fd8f0', pal: ['#ffffff', '#7fd8f0', '#2f8ac8', '#7fd8f0'], price: 30, earn: [c => ((c.dgClear || {}).frost ?? -1) >= 1, 'Clear the Hall of the Frozen Jarl on Heroic'] },
+  { id: 'candyf', name: 'Candy', color: '#ffb3d9', pal: ['#ffb3d9', '#b3dcff', '#c6ffd9', '#fff6b3'], anim: true, price: 30 },
+  { id: 'ember', name: 'Ember', color: '#ff7a1a', pal: ['#ffe08a', '#ff9100', '#ff3d00', '#7a1400', '#ff3d00', '#ff9100'], anim: true, price: 35, earn: [c => (c.counters.bossWins || 0) >= 200, 'Win 200 boss fights'] },
+  { id: 'royalf', name: 'Royal', color: '#9d4edd', pal: ['#7b2cbf', '#e8c15a', '#7b2cbf', '#f5d76e'], anim: true, price: 50, earn: [c => (c.ascension || 0) >= 1, 'Ascend once'] },
+  { id: 'galaxyf', name: 'Galaxy', color: '#8a3bd1', pal: ['#4b3bd1', '#d14dff', '#3a7bff', '#ffffff', '#4b3bd1'], anim: true, price: 60, earn: [c => Object.keys(c.secrets || {}).length >= 15, 'Find 15 secrets'] },
+  { id: 'rainbowf', name: 'Rainbow', color: '#ff4dd8', pal: ['#ff4d4d', '#ff9f40', '#ffe14d', '#5ee65e', '#4de0ff', '#4d7bff', '#b04dff', '#ff4d4d'], anim: true, price: 80, earn: [() => Object.keys(account.costumes || {}).length >= 15, 'Own 15 costumes'] },
 ];
 const BG_BY = Object.fromEntries(PROFILE_BGS.map(b => [b.id, b])), FRAME_BY = Object.fromEntries(PROFILE_FRAMES.map(f => [f.id, f]));
 const sxEarned = (o, c) => !!(o.earn && c && (() => { try { return o.earn[0](c); } catch (e) { return false; } })());
 const styleOwned = (id, c) => { const s = STYLE_BY[id]; return !!s && (s.free || !!(account.styles || {})[id] || sxEarned(s, c)); };
-const bgOwned = (id, c) => { const b = BG_BY[id]; return !!b && (b.free || sxEarned(b, c)); };
-const frameOwned = (id, c) => { const f = FRAME_BY[id]; return !!f && (f.free || sxEarned(f, c)); };
+const bgOwned = (id, c) => { const b = BG_BY[id]; return !!b && (b.free || !!(account.bgs || {})[id] || sxEarned(b, c)); };
+const frameOwned = (id, c) => { const f = FRAME_BY[id]; return !!f && (f.free || !!(account.frames || {})[id] || sxEarned(f, c)); };
 function titleChoices(c) {
   const s = new Set(c.titlesSeen || []); if (c.displayTitle) s.add(c.displayTitle);
   try { for (const t of earnedTitleBonuses(c).list) s.add(t.name); } catch (e) { }
@@ -107,6 +144,7 @@ function styledTitle(text, styleId, opt) {
     if (s.words) s.words.forEach((p, w) => { css += kf(`st-${s.id}-${w}`, p) + `.st-${s.id} .w${w} i{animation:st-${s.id}-${w} ${(p.length * 0.45).toFixed(2)}s linear infinite}`; });
     else css += kf(`st-${s.id}`, s.pal) + `.st-${s.id} i{animation:st-${s.id} ${(s.pal.length * 0.45).toFixed(2)}s linear infinite}`;
   }
+  for (const f of PROFILE_FRAMES) if (f.pal) css += `.pframe.pf-${f.id}{background:linear-gradient(135deg,${f.pal.join(',')});background-size:${f.anim ? '300% 300%' : '100% 100%'}${f.anim ? ';animation:pfflow 5s linear infinite' : ''}}`;
   const el = document.createElement('style'); el.id = 'sxcss'; el.textContent = css; document.head.appendChild(el);
 })();
 function showcaseCharCard(c, big) {
@@ -123,6 +161,7 @@ function tabShowcase() {
   const preview = { name: ch.name, race: ch.race, cls: ch.cls, gender: ch.gender, mark: ch.mark, look: pxLookOf(ch), title: sc.title, showcase: sc,
     pet: (() => { const p = ch.petActive && (ch.pets || []).find(x => x.uid === ch.petActive); return p ? { sp: p.sp, name: p.name || '', level: p.level || 1 } : null; })() };
   const lockLine = o => o.earn ? `🔒 ${esc(o.earn[1])}` : '';
+  const buyLine = (kind, o) => `<span class="mute" style="font-size:12px">${o.earn ? lockLine(o) + (o.price ? ' · or' : '') : ''}${o.price ? ` <button class="sm" data-act="sxbuyx" data-arg="${kind}|${o.id}" ${account.shards >= o.price ? '' : 'disabled'}>Buy · ${o.price} Thousandium</button>` : ''}</span>`;
   const tabsHtml = [['title', 'Title'], ['style', 'Title style'], ['bg', 'Background'], ['frame', 'Frame']].map(([k, n]) => `<button class="chip ${sxView === k ? 'on' : ''}" data-act="sxview" data-arg="${k}">${n}</button>`).join('');
   let body = '';
   if (sxView === 'title') body = titles.length ? `<p class="mute" style="font-size:14px;margin:0 0 8px">Pick from the titles you've earned. The subtitle shows smaller, under it.</p>
@@ -132,10 +171,10 @@ function tabShowcase() {
   if (sxView === 'style') body = `<p class="mute" style="font-size:14px;margin:0 0 8px">${TITLE_STYLES.filter(x => styleOwned(x.id, ch)).length} of ${TITLE_STYLES.length} unlocked. Styles are yours on every character once bought. Earned ones unlock by playing.</p><div class="grid sxgrid">${[...TITLE_STYLES].sort((a, b) => styleOwned(b.id, ch) - styleOwned(a.id, ch)).map(s => { const own = styleOwned(s.id, ch), on = sc.style === s.id;
       return `<div class="card sxopt ${on ? 'on' : ''} ${own ? '' : 'locked'}">${styledTitle(sc.title || s.name, s.id, { size: 'lg' })}<div class="spread" style="margin-top:6px"><b style="font-size:13px">${esc(s.name)}</b>${on ? '<span class="chip on">Using</span>' : own ? `<button class="sm" data-act="sxstyle" data-arg="${s.id}">Use</button>` : ''}</div>
         ${own ? '' : `<div class="mute" style="font-size:12px;margin-top:4px">${s.earn ? lockLine(s) + (s.price ? ' · or' : '') : ''}${s.price ? ` <button class="sm" data-act="sxbuy" data-arg="${s.id}" ${account.shards >= s.price ? '' : 'disabled'}>Buy · ${s.price} Thousandium</button>` : ''}</div>`}</div>`; }).join('')}</div>`;
-  if (sxView === 'bg') body = `<div class="grid sxgrid">${PROFILE_BGS.map(b => { const own = bgOwned(b.id, ch), on = sc.bg === b.id;
-      return `<div class="card sxopt sxbg pbg-${b.id} ${on ? 'on' : ''} ${own ? '' : 'locked'}"><b>${esc(b.name)}</b><div style="margin-top:22px">${on ? '<span class="chip on">Using</span>' : own ? `<button class="sm" data-act="sxbg" data-arg="${b.id}">Use</button>` : `<span class="mute" style="font-size:12px">${lockLine(b)}</span>`}</div></div>`; }).join('')}</div>`;
-  if (sxView === 'frame') body = `<div class="grid sxgrid">${PROFILE_FRAMES.map(f => { const own = frameOwned(f.id, ch), on = sc.frame === f.id;
-      return `<div class="card sxopt ${on ? 'on' : ''} ${own ? '' : 'locked'}"><div class="pframe pf-${f.id}" ${f.color ? `style="--fc:${f.color}"` : ''}>${portrait(ch, 48)}</div><b style="font-size:14px">${esc(f.name)}</b><div style="margin-top:6px">${on ? '<span class="chip on">Using</span>' : own ? `<button class="sm" data-act="sxframe" data-arg="${f.id}">Use</button>` : `<span class="mute" style="font-size:12px">${lockLine(f)}</span>`}</div></div>`; }).join('')}</div>`;
+  if (sxView === 'bg') body = `<p class="mute" style="font-size:14px;margin:0 0 8px">${PROFILE_BGS.filter(b => bgOwned(b.id, ch)).length} of ${PROFILE_BGS.length} unlocked. Bought ones are yours on every character.</p><div class="grid sxgrid">${[...PROFILE_BGS].sort((a, b) => bgOwned(b.id, ch) - bgOwned(a.id, ch)).map(b => { const own = bgOwned(b.id, ch), on = sc.bg === b.id;
+      return `<div class="card sxopt sxbg pbg-${b.id} ${on ? 'on' : ''} ${own ? '' : 'locked'}"><b>${esc(b.name)}</b><div style="margin-top:22px">${on ? '<span class="chip on">Using</span>' : own ? `<button class="sm" data-act="sxbg" data-arg="${b.id}">Use</button>` : buyLine('bg', b)}</div></div>`; }).join('')}</div>`;
+  if (sxView === 'frame') body = `<p class="mute" style="font-size:14px;margin:0 0 8px">${PROFILE_FRAMES.filter(f => frameOwned(f.id, ch)).length} of ${PROFILE_FRAMES.length} unlocked. Bought ones are yours on every character.</p><div class="grid sxgrid">${[...PROFILE_FRAMES].sort((a, b) => frameOwned(b.id, ch) - frameOwned(a.id, ch)).map(f => { const own = frameOwned(f.id, ch), on = sc.frame === f.id;
+      return `<div class="card sxopt ${on ? 'on' : ''} ${own ? '' : 'locked'}"><div class="pframe pf-${f.id}" ${f.color ? `style="--fc:${f.color}"` : ''}>${portrait(ch, 48)}</div><b style="font-size:14px">${esc(f.name)}</b><div style="margin-top:6px">${on ? '<span class="chip on">Using</span>' : own ? `<button class="sm" data-act="sxframe" data-arg="${f.id}">Use</button>` : buyLine('frame', f)}</div></div>`; }).join('')}</div>`;
   return `<div class="spread"><h2>Profile</h2><span class="chip">Thousandium <b class="gold">${N(account.shards)}</b></span></div>
     <p class="mute">Dress up your public profile. Your title and its style also show next to your name in chat, on the leaderboards and in your sidebar.</p>
     <div class="sxwrap"><div><div class="card sxprev"><div class="mute" style="font-size:12px;margin-bottom:6px">Preview</div>${showcaseCharCard(preview, true)}<div class="mute" style="font-size:14px">${esc(race().name)} ${esc(tierName(ch.cls, ch.adv.spec, ch.adv.tier))} · <b>${ch.ascension ? `A${ch.ascension} · ` : ''}Lv ${ch.level}</b></div></div></div></div></div></div></div>
@@ -168,6 +207,18 @@ const SHOWCASE_HANDLERS = {
     if (account.shards < s.price) { toast(`You need ${s.price} Thousandium.`); return; }
     modal(`<h3>Buy ${esc(s.name)}?</h3><div style="margin:10px 0">${styledTitle(showcaseOf(ch).title || s.name, s.id, { size: 'lg' })}</div><p>Costs <b>${s.price} Thousandium</b> (you have ${N(account.shards)}). It's yours on every character.</p>
       <div class="row" style="justify-content:flex-end;gap:6px"><button data-act="close">Cancel</button><button class="pri" data-act="sxbuyok" data-arg="${id}">Buy</button></div>`);
+  },
+  sxbuyx: a => {
+    const [kind, id] = a.split('|'), o = (kind === 'bg' ? BG_BY : FRAME_BY)[id]; if (!o || !o.price || (kind === 'bg' ? bgOwned : frameOwned)(id, ch)) return;
+    if (account.shards < o.price) { toast(`You need ${o.price} Thousandium.`); return; }
+    modal(`<h3>Buy the ${esc(o.name)} ${kind === 'bg' ? 'background' : 'frame'}?</h3><p>Costs <b>${o.price} Thousandium</b> (you have ${N(account.shards)}). It's yours on every character, and you'll start using it now.</p>
+      <div class="row" style="justify-content:flex-end;gap:6px"><button data-act="close">Cancel</button><button class="pri" data-act="sxbuyxok" data-arg="${a}">Buy</button></div>`);
+  },
+  sxbuyxok: a => {
+    closeModal(); const [kind, id] = a.split('|'), o = (kind === 'bg' ? BG_BY : FRAME_BY)[id]; if (!o || !o.price || account.shards < o.price) return;
+    const k = kind === 'bg' ? 'bgs' : 'frames'; if ((account[k] || {})[id]) return;
+    account.shards -= o.price; account[k] = account[k] || {}; account[k][id] = 1; showcaseOf(ch)[kind === 'bg' ? 'bg' : 'frame'] = id;
+    addLog('lucky', `${kind === 'bg' ? 'Background' : 'Frame'} bought: ${o.name} (−${o.price} Thousandium).`); sxChanged();
   },
   sxbuyok: id => { const s = STYLE_BY[id]; closeModal(); if (!s || account.shards < s.price || styleOwned(id, ch)) return; account.shards -= s.price; account.styles = account.styles || {}; account.styles[id] = 1; addLog('lucky', `Title style bought: ${s.name} (−${s.price} Thousandium).`); showcaseOf(ch).style = id; sxChanged(); },
 };

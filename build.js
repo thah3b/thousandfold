@@ -28,7 +28,9 @@ ${r('companions.js')}
 ${r('quests.js')}
 ${r('pets.js')}
 ${r('sprites.js')}
+${r('looks.js')}
 ${r('fashion.js')}
+${r('costumes.js')}
 ${r('arena.js')}
 ${r('qol.js')}
 ${r('anim.js')}

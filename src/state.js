@@ -408,7 +408,7 @@ function combatTick(a, e, d, now) {
   const k0 = tierOf(ch.prof[e.id] || 0), r = resolveFight(e, d, rng);
   const g = agg[a.res] || (agg[a.res] = { kind: 'combat', wins: 0, losses: 0, xp: 0, gold: 0, loot: {}, n: 0, dmg: 0, ate: {} });
   g.n++; g.dmg += r.dmg; if (r.won) { g.wins++; g.xp += r.xp; g.gold += r.gold; for (const [k, q] of Object.entries(r.loot)) g.loot[k] = (g.loot[k] || 0) + q; a.streak++; } else g.losses++;
-  for (const l of r.rare) { const nm = ITEM(l.key).name; addLog('lucky', `Rare drop from ${e.name}: ${nm}!`); if (l.unique) { toast(`<b>Unique drop!</b> ${itemIcon(l.key, 20)} ${esc(nm)}`, 'gold'); chime(988, 1480); flash(); } }
+  for (const l of r.rare) { const nm = ITEM(l.key).name; addLog('lucky', `${l.unique ? 'Unique' : 'Rare'} drop from ${e.name}: ${nm}!`); } // v3.0: log only, no pop-up (user request)
   if (r.died) {
     ch.hp = d.maxHP * BALANCE.combat.defeatHpFrac;
     for (const o of [...ch.actions]) if (o.res !== a.res && ACT(o.res).kind === 'combat') stopAction(o.res); // one defeat ends every fight

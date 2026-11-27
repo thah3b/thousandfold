@@ -2,8 +2,16 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.5f';
+const GAME_VERSION = 'v3.0';
 const PATCH_NOTES = [
+  { v: 'v3.0', date: '2026-11-27', title: 'Wardrobe+, Costumes and Profile', notes: [
+    "Wardrobe+: change your body as well as your clothes. New free sections for Hair style (14 styles), Hair colour (5 new), Beard (from clean-shaven to braided; dwarves can finally trim theirs), Skin (16 tones) and Eyes (14 colours, even for races that had fixed eyes).",
+    "New Wardrobe pieces: a Wings & back section (bat, angel, fairy, butterfly, dragon, frost and phoenix wings, balloons, a jetpack, a kite and more), a Face section (glasses, sunglasses, eyepatch, monocle, masks, stickers), 8 new hats, 9 new capes (including two-tone ones), 16 new held items and 11 new poses (Victory, Salute, Thinking, Sleepy, Smitten, Grumpy, Starstruck…).",
+    "The default dwarf beard is smaller, so it no longer covers your outfit. The old big one is still there as the Mighty Beard.",
+    "New Costumes tab (You → Costumes): 26 full sets that go over your look in one tap: Merlin, the Hooded Outlaw, a Knight of the Round Table, Samurai, Shadow Ninja, Pharaoh, Astronaut, the Count of the Night, Jack Frost, the Great Detective, Captain Comet, a Clockwork Exosuit, a Star Paladin, a Dragon Hatchling and more. Buy each once with gold or Thousandium; it's yours on every character.",
+    "Profile: 18 new backgrounds and 17 new frames (some with flowing colours). Earn them by playing or buy them with Thousandium; bought ones work on every character.",
+    "Unique drops no longer pop up on screen; they're in your log instead.",
+  ] },
   { v: 'v2.5f', date: '2026-11-26', title: '500-slot bags', notes: [
     "Bigger bags: every character's inventory goes from 200 to 500 slots. Characters that already exist get +300 slots, and any space you bought at the Bank is kept on top.",
   ] },

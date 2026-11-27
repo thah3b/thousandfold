@@ -214,7 +214,7 @@ const NAV = [
   ['Gathering', GATHER_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Crafting', CRAFT_SKILLS.map(s => [s, SKILLS[s].name])],
   ['Adventure', [['quests', 'Quests'], ['map', 'Map'], ['combat', 'Combat'], ['dungeons', 'Dungeons'], ['arena', 'Arena']]],
-  ['You', [['inv', 'Inventory'], ['char', 'Character'], ['prof', 'Proficiency'], ['class', 'Class'], ['talents', 'Talents'], ['training', 'Training'], ['companions', 'Companions'], ['pets', 'Pets'], ['showcase', 'Profile'], ['wardrobe', 'Wardrobe'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
+  ['You', [['inv', 'Inventory'], ['char', 'Character'], ['prof', 'Proficiency'], ['class', 'Class'], ['talents', 'Talents'], ['training', 'Training'], ['companions', 'Companions'], ['pets', 'Pets'], ['showcase', 'Profile'], ['wardrobe', 'Wardrobe'], ['costumes', 'Costumes'], ['arsenal', 'Arsenal'], ['collection', 'Collection'], ['titles', 'Titles'], ['ach', 'Achievements']]],
   ['Social', [['friends', 'Friends'], ['chat', 'Chat'], ['mail', 'Mailbox'], ['trade', 'Trades'], ['guild', 'Guild']]],
   ['Town', [['shop', 'Shop'], ['auction', 'Auction House'], ['bank', 'Bank'], ['account', 'Account'], ['settings', 'Settings'], ['debug', 'Debug']]],
   ['Misc', [['events', 'Events'], ['games', 'Daily games'], ['casino', 'Casino'], ['secrets', 'Secrets'], ['lore', 'Lore'], ['leaders', 'Leaderboards']]],
@@ -281,7 +281,7 @@ function renderMain() {
   const ae = document.activeElement, keep = ae && ae.id && $('#main').contains(ae) ? { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd } : null;
   // Keep whatever the player has typed (chat, search, bet boxes…) when the page redraws.
   const typed = [...$('#main').querySelectorAll('input[id]:not([type=checkbox]):not([type=radio]), textarea[id]')].filter(x => x.value !== x.defaultValue).map(x => [x.id, x.value]);
-  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { home: tabHome, games: tabGames, casino: tabCasino, showcase: tabShowcase, wardrobe: tabWardrobe, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
+  const f = SKILLS[tab] && SKILLS[tab].kind === 'gather' ? () => tabGather(tab) : SKILLS[tab] && SKILLS[tab].kind === 'craft' ? () => tabCraft(tab) : { home: tabHome, games: tabGames, casino: tabCasino, showcase: tabShowcase, wardrobe: tabWardrobe, costumes: tabCostumes, arena: tabArena, dungeons: tabDungeons, prof: tabProf, inv: tabInv, bank: tabBank, char: tabChar, titles: tabTitles, ach: tabAch, shop: tabShop, settings: tabSettings, map: tabMap, combat: tabCombat, quests: tabQuests, class: () => tabClass() + perkCard(), talents: tabTalents, companions: tabCompanions, arsenal: tabArsenal, training: tabTraining, pets: tabPets, collection: tabCollection, account: tabAccount, cloud: tabAccount, leaders: tabLeaders, friends: tabFriends, chat: tabChat, mail: tabMail, trade: tabTrade, auction: tabAuction, secrets: tabSecrets, debug: tabDebug, guild: tabGuild, events: tabEvents, lore: tabLore }[tab] || tabLater;
   const openD = new Set([...$('#main').querySelectorAll('details[open] > summary')].map(x => x.textContent));
   gateFreshSeen(tab);
   $('#main').innerHTML = tabOpen(tab) ? f() : tabLocked(tab);
@@ -864,6 +864,7 @@ const HANDLERS = {
   ...LORE_HANDLERS,
   ...PROFILE_HANDLERS,
   ...FASHION_HANDLERS,
+  ...COSTUME_HANDLERS,
   ...ARENA_HANDLERS,
   ...QOL_HANDLERS,
   ...ANIM_HANDLERS,

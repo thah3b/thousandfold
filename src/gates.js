@@ -23,7 +23,7 @@ const GATES = {
   enchanting: [[['sk', 'mining', 20], ['sk', 'herbalism', 20]]],
   combat: [[['lvl', 5]]], prof: [[['lvl', 5]]], map: [[['quest']]], pets: [[['quest']]], bank: [[['lvl', 8]]],
   class: [[['lvl', 10]]], talents: [[['lvl', 10]]], training: [[['lvl', 10]]],
-  wardrobe: [[['lvl', 12]]], arsenal: [[['lvl', 12]]], collection: [[['lvl', 12]]], titles: [[['lvl', 12]]], ach: [[['lvl', 12]]], showcase: [[['lvl', 12]]],
+  wardrobe: [[['lvl', 12]]], costumes: [[['lvl', 12]]], arsenal: [[['lvl', 12]]], collection: [[['lvl', 12]]], titles: [[['lvl', 12]]], ach: [[['lvl', 12]]], showcase: [[['lvl', 12]]],
   companions: [[['lvl', 15]]], auction: [[['lvl', 15]]], trade: [[['lvl', 15]]], friends: [[['lvl', 15]]], chat: [[['lvl', 15]]],
   guild: [[['lvl', 20]]], casino: [[['lvl', 20]]],
   events: [[['lvl', 3]]], games: [[['lvl', 3]]], leaders: [[['lvl', 5]]], secrets: [[['lvl', 10]]],

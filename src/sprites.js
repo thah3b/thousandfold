@@ -292,14 +292,17 @@ const PX_PROPS = {
 const PX_HEAD = [16, 14.8, 10.6, 9.4];
 const pxInHead = (x, y, pad) => ((x + 0.5 - PX_HEAD[0]) / (PX_HEAD[2] + (pad || 0))) ** 2 + ((y + 0.5 - PX_HEAD[1]) / (PX_HEAD[3] + (pad || 0))) ** 2 <= 1;
 function pxChibiGrid(look) {
-  const g = new PxGrid(32, 36), L = look, sk = PX_SKIN[L.race] || PX_SKIN.human, cl = PX_CLASS[L.cls] || PX_CLASS.warrior;
+  const g = new PxGrid(32, 36), L = look, sk = L.skin || PX_SKIN[L.race] || PX_SKIN.human, cl = PX_CLASS[L.cls] || PX_CLASS.warrior;
   const o = L.outfit || cl[0], ac = L.accent || cl[1], hair = L.hair || '#3a2a20', robe = L.robe !== undefined ? L.robe : cl[5];
-  const cape = L.cape !== undefined ? L.cape : cl[4], C = { o, a: ac }, S = pxPal(sk), H = pxPal(hair), O = pxPal(o), A = pxPal(ac);
-  const female = L.gender === 'Female', boot = pxPal('#7a4e2c'), eyeC = PX_RACE_EYE[L.race] || L.eye || PX_EYES[0];
-  const hat = L.hat === undefined ? cl[3] : L.hat, prop = L.prop === undefined ? cl[2] : L.prop, sparkles = [];
-  if (L.race === 'sylph') g.layer(t => { for (const x of [4, 28]) { t.ell(x, 26, 4, 6.5, '#cfeefa'); t.ell(x, 26, 2.2, 4.5, '#eefaff'); } });
-  if (cape) g.layer(t => { const P = pxPal(cape); t.poly([[9, 23], [23, 23], [29, 35], [3, 35]], P.a); t.poly([[17, 23], [23, 23], [29, 35], [19, 35]], P.b); t.rect(4, 33, 25, 2, P.d); });
-  if (female) g.layer(t => t.ell(16, 19, 12.6, 12.5, null, H, (x, y) => y >= 12 && y <= 31));
+  const capeV = L.cape !== undefined ? L.cape : cl[4], [cape, capeIn] = capeV ? String(capeV).split('|') : [null, null], C = { o, a: ac, p2: L.pat2 }, S = pxPal(sk), H = pxPal(hair), O = pxPal(o), A = pxPal(ac);
+  const female = L.gender === 'Female', boot = pxPal('#7a4e2c'), eyeC = L.eyeC || PX_RACE_EYE[L.race] || L.eye || PX_EYES[0];
+  const hat = L.hat === undefined ? cl[3] : L.hat, pose = L.pose || 'idle', sparkles = [];
+  const handsOff = ['both', 'shrug'].includes(pose), prop = handsOff ? null : L.prop === undefined ? cl[2] : L.prop;
+  const hs = PX_HAIRSTYLES[L.hs] ? L.hs : female ? 'long' : 'short', HS = PX_HAIRSTYLES[hs];
+  if (L.back && PX_BACKS[L.back]) g.layer(t => PX_BACKS[L.back](t, C));
+  if (L.race === 'sylph' && !L.back) g.layer(t => { for (const x of [4, 28]) { t.ell(x, 26, 4, 6.5, '#cfeefa'); t.ell(x, 26, 2.2, 4.5, '#eefaff'); } });
+  if (cape) g.layer(t => { const P = pxPal(cape), Q = capeIn ? pxPal(capeIn) : P; t.poly([[9, 23], [23, 23], [29, 35], [3, 35]], P.a); t.poly([[17, 23], [23, 23], [29, 35], [19, 35]], capeIn ? Q.a : P.b); t.rect(4, 33, 25, 2, P.d); });
+  if (HS.back) g.layer(t => HS.back(t, H, female));
   if (prop && PX_PROPS[prop]) g.layer(t => PX_PROPS[prop](t, C));
   if (/staff/.test(prop || '')) sparkles.push([1, 1], [9, 2], [0, 7], [10, 6]);
   // legs and torso
@@ -311,9 +314,14 @@ function pxChibiGrid(look) {
     if (robe) { t.rect(15, 26, 2, 2, '#4fa8e8'); t.set(15, 26, '#cfeaff'); }
     t.rect(11, 28, 10, 2, '#6b4426').rect(11, 29, 10, 1, '#4a2e18'); t.rect(15, 28, 2, 2, PXC.gold);
   });
+  if (L.pattern && PX_PATTERNS[L.pattern]) PX_PATTERNS[L.pattern](g, C, robe);
   // arms and hands (pose: idle, wave, wink, cast, cheer)
-  const pose = L.pose || 'idle', upR = pose === 'wave' || pose === 'cheer';
-  g.layer(t => { t.rect(8, 24, 3, 5, O.a).rect(8, 24, 1, 5, O.c).rect(8, 28, 3, 1, A.a); t.ell(9.5, 30, 1.9, 1.7, S.a); if (!upR) { t.rect(21, 24, 3, 5, O.b).rect(21, 28, 3, 1, A.b); t.ell(22.5, 30, 1.9, 1.7, S.b); } });
+  const upR = ['wave', 'cheer', 'both', 'peace'].includes(pose), upL = pose === 'both', armR = ['salute', 'think', 'shrug'].includes(pose);
+  g.layer(t => {
+    if (pose === 'shrug') { t.rect(6, 24, 5, 3, O.a).rect(6, 24, 5, 1, O.c); t.ell(5, 23.5, 1.9, 1.7, S.a); t.rect(21, 24, 5, 3, O.b); t.ell(27, 23.5, 1.9, 1.7, S.b); return; }
+    if (!upL) { t.rect(8, 24, 3, 5, O.a).rect(8, 24, 1, 5, O.c).rect(8, 28, 3, 1, A.a); t.ell(9.5, 30, 1.9, 1.7, S.a); }
+    if (!upR && !armR) { t.rect(21, 24, 3, 5, O.b).rect(21, 28, 3, 1, A.b); t.ell(22.5, 30, 1.9, 1.7, S.b); }
+  });
   if (cape) g.layer(t => { const P = pxPal(cape); t.rect(8, 22, 4, 3, P.a).rect(20, 22, 4, 3, P.b).rect(8, 22, 16, 1, P.c); t.rect(15, 23, 2, 2, PXC.gold); });
   // head and face
   g.layer(t => {
@@ -341,21 +349,22 @@ function pxChibiGrid(look) {
     if (mk === 'Runic tattoo') { t.set(25, 14, '#6fd0e8').set(25, 16, '#6fd0e8').set(24, 15, '#6fd0e8'); }
     if (mk === 'Birthmark') t.set(21, 21, S.d);
   });
-  if (L.beard || (L.race === 'dwarf' && !female)) g.layer(t => { const B = pxPal(L.elder ? '#f2eee6' : hair); t.ell(16, 22, 8, 5.5, null, B, (x, y) => y >= 19); t.rect(11, 19, 10, 1, B.a); t.set(15, 22, B.b).set(17, 23, B.b).set(13, 21, B.c); });
-  // hair: a rounded cap and chunky bangs
+  if (L.face && PX_FACES[L.face] && PX_FACES[L.face].under) g.layer(t => PX_FACES[L.face](t, C, S));
+  const bd = L.beard === true ? 'full' : typeof L.beard === 'string' ? L.beard : L.race === 'dwarf' && !female ? 'full' : null;
+  if (bd && PX_BEARDS[bd]) { const B = pxPal(L.elder ? '#f2eee6' : hair); if (PX_BEARDS[bd].flat) PX_BEARDS[bd](g, B, S); else g.layer(t => PX_BEARDS[bd](t, B, S)); }
+  if (L.face && PX_FACES[L.face] && !PX_FACES[L.face].under) { if (PX_FACES[L.face].flat) PX_FACES[L.face](g, C, S); else g.layer(t => PX_FACES[L.face](t, C, S)); }
+  // hair: style front (cap, bangs) plus race ears/horns
   g.layer(t => {
-    t.ell(16, 11.6, 11.5, 8.2, null, H, (x, y) => y <= 12);
-    t.rect(6, 10, 21, 2, H.a);
-    const side = female ? 24 : 19;
-    const locks = [[5, 9.5, 6, side], [8, 13, 10.5, 14], [12, 17, 15, 15.5], [15.5, 20, 17.5, 14], [19, 24, 21.5, 14], [22.5, 27, 26, side]];
-    for (const [x0, x1, tx, ty] of locks) t.poly([[x0, 11], [x1, 11], [tx, ty]], tx > 16 ? H.b : H.a);
-    t.rect(5, 12, 3, side - 15, H.a).rect(5, 12, 1, side - 15, H.c).rect(25, 12, 3, side - 15, H.b);
-    t.set(10, 6, H.c).set(11, 5, H.c).set(12, 5, H.c).set(9, 7, H.c);
+    HS.front(t, H, female);
     if (L.race === 'beastfolk') { t.poly([[6, 9], [7, 0], [12, 5]], H.a).poly([[20, 5], [25, 0], [26, 9]], H.b); t.poly([[7.6, 7], [8, 2.5], [10.6, 5]], '#f3a8a8').poly([[21.4, 5], [24, 2.5], [24.4, 7]], '#f3a8a8'); }
     if (L.race === 'dragonkin') { t.line(9, 5, 6, 0, PXC.bone, PXC.boneD); t.line(22, 5, 25, 0, PXC.bone, PXC.boneD); }
   });
   if (hat && PX_HATS[hat]) g.layer(t => PX_HATS[hat](t, C));
-  if (upR) g.layer(t => { t.poly([[20.5, 23], [24, 23], [29, 18], [26.5, 16.5]], O.b); t.line(23, 23, 27.5, 18.6, A.b); t.ell(28.5, 15.5, 2, 2, S.b); });
+  if (upR) g.layer(t => { t.poly([[20.5, 23], [24, 23], [29, 18], [26.5, 16.5]], O.b); t.line(23, 23, 27.5, 18.6, A.b); t.ell(28.5, 15.5, 2, 2, S.b); if (pose === 'peace') { t.rect(28, 11, 1, 3, S.a).rect(30, 11, 1, 3, S.a); } });
+  if (upL) g.layer(t => { t.poly([[11.5, 23], [8, 23], [3, 18], [5.5, 16.5]], O.a); t.line(9, 23, 4.5, 18.6, A.a); t.ell(3.5, 15.5, 2, 2, S.a); });
+  if (pose === 'salute') g.layer(t => { t.poly([[20.5, 23], [24, 23], [27, 15], [24.5, 14]], O.b); t.rect(21, 11, 6, 2, S.a).rect(21, 12, 6, 1, S.b); });
+  if (pose === 'think') g.layer(t => { t.poly([[21, 23], [24, 24], [21, 27], [19, 25]], O.b); t.ell(18.5, 23, 2, 1.7, S.a); });
+  if (PX_POSE_FACE[pose]) PX_POSE_FACE[pose](g, S, sparkles);
   if (pose === 'wink') { g.rect(19, 15, 4, 4, S.a); g.line(19, 17, 20, 16, PX.out).line(21, 16, 22, 17, PX.out); g.set(14, 20, '#a8503a').set(17, 20, '#a8503a'); }
   if (pose === 'cheer') { g.rect(15, 20, 2, 2, '#8a3a2a'); g.set(15, 21, '#f08a8a'); sparkles.push([30, 12], [27, 11], [31, 16]); }
   if (pose === 'cast') { const k = pxTone(ac === PXC.gold ? '#7fe8d8' : ac, 0.3); for (const [x, y] of [[22, 26], [25, 28], [24, 32], [20, 31], [26, 30]]) g.set(x, y, k); g.set(23, 29, '#ffffff'); }
@@ -364,7 +373,7 @@ function pxChibiGrid(look) {
   return g;
 }
 function pxChibi(look, size, opt) {
-  const k = 'c2:' + [look.race, look.gender, look.cls, look.hair, look.eye, look.outfit, look.accent, look.hat, look.prop, look.cape, look.robe, look.mark, look.beard, look.elder, look.pose].map(v => v === undefined ? '~' : v === null ? '0' : v).join('|');
+  const k = 'c3:' + [look.race, look.gender, look.cls, look.hair, look.eye, look.outfit, look.accent, look.hat, look.prop, look.cape, look.robe, look.mark, look.beard, look.elder, look.pose, look.skin, look.eyeC, look.hs, look.back, look.face, look.pattern, look.pat2].map(v => v === undefined ? '~' : v === null ? '0' : v).join('|');
   const o = opt || {}; return pxImg(k, size, () => pxChibiGrid(look), { ...o, h: o.h || Math.round(size * 36 / 32) });
 }
 // A player character's look.
