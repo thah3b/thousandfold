@@ -68,7 +68,7 @@ function updateLive() {
       case 'can': v = N(craftable(ch, RECIPE[arg])); break;
       case 'streak': { const a = ch.actions.find(x => x.res === arg); v = a ? N(a.streak) : '0'; break; }
       case 'total': v = N(ch.totals[arg]); break;
-      case 'xpline': { const L = levelFromXp(ch.xp); v = L.need ? `${N(L.into)} / ${N(L.need)} XP` : 'Max level'; break; }
+      case 'xpline': { const L = charLevelXp(ch); v = L.need ? `${N(L.into)} / ${N(L.need)} XP` : 'Max level'; break; }
       case 'sxpline': { const L = levelFromXp(ch.skills[arg].xp); v = L.need ? `${N(L.into)} / ${N(L.need)} XP` : 'Max level'; break; }
       case 'rwnext': v = fmtTime(Math.max(0, rwMidnight() - now) / 1000); break;
       case 'ms': { const m = nextMilestone(); v = m ? `${m.label} · ${fmtTime(m.eta)}` : (ch.actions.length ? 'Keep going' : 'Start an action'); break; }
@@ -87,7 +87,7 @@ function updateLive() {
   }
   for (const el of $$('[data-w]')) {
     const W0 = el.dataset.w, ci = W0.indexOf(':'), k = ci < 0 ? W0 : W0.slice(0, ci), arg = ci < 0 ? '' : W0.slice(ci + 1); let w = 0;
-    if (k === 'xp') { const L = levelFromXp(ch.xp); w = L.need ? L.into / L.need : 1; }
+    if (k === 'xp') { const L = charLevelXp(ch); w = L.need ? L.into / L.need : 1; }
     if (k === 'sxp') { const L = levelFromXp(ch.skills[arg].xp); w = L.need ? L.into / L.need : 1; }
     if (k === 'tier') { const c = ch.prof[arg] || 0, t = tierOf(c), T = BALANCE.tierThresholds; w = t < 9 ? (c - T[t]) / (T[t + 1] - T[t]) : 1; }
     if (k === 'hp') { const mh = derive(ch, now, null, 'slaying').maxHP; w = (ch.hp == null ? mh : Math.max(0, ch.hp)) / mh; }
@@ -635,9 +635,9 @@ function tierBox(t) {
 function tabClass() {
   const c = cls(), A = ADVANCE[ch.cls], q = ch.adv.quest, res = c.res;
   const AS = BALANCE.ascension;
-  let questHtml = `<p class="mute" style="margin:4px 0 8px">You have reached your final tier. At level ${AS.needLevel} you can ascend: your level starts again at 1 and you keep everything else, including allocated stats, skills, talents, items and class. You earn stat and skill points all over again, with no cap.</p>
-    <div class="kv"><span>Ascensions</span><span>A${ch.ascension}</span><span>Next ascension adds</span><span>+${pct(AS.xp)} XP, +${pct(AS.yield)} yield, +${pct(AS.power)} attack and HP, ${AS.shards} Thousandium</span><span>Level</span><span>${ch.level} / ${AS.needLevel}</span></div>
-    <div class="row" style="margin-top:10px;gap:6px;align-items:center"><button class="pri" data-act="askascend" ${canAscend() ? '' : 'disabled'}>${canAscend() ? `Ascend to A${ch.ascension + 1}` : `Ascend at level ${AS.needLevel}`}</button><button class="sm ${ch.autoAscend !== false ? 'pri' : ''}" data-act="autoasc" title="Ascend by itself as soon as you reach level ${AS.needLevel}">Auto-ascend: ${ch.autoAscend !== false ? 'On' : 'Off'}</button></div>`;
+  let questHtml = `<p class="mute" style="margin:4px 0 8px">You have reached your final tier. At level ${ascNeed(ch.ascension)} you can ascend: your level starts again at 1 and you keep everything else, including allocated stats, skills, talents, items and class. You earn stat and skill points all over again, with no cap.</p>
+    <div class="kv"><span>Ascensions</span><span>A${ch.ascension}</span><span>Next ascension adds</span><span>+${pct(AS.xp)} XP, +${pct(AS.yield)} yield, +${pct(AS.power)} attack and HP, ${AS.shards} Thousandium</span><span>Level</span><span>${ch.level} / ${ascNeed(ch.ascension)}</span><span>Ascension level</span><span>99 for A0–A4, then +50 every 5 ascensions (A5: 150, A10: 200…)</span></div>
+    <div class="row" style="margin-top:10px;gap:6px;align-items:center"><button class="pri" data-act="askascend" ${canAscend() ? '' : 'disabled'}>${canAscend() ? `Ascend to A${ch.ascension + 1}` : `Ascend at level ${ascNeed(ch.ascension)}`}</button><button class="sm ${ch.autoAscend !== false ? 'pri' : ''}" data-act="autoasc" title="Ascend by itself as soon as you reach level ${ascNeed(ch.ascension)}">Auto-ascend: ${ch.autoAscend !== false ? 'On' : 'Off'}</button></div>`;
   if (q) {
     const steps = [0, 1, 2, 3, 4].map(i => { const g = advGoal(i), done = i < q.step, cur = i === q.step;
       return `<div class="qstep ${done ? 'done' : cur ? 'cur' : ''}"><span>${done ? '✓' : i + 1}</span><div><b>${esc(g.label)}</b>${cur && i < 4 ? `<div class="spread" style="font-size:14px"><span class="mute">${N(Math.min(g.have, g.need))} / ${N(g.need)}</span>${g.go ? `<button class="sm" data-act="${g.region ? 'goregion' : 'questgo'}" data-arg="${g.region || g.go}">Go</button>` : ''}</div><div class="bar"><i style="width:${Math.min(100, g.have / g.need * 100).toFixed(1)}%"></i></div>` : ''}</div></div>`; }).join('');
@@ -688,6 +688,7 @@ function tabTalents() {
   const M = classMods(ch);
   return `<div class="spread"><h2>Talents</h2><span class="chip">Skill points <b class="ember">${ch.skillPts}</b> · spent ${spentPoints()}</span></div>
     <p class="mute">One point per level, three more every tenth level. Capstones cost 3. ${tier < 2 ? 'Your specialization branch opens at tier 2.' : ''}</p>
+    ${ch.skillPts >= BALANCE.talentShards ? (() => { const R = BALANCE.talentShards, max = Math.floor(ch.skillPts / R); return `<div class="card tpconv" style="margin:8px 0"><div class="spread" style="flex-wrap:wrap;gap:8px"><span>Spare points can become Thousandium: <b>${R} points → 1 Thousandium</b>.</span><span class="row" style="gap:6px">${[1, 10].filter(n => n < max).map(n => `<button class="sm" data-act="tpconv" data-arg="${n}">${n * R} → ${n}</button>`).join('')}<button class="sm pri" data-act="tpconv" data-arg="${max}">All: ${max * R} → ${max}</button></span></div></div>`; })() : ''}
     <div class="row" style="margin:10px 0">${trees.map(([id, n]) => `<button class="chip ${cur === id ? 'on' : ''}" data-act="ttree" data-arg="${id}">${esc(n)}</button>`).join('')}
       <button class="chip" data-act="respectal" ${spentPoints() ? '' : 'disabled'}>Reset talents (${rc ? N(rc) + 'g' : 'free'})</button></div>
     ${body}
@@ -980,6 +981,15 @@ const HANDLERS = {
   gift: k => { giveGift(k); renderMain(); },
   feed: a => { const i = a.lastIndexOf('|'), k = a.slice(0, i), q = a.slice(i + 1); feedGrowth(k, q === 'all' ? ch.inv[k] : 1); renderMain(); },
   askascend: () => modal(`<h3>Ascend to A${ch.ascension + 1}?</h3><p>Your character level returns to 1. Everything else stays: stats you allocated, skill levels, proficiency, talents, items, gold and class tier. Region and gear requirements treat you as level ${BALANCE.ascension.needLevel}.</p><p class="verd">Permanent: +${pct(BALANCE.ascension.xp)} XP, +${pct(BALANCE.ascension.yield)} yield, +${pct(BALANCE.ascension.power)} attack and HP per ascension.</p><div class="row"><button class="pri" data-act="doascend">Ascend</button><button data-act="close">Not yet</button></div>`),
+  tpconv: n => {
+    const R = BALANCE.talentShards, k = Math.min(Math.floor(ch.skillPts / R), Math.max(1, Math.floor(+n) || 0)); if (k < 1) return;
+    modal(`<h3>Convert talent points?</h3><p>${k * R} spare talent points become <b>${k} Thousandium</b>. This can't be undone; you'll have ${ch.skillPts - k * R} talent points left.</p><div class="row" style="justify-content:flex-end;gap:6px"><button data-act="close">Cancel</button><button class="pri" data-act="tpconvok" data-arg="${k}">Convert</button></div>`);
+  },
+  tpconvok: n => {
+    closeModal(); const R = BALANCE.talentShards, k = Math.min(Math.floor(ch.skillPts / R), Math.floor(+n) || 0); if (k < 1) return;
+    ch.skillPts -= k * R; account.shards += k; ch.counters.shardsEarned = (ch.counters.shardsEarned || 0) + k;
+    addLog('lucky', `Converted ${k * R} talent points into ${k} Thousandium.`); dirty = true; save(); renderTop(); renderMain(); renderNav();
+  },
   autoasc: () => { ch.autoAscend = ch.autoAscend === false; addLog('sys', `Auto-ascend ${ch.autoAscend ? 'on' : 'off'}.`); if (ch.autoAscend && canAscend()) ascend(true); dirty = true; save(); renderMain(); renderSide(); renderTop(); },
   doascend: () => { closeModal(); ascend(); renderMain(); renderSide(); renderTop(); },
   autosell: a => { const [k, v] = a.split('|'); if (v === 'off') delete ch.autoSell[k]; else ch.autoSell[k] = +v; autoSellTick(false); renderMain(); },

@@ -57,8 +57,13 @@ function tierTime(a, tier) { return tierTimes(a)[Math.min(tier, 5)]; }
 function actionSec(a, count, speed) { return Math.max(BALANCE.minActionSec, tierTime(a, tierOf(count)) * (1 - Math.min(BALANCE.speedBonusCap, speed))); }
 
 // --- Levels ---
-function levelCost(L) { const l = BALANCE.level; return Math.round(l.a * Math.pow(L, l.p) * Math.pow(l.g, L - 1)); }
-function levelFromXp(xp) { let L = 1, rest = xp; while (L < BALANCE.level.max && rest >= levelCost(L)) { rest -= levelCost(L); L++; } return { level: L, into: rest, need: L < BALANCE.level.max ? levelCost(L) : 0 }; }
+function levelCost(L) { const l = BALANCE.level; if (L >= 99) return Math.round(Math.round(l.a * Math.pow(99, l.p) * Math.pow(l.g, 98)) * Math.pow(l.over99, L - 99)); return Math.round(l.a * Math.pow(L, l.p) * Math.pow(l.g, L - 1)); }
+function levelFromXp(xp, max) { const M = max || BALANCE.level.max; let L = 1, rest = xp; while (L < M && rest >= levelCost(L)) { rest -= levelCost(L); L++; } return { level: L, into: rest, need: L < M ? levelCost(L) : 0 }; }
+// v3.0c: the level you ascend at rises by 50 every 5 ascensions (99 for A0–A4, 150 for A5–A9, 200 for A10–A14…).
+const ascNeed = a => (a || 0) < 5 ? BALANCE.ascension.needLevel : 100 + 50 * Math.floor(a / 5);
+const charMax = c => ascNeed(c.ascension || 0);
+const charLevelXp = c => levelFromXp(c.xp, charMax(c));
+function lvlsBefore(a) { let n = 0; for (let k = 0; k < Math.min(a || 0, 1000); k++) n += ascNeed(k); return n; }
 
 // --- Stats ---
 function effPts(p) {
@@ -356,7 +361,7 @@ function travelMinutes(from, to) {
   return dist[to];
 }
 const travelBonus = D => Math.min(BALANCE.travel.cap + ((D.M && D.M.mounted) ? PET_CFG.mountCapBonus : 0), above(D.S.AGI.total) * BALANCE.travel.perAgi + ((D.M && D.M.travel) || 0));
-const gateLevel = ch => ch.ascension ? BALANCE.ascension.needLevel : ch.level;
+const gateLevel = ch => ch.ascension ? Math.max(BALANCE.ascension.needLevel, ch.level) : ch.level;
 const priceIndex = (ch, itemLvl) => Math.max(1, Math.pow(BALANCE.economy.priceGrowth, gateLevel(ch) - Math.max(1, itemLvl || 1)));
 const scaled = (ch, base, itemLvl) => Math.ceil(base * priceIndex(ch, itemLvl));
 const levelLabel = c => (c.ascension ? `A${c.ascension} · ` : '') + 'Lv ' + c.level;

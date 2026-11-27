@@ -78,11 +78,12 @@ const BALANCE = {
     potionUnit: { yield: 40000, xp: 40000, proc: 1500000, luck: 1200000, skill: 15000 }, potionExp: 1.8,
     buyQty: [1, 10, 100, 1000] },
   // Ascension: at max level of your final class tier, reset character level to 1 and keep everything else.
+  talentShards: 10, // v3.0c: spare talent points per 1 Thousandium
   ascension: { needTier: 4, needLevel: 99, xp: 0.05, yield: 0.05, power: 0.03, shards: 10 },
   banker: { dailyRate: 0.01, cap: 5e6 },
 
   // Skill / character level curve: xp to go from L to L+1 = a * L^p * g^(L-1)
-  level: { a: 60, p: 1.0, g: 1.17, max: 99, statPointsPerLevel: 20,
+  level: { a: 60, p: 1.0, g: 1.17, over99: 1.03, max: 99, statPointsPerLevel: 20,
            skillPointsPerLevel: 1, skillPointsMilestone: 3, classGrowthPerLevel: 1, charXpShare: 0.4 },
 
   // Stat soft caps: [threshold, multiplier applied past it]

@@ -2,8 +2,14 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v3.0b';
+const GAME_VERSION = 'v3.0c';
 const PATCH_NOTES = [
+  { v: 'v3.0c', date: '2026-11-27', title: 'Arena NPCs, higher ascension levels, talent points to Thousandium', notes: [
+    "Fixed: after ascending (especially with auto-ascend), the leaderboard stopped accepting your character and the Arena said \"Arena entry doesn't match your character\". The leaderboard's speed check now allows fast ascension climbs.",
+    "Arena: five fixed NPC opponents, always available: Hobo (1k battle power, +15 rating), City Guard (5k, +30), Street Mage (10k, +60), Royal Paladin (20k, +120) and Demon King (40k, +250). Losing to one costs a fifth of its points. Real players near your rating are still listed first.",
+    "Ascension level rises: you ascend at level 99 for A0–A4, at level 150 for A5–A9, at 200 for A10–A14, and so on (+50 every 5 ascensions). Levels past 99 cost a little more XP each.",
+    "Talents: spare talent points can be turned into Thousandium on the Talents tab (10 points → 1 Thousandium).",
+  ] },
   { v: 'v3.0b', date: '2026-11-27', title: 'Auto-ascend and faster stat points', notes: [
     "Auto-ascend: once you're in your final class tier, your character ascends by itself as soon as it reaches level 99. It's on by default; switch it off on the Class tab. It only writes to the log, no pop-up.",
     "Stat points: new +50, +100 and All buttons next to each stat, so thousands of points take a few taps. You still see the preview and press Apply.",

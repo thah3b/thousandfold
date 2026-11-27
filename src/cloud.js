@@ -24,11 +24,11 @@ const CLOUD = { autoMins: 2, lbCats: [
 let cloud = { provider: null, state: 'starting', msg: '', uid: null, canWrite: null, meta: null, lb: null, lbAt: 0, lbErr: '', busy: false, lastUp: 0, lastLb: '', modId: null, banned: {}, isOwner: false, prompt: false };
 
 // ---------- Validation (mirrored in supabase/migrations/0001_init.sql → tf_validate) ----------
-function statPtsEarned(c) { return BALANCE.level.statPointsPerLevel * ((c.ascension || 0) * (BALANCE.level.max - 1) + (c.level - 1)); }
+function statPtsEarned(c) { return BALANCE.level.statPointsPerLevel * (lvlsBefore(c.ascension || 0) - (c.ascension || 0) + (c.level - 1)); }
 function lbEntry(c) {
   const ach = ACHIEVEMENTS.filter(a => c.ach && c.ach[a.id]).reduce((s, a) => s + a.pts, 0);
   let coll = 0; try { const C = collectionPct(c); coll = Math.round(Object.values(C).reduce((s, v) => s + v, 0) / 4 * 100); } catch (e) { }
-  return { cid: c.id, name: c.name, cls: c.cls, race: c.race, asc: c.ascension || 0, level: c.level, prog: (c.ascension || 0) * BALANCE.level.max + c.level,
+  return { cid: c.id, name: c.name, cls: c.cls, race: c.race, asc: c.ascension || 0, level: c.level, prog: lvlsBefore(c.ascension || 0) + c.level,
     xp: Math.floor(c.xp), ach, gold: Math.floor(c.counters.goldEarned || 0), held: Math.max(0, Math.floor(c.gold || 0)), casino_net: csLifetimeNet(c), kills: c.counters.kills || 0, species: Object.keys(c.petDex || {}).length, coll,
     alloc: Object.values(c.alloc || {}).reduce((s, v) => s + (+v || 0), 0), unspent: c.unspent || 0, created: c.created || 0,
     skills: SKILL_IDS.map(s => [c.skills[s].level, Math.floor(c.skills[s].xp)]), ver: GAME_VERSION, at: Date.now() };
@@ -37,13 +37,13 @@ function validateEntry(e) {
   const f = [], num = v => typeof v === 'number' && Number.isFinite(v) && v >= 0;
   for (const k of ['asc', 'level', 'xp', 'ach', 'gold', 'kills', 'species', 'coll', 'alloc', 'unspent', 'created']) if (!num(e[k])) f.push(`bad ${k}`);
   if (f.length) return f;
-  if (e.level < 1 || e.level > BALANCE.level.max) f.push('level out of range');
+  if (e.level < 1 || e.level > ascNeed(e.asc)) f.push('level out of range');
   if (e.asc > 1000) f.push('ascension out of range');
-  if (levelFromXp(e.xp).level !== e.level) f.push('level does not match XP');
+  if (levelFromXp(e.xp, ascNeed(e.asc)).level !== e.level) f.push('level does not match XP');
   for (const [lv, xp] of e.skills || []) if (levelFromXp(xp).level !== lv) { f.push('a skill level does not match its XP'); break; }
-  if (e.alloc + e.unspent > BALANCE.level.statPointsPerLevel * (e.asc * (BALANCE.level.max - 1) + e.level - 1) + 60) f.push('more stat points than levels give');
+  if (e.alloc + e.unspent > BALANCE.level.statPointsPerLevel * (lvlsBefore(e.asc) - e.asc + e.level - 1) + 60) f.push('more stat points than levels give');
   const hours = Math.max(0, (Date.now() - e.created) / 3.6e6);
-  if (e.prog > 15 + 60 * hours) f.push('levels gained faster than possible');
+  if (e.prog > 30 + 300 * hours) f.push('levels gained faster than possible');
   if (e.ach > ACHIEVEMENTS.reduce((s, a) => s + a.pts, 0)) f.push('too many achievement points');
   if (e.species > Object.keys(SPECIES).length || e.coll > 100) f.push('collection out of range');
   if (nameProblem(e.name)) f.push('name not allowed');

@@ -125,7 +125,7 @@ function addXp(skill, xp, quiet, notes) {
   if (ch.comp) { const L0 = compLevel(ch.comp); ch.comp.xp += xp * (ch.cls === 'healer' && ch.comp.cls === 'healer' ? BALANCE.level.charXpShare : 0.25); const L1 = compLevel(ch.comp); if (L1 > L0) { const nm = COMPANIONS[ch.comp.cls][0], msg = `${nm} reached level ${L1}.`; quiet ? notes.push(msg) : addLog('level', msg); dirty = true; } }
   if (ch.pets && ch.pets.length && skill !== 'beastmastery') petXpShare(xp, quiet, notes);
   if (ch.growth && growthEquipped(ch)) { if (SKILLS[skill].kind === 'gather') ch.growth.gatherXp += xp; else if (skill === 'slaying') ch.growth.combatXp += xp; }
-  const C = levelFromXp(ch.xp).level;
+  const C = charLevelXp(ch).level;
   if (C > ch.level) {
     const gained = C - ch.level; let sp = 0;
     for (let l = ch.level + 1; l <= C; l++) { sp += BALANCE.level.skillPointsPerLevel + (l % 10 === 0 ? BALANCE.level.skillPointsMilestone : 0); if (l % BALANCE.respec.freeEvery === 0 && l <= BALANCE.respec.freeUntilLevel) { ch.freeRespecs++; ch.freeTreeRespecs = (ch.freeTreeRespecs || 0) + 1; } }
@@ -338,7 +338,7 @@ function nextMilestone() {
     const L = levelFromXp(ch.skills[s].xp); if (r.xp > 0.01 && L.need) cand(`${SKILLS[s].name} level ${L.level + 1}`, (L.need - L.into) / r.xp);
     const line = SKILL_TITLES[s].line.find(l => ch.totals[s] < l[0]); if (line && r.comp > 0.01) cand(`Title: ${line[1]}`, (line[0] - ch.totals[s]) / r.comp);
   }
-  const C = levelFromXp(ch.xp); if (total > 0.01 && C.need) cand(`Level ${C.level + 1}`, (C.need - C.into) / (total * BALANCE.level.charXpShare));
+  const C = charLevelXp(ch); if (total > 0.01 && C.need) cand(`Level ${C.level + 1}`, (C.need - C.into) / (total * BALANCE.level.charXpShare));
   return best;
 }
 
@@ -699,7 +699,7 @@ function autoSellTick(quiet) {
     if (!ch.autoLogAt || Date.now() - ch.autoLogAt > 10000) { addLog('gain', `Auto-sold ${N(ch.autoUnitsAcc)} items for ${N(ch.autoGoldAcc)} gold.`); ch.autoGoldAcc = 0; ch.autoUnitsAcc = 0; ch.autoLogAt = Date.now(); } }
   return gold;
 }
-const canAscend = () => ch.adv.tier >= BALANCE.ascension.needTier && ch.level >= BALANCE.ascension.needLevel;
+const canAscend = () => ch.adv.tier >= BALANCE.ascension.needTier && ch.level >= ascNeed(ch.ascension);
 function ascend(auto) {
   if (!canAscend()) return;
   const A = BALANCE.ascension;
