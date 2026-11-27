@@ -289,7 +289,7 @@ document.addEventListener('keydown', e => {
   const inInput = e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
   const c = ch && ch.casino; if (!c) return;
   if (c.bigWin) { if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); CASINO_HANDLERS.csbigok(); } return; }
-  if (e.key === 'Enter' && inInput) { e.preventDefault(); csDeal(); return; }
+  if (e.key === 'Enter' && inInput) { if (c.view === 'table') { e.preventDefault(); csDeal(); } return; }
   if (inInput) return;
   const k = e.key.toLowerCase(), m = { h: 'hit', s: 'stand', d: 'double', p: 'split' }[k];
   if (m && c.round && c.round.phase === 'play') { e.preventDefault(); csAction(m); }
@@ -379,13 +379,13 @@ document.addEventListener('pointermove', e => {
 document.addEventListener('pointerleave', e => { const box = e.target.closest && e.target.closest('.cschart'); if (!box) return; box.querySelectorAll('.xh,.dot,.cstip').forEach(n => n.style.display = 'none'); }, true);
 
 function csStatsHtml() {
-  const c = csState(), cur = c.statCur || c.cur, S = c.stats[cur], cn = cur === 'th' ? 'Thousandium' : 'gold';
+  const c = csState(), cur = c.statCur || c.cur, g = c.statGame || 'bj', S = g === 'bj' ? c.stats[cur] : cs2State().stats2[g][cur], cn = cur === 'th' ? 'Thousandium' : 'gold';
   const net = S.won - S.lost, decided = S.wins + S.losses + S.pushes;
   const tile = (n, v, cls) => `<div class="cstile"><span class="mute">${n}</span><b class="num ${cls || ''}">${v}</b></div>`;
   const recent = csPoints(S).slice(-12).reverse();
-  return `<div class="row" style="gap:6px;margin-bottom:10px">${['gold', 'th'].map(k => `<button class="chip ${cur === k ? 'on' : ''}" data-act="csstatcur" data-arg="${k}">${CS.cur[k].name}</button>`).join('')}</div>
+  return `<div class="row" style="gap:6px;margin-bottom:10px">${[['bj', 'Blackjack'], ['bac', 'Baccarat'], ['pred', 'Prediction']].map(([k, n]) => `<button class="chip ${g === k ? 'on' : ''}" data-act="csstatgame" data-arg="${k}">${n}</button>`).join('')}<span style="width:10px"></span>${['gold', 'th'].map(k => `<button class="chip ${cur === k ? 'on' : ''}" data-act="csstatcur" data-arg="${k}">${CS.cur[k].name}</button>`).join('')}</div>
     <div class="cstiles">${tile(`Your ${cn}`, N(csBal(cur)), 'gold')}${tile('Rounds', N(S.rounds))}${tile('Wagered', N(S.wagered))}${tile('Won', N(S.won), 'verd')}${tile('Lost', N(S.lost), 'bad')}${tile('Net', (net > 0 ? '+' : net < 0 ? '−' : '') + N(Math.abs(net)), net > 0 ? 'verd' : net < 0 ? 'bad' : '')}
-      ${tile('Hands won', decided ? Math.round(S.wins / decided * 100) + '%' : '—')}${tile('Blackjacks', N(S.bj))}${tile('Biggest win', N(Math.max(0, S.best)))}${tile('Side bet hits', N(S.ppHits + S.t3Hits))}</div>
+      ${tile(g === 'bj' ? 'Hands won' : 'Rounds won', decided ? Math.round(S.wins / decided * 100) + '%' : '—')}${g === 'bj' ? tile('Blackjacks', N(S.bj)) : ''}${tile('Biggest win', N(Math.max(0, S.best)))}${g === 'bj' ? tile('Side bet hits', N(S.ppHits + S.t3Hits)) : tile('Biggest loss', N(Math.max(0, -S.worst)))}</div>
     <div class="card" style="margin-top:12px"><div class="spread" style="flex-wrap:wrap;gap:8px"><h3 style="margin:0">${esc(CS_SERIES.find(s => s[0] === c.chart.series)[1])}</h3>
       <div class="row" style="gap:6px">${CS_SERIES.map(([k, n]) => `<button class="chip ${c.chart.series === k ? 'on' : ''}" data-act="csseries" data-arg="${k}">${n}</button>`).join('')}</div></div>
       <div class="row" style="gap:6px;margin:8px 0">${[[50, 'Last 50'], [200, 'Last 200'], [0, 'All']].map(([v, n]) => `<button class="sm ${c.chart.range === v ? 'pri' : 'ghost'}" data-act="csrange" data-arg="${v}">${n}</button>`).join('')}<span class="mute" style="font-size:13px">${cn} · one point per round</span></div>
@@ -396,17 +396,18 @@ function csStatsHtml() {
 }
 
 function tabCasino() {
-  const c = csState();
+  const c = csState(); cs2State();
+  const busy = (c.round && c.round.phase !== 'done') || (c.bac.round && c.bac.round.phase !== 'done') || (c.pred.round && c.pred.round.phase !== 'done');
   if (c.round && c.round.phase === 'dealer' && !csTimer) csDealerPlay();
-  const curs = ['gold', 'th'].map(k => `<button class="chip ${c.cur === k ? 'on' : ''}" data-act="cscur" data-arg="${k}" ${c.round && c.round.phase !== 'done' ? 'disabled' : ''}>${CS.cur[k].name} <b class="gold">${N(csBal(k))}</b></button>`).join('');
+  const curs = ['gold', 'th'].map(k => `<button class="chip ${c.cur === k ? 'on' : ''}" data-act="cscur" data-arg="${k}" ${busy ? 'disabled' : ''}>${CS.cur[k].name} <b class="gold">${N(csBal(k))}</b></button>`).join('');
   return `<div class="spread"><h2>Casino</h2><div class="row" style="gap:6px">${curs}</div></div>
-    <p class="mute" style="margin:4px 0 10px">Blackjack at the Golden Hearth. Bet gold or Thousandium. Wins and losses are yours to keep, so play what you can afford to lose.</p>
-    <div class="row" style="gap:6px;margin-bottom:12px">${[['table', '🂡 Blackjack'], ['stats', '📈 Stats']].map(([k, n]) => `<button class="chip ${c.view === k ? 'on' : ''}" data-act="csview" data-arg="${k}">${n}</button>`).join('')}</div>
-    ${c.view === 'stats' ? csStatsHtml() : csTableHtml()}`;
+    <p class="mute" style="margin:4px 0 10px">Blackjack, Baccarat and Prediction at the Golden Hearth. Bet gold or Thousandium. Wins and losses are yours to keep, so play what you can afford to lose.</p>
+    <div class="row" style="gap:6px;margin-bottom:12px">${[['table', '🂡 Blackjack'], ['bac', '🎴 Baccarat'], ['pred', '📈 Prediction'], ['stats', '📊 Stats']].map(([k, n]) => `<button class="chip ${c.view === k ? 'on' : ''}" data-act="csview" data-arg="${k}" ${busy && c.view !== k ? 'disabled' : ''}>${n}</button>`).join('')}</div>
+    ${c.view === 'stats' ? csStatsHtml() : c.view === 'bac' ? bcTableHtml() : c.view === 'pred' ? pdTableHtml() : csTableHtml()}`;
 }
 
 const CASINO_HANDLERS = {
-  cscur: k => { const c = csState(); if (c.round && c.round.phase !== 'done') return; c.cur = k; c.statCur = k; c.msg = ''; renderMain(); },
+  cscur: k => { const c = csState(); if ((c.round && c.round.phase !== 'done') || (c.bac && c.bac.round && c.bac.round.phase !== 'done') || (c.pred && c.pred.round && c.pred.round.phase !== 'done')) return; c.cur = k; c.statCur = k; c.msg = ''; renderMain(); },
   csview: k => { csState().view = k; renderMain(); },
   csbetop: a => { const [k, op] = a.split('|'), c = csState(), b = c.bets[c.cur], L = CS.cur[c.cur], cap = k === 'main' ? L.max : L.sideMax;
     if (op === 'half') b[k] = Math.floor(b[k] / 2); else if (op === 'dbl') b[k] = Math.max(1, b[k]) * 2;
@@ -420,5 +421,5 @@ const CASINO_HANDLERS = {
   csseries: k => { csState().chart.series = k; renderMain(); },
   csrange: v => { csState().chart.range = +v; renderMain(); },
   csreset: () => { const c = csState(), cur = c.statCur || c.cur; modal(`<h3>Reset ${esc(CS.cur[cur].name)} stats?</h3><p>Your graph and totals start again from zero. Your ${esc(CS.cur[cur].name)} isn't touched.</p><div class="row"><button class="pri" data-act="csresetok" data-arg="${cur}">Reset</button><button data-act="close">Cancel</button></div>`); },
-  csresetok: cur => { closeModal(); delete ch.casino.stats[cur]; csState(); save(); renderMain(); },
+  csresetok: cur => { closeModal(); const g = ch.casino.statGame || 'bj'; if (g === 'bj') delete ch.casino.stats[cur]; else ch.casino.stats2[g][cur] = cs2Stats(); csState(); save(); renderMain(); },
 };

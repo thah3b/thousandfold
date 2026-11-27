@@ -44,6 +44,7 @@ ${r('gates.js')}
 ${r('words.js')}
 ${r('games.js')}
 ${r('casino.js')}
+${r('casino2.js')}
 ${r('funtitles.js')}
 ${r('showcase.js')}
 ${r('cloud.js')}

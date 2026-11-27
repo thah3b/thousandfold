@@ -787,3 +787,38 @@ body.reduced .pframe[class*=pf-]{animation:none}
 /* v3.1: Pioneer background */
 .profchar.pbg-pioneerbg,.sxbg.pbg-pioneerbg{background:radial-gradient(circle at 50% 110%,#ffe9a0 0 18%,transparent 45%),repeating-conic-gradient(from 0deg at 50% 110%,rgba(255,233,160,.18) 0 6deg,transparent 6deg 14deg),linear-gradient(#0e3a44,#2a8a88 70%,#5ad0c8);box-shadow:inset 0 0 0 3px #ffd23a}
 .funtitles .spread{flex-wrap:nowrap;align-items:flex-start;gap:8px}.funtitles .spread>span:first-child{flex:1;min-width:0}.funtitles .num{white-space:nowrap}
+/* ---- v3.2: Baccarat ---- */
+.bchands{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.bchand{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px;border-radius:14px;border:2px solid transparent;min-width:170px}
+.bchand.p .bclbl{color:#8ec5ff}.bchand.b .bclbl{color:#ff9b93}
+.bclbl{font:12px Silkscreen,monospace;letter-spacing:2px}
+.bchand.won{border-color:#ffd76a;background:rgba(255,215,106,.1);box-shadow:0 0 18px rgba(255,215,106,.25)}
+.bcspots{display:grid;grid-template-columns:repeat(3,auto);gap:12px 16px;justify-content:center;margin-top:auto}
+.bcspot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:104px;height:84px;border-radius:18px;border:2px solid rgba(233,212,138,.6);font:10px Silkscreen,monospace;color:#e9d48a;text-align:center;gap:2px}
+.bcspot.bp{border-color:#5aa0e8;color:#8ec5ff}.bcspot.bb{border-color:#e8574a;color:#ff9b93}.bcspot.bt{border-color:#4fc35a;color:#8ff0b0}
+.bcspot.bpp,.bcspot.bbp{width:104px;height:56px;border-style:dashed}.bcspot.bpp{grid-column:1}.bcspot.bbp{grid-column:3}
+.bcspot .pay{opacity:.7;font-size:9px}
+.bcspot .csstack{font:700 13px 'Alegreya Sans',system-ui;color:#fff;min-height:18px}
+.bcspot .csstack:not(:empty){background:radial-gradient(circle,#c13d16 55%,#fff 56% 62%,#c13d16 63%);border-radius:50%;width:44px;height:44px;display:grid;place-items:center;font-size:11px;border:2px solid #4a1606;box-shadow:0 3px 0 #4a1606}
+.bcspot.hit{box-shadow:0 0 22px rgba(255,215,106,.7);border-color:#ffd76a}
+.bcroad{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.bcroad i{position:relative;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 11px 'Alegreya Sans',system-ui;font-style:normal;color:#fff}
+.bcroad i.P{background:#2f6fd8}.bcroad i.B{background:#c8302a}.bcroad i.T{background:#2f9a4a}
+.bcroad i s{position:absolute;right:-1px;bottom:-1px;width:7px;height:7px;border-radius:50%;background:#ffd76a;border:1px solid #000}
+/* ---- v3.2: Prediction ---- */
+.pdtable{min-height:0!important;border-radius:18px!important;padding:12px!important;justify-content:flex-start}
+#pdchart{width:100%}
+.pdchart{width:100%;height:auto;display:block}
+.pdgrid{stroke:rgba(255,255,255,.12);stroke-width:1}.pdmid{stroke:rgba(255,255,255,.55);stroke-width:1.5;stroke-dasharray:6 5}
+.pdax{fill:rgba(243,239,226,.65);font:11px 'Alegreya Sans',system-ui;text-anchor:end}
+.pdnow{font:700 15px 'Alegreya Sans',system-ui}
+.pdsides{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.pdsides button{font-size:17px;font-weight:700;padding:12px 8px;border-radius:12px;border:2px solid var(--line)}
+.pdsides .pdup.on{background:#1f7a45;border-color:#3fbf6f;color:#fff}.pdsides .pddown.on{background:#8a2a24;border-color:#e8574a;color:#fff}
+.pdrecent{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:8px}
+.pdrec{display:flex;flex-direction:column;align-items:center;padding:6px;border-radius:10px;background:var(--panel2);border:1px solid var(--line)}
+.pdrec.up b{color:#3fbf6f}.pdrec.down b{color:#e8574a}
+.pdmini{width:100%;height:auto}.pdmini .pdmid{stroke:rgba(255,255,255,.35);stroke-width:1}
+@media (max-width:720px){.bchands{gap:10px}.bchand{min-width:0}.bcspot{width:88px;height:74px}.bcspot.bpp,.bcspot.bbp{width:88px}.pdrecent{grid-template-columns:repeat(5,1fr)}.pdrec{padding:3px}.pdrec b{font-size:12px}}
+.pdtable .csbanner{position:static;transform:none;margin:8px 0 0;width:100%;box-sizing:border-box}
+.pdax{font-size:10px}.pdnow{font-size:13px}

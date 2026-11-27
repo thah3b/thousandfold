@@ -2,8 +2,13 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v3.1';
+const GAME_VERSION = 'v3.2';
 const PATCH_NOTES = [
+  { v: 'v3.2', date: '2026-11-27', title: 'Baccarat and Prediction in the Casino', notes: [
+    "Casino: Baccarat, with a 2-deck shoe. Bet Player (1:1), Banker (0.95:1) or Tie (8:1), plus optional Player Pair and Banker Pair side bets (11:1). Standard punto banco drawing rules, cards dealt one at a time, and a bead road of the last 60 results.",
+    "Casino: Prediction. Pick Up or Down, put in any amount and Start round: a simulated, 100% random market draws 10 line segments from 0% and ends anywhere between −100% and +100%. You win or lose exactly that much: +100% on an Up pick doubles your money, −85% leaves you 15%. Picking Down works the other way round. Your last 10 sessions are shown as mini charts.",
+    "Casino Stats now has a game switch (Blackjack, Baccarat, Prediction), each with its own gold and Thousandium totals and graph. Gold results from all three games count toward the Casino losses leaderboard.",
+  ] },
   { v: 'v3.1', date: '2026-11-27', title: 'Hell’s Gate, Heaven’s Gate, 20 pets and fun titles', notes: [
     "New region: Hell’s Gate (opens at Ascension 5), past Worldheart Chasm. Seven new enemies from 8.6k to 22.8k recommended power, ending with Malphas, Duke of Cinders, plus a hidden three-headed hound. Two uniques, a Brimstone Egg, a dungeon, a region story, a lore page and local talk.",
     "New region: Heaven’s Gate (opens at Ascension 10), past Frostspire. Seven enemies from 26k to 71k recommended power, ending with the Arbiter of Dawn, plus a hidden Sky Leviathan. Two uniques, a Celestial Egg, a dungeon, a region story, a lore page and local talk.",
