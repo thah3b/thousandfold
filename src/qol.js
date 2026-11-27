@@ -14,7 +14,6 @@ function tryStart(id, quiet) {
   const a = ACT(id); if (!a || !isUnlocked(ch, a) || ch.actions.find(x => x.res === id)) return false;
   if (cantStart(a)) return false;
   if (a.inputs && craftable(ch, a) < 1) return false;
-  if (a.kind === 'combat' && ch.actions.some(x => ACT(x.res).kind === 'combat')) return false;
   if (staminaUsed() + a.stamina > D().stamina) return false;
   ch.actions.push({ res: id, prog: 0, streak: 0, vein: 0 });
   ch.counters.maxActive = Math.max(ch.counters.maxActive, ch.actions.length);

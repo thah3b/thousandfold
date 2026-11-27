@@ -2,8 +2,12 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.5d';
+const GAME_VERSION = 'v2.5e';
 const PATCH_NOTES = [
+  { v: 'v2.5e', date: '2026-11-26', title: 'Notifications and multiple fights', notes: [
+    "Notifications: a pop-up tells you when someone sends you a friend request or a private message, with a button to open it. A \ud83d\udcac counter in the top bar (and on the Social menu and the phone's Social button) shows friend requests and unread chat. Social info now refreshes every 20 seconds.",
+    "Fight several enemies at once in the same area: each fight uses stamina like any action and they all share your HP. Being defeated ends all of them.",
+  ] },
   { v: 'v2.5d', date: '2026-11-26', title: 'Stamina fix', notes: [
     "Fixed: stamina from talents (Endurance, the gathering capstone), the Second Wind perk and stamina meals was swallowed by the cap. The cap of 16 now only limits base + DEX; class advances, talents, perks and food add on top. Hover the Stamina counter on Home to see where yours comes from.",
   ] },

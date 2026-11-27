@@ -20,11 +20,32 @@ async function socRefresh() {
   if (soc.trades || Object.keys(account.escrow || {}).length) await tradeSync();
   if (soc.me && typeof guildLoad === 'function') { if (soc.guild === undefined) await guildLoad(true); else guildContribute(); }
   if (soc.me && typeof profilePublish === 'function') profilePublish();
+  socNotify();
   socPaint();
 }
+// v2.5e: tell the player about new friend requests and private messages (world chat only gets a badge).
+function socNotify() {
+  if (!soc.me || screen !== 'game') return;
+  const seen = soc.notified || (soc.notified = { req: null, dm: {} });
+  const inc = soc.friends.filter(f => f.status === 'incoming');
+  if (seen.req === null) { seen.req = new Set(inc.map(f => f.id)); if (inc.length && tab !== 'friends') toast(`👋 You have <b>${inc.length}</b> friend request${inc.length === 1 ? '' : 's'}. <button class="sm" data-act="tab" data-arg="friends">View</button>`, 'gold'); }
+  else for (const f of inc) if (!seen.req.has(f.id)) { seen.req.add(f.id); addLog('sys', `${f.name} sent you a friend request.`); if (tab !== 'friends') toast(`👋 <b>${esc(f.name)}</b> sent you a friend request. <button class="sm" data-act="tab" data-arg="friends">View</button>`, 'gold'); }
+  const cs = account.chatSeen || {};
+  for (const f of friendsOnly()) {
+    if (!f.last_dm || f.last_dm_mine || f.last_dm <= (cs['dm:' + f.id] || 0) || f.last_dm <= (seen.dm[f.id] || 0)) continue;
+    const first = seen.dm[f.id] === undefined && seen.boot; seen.dm[f.id] = f.last_dm;
+    if (tab === 'chat' && soc.chan === 'dm:' + f.id) continue;
+    toast(`💬 New message from <b>${esc(f.name)}</b>. <button class="sm" data-act="chatdm" data-arg="${esc(f.id)}">Open</button>`);
+  }
+  seen.boot = true;
+}
+// The count shown on the top-bar chat chip, the Social group and the phone Social button.
+const socAlerts = () => !socOn() || !soc.me ? 0 : soc.friends.filter(f => f.status === 'incoming').length + unreadChat();
+function socChip() { const n = socAlerts(); return `<button class="chip ${n ? 'on' : ''}" id="socchip" data-act="tab" data-arg="${soc.friends.some(f => f.status === 'incoming') ? 'friends' : 'chat'}" title="Friend requests and unread chat"${n ? '' : ' style="display:none"'}>💬 ${n}</button>`; }
 function socPaint() {
   if (screen !== 'game') return;
   const chip = document.getElementById('mailchip'); if (chip) chip.outerHTML = mailChip();
+  const sc = document.getElementById('socchip'); if (sc) sc.outerHTML = socChip();
   if (typeof renderNav === 'function') renderNav();
   if (['friends', 'mail', 'trade'].includes(tab) && !document.activeElement?.closest?.('#main input, #main textarea, #main select')) renderMain();
 }
@@ -232,6 +253,7 @@ const SOCIAL_HANDLERS = {
   socaddname: async n => { try { const r = await rpc('tf_friend_add', { p_target: n }); closeModal(); toast(r === 'accepted' ? 'You’re now friends!' : 'Friend request sent.', 'verd'); socRefresh(); } catch (e) { toast(esc(e.message)); } },
   socdm: id => { soc.chan = 'dm:' + id; HANDLERS.tab('chat'); },
   socchan: k => { soc.chan = k; soc.err = ''; renderMain(); chatLoop(); },
+  chatdm: id => { soc.chan = 'dm:' + id; HANDLERS.tab('chat'); },
   chatsend: async () => { const el = $('#chatin'); if (!el) return; const v = el.value.trim(); if (!v) return; try { await rpc('tf_chat_send', { p_channel: soc.chan, p_body: v }); const cur = $('#chatin'); if (cur && cur.value.trim() === v) cur.value = ''; el.value = ''; soc.err = ''; await chatFetch(); const nf = $('#chatin'); if (nf) nf.focus(); } catch (e) { soc.err = e.message; chatPaint(false); } },
   socgift: id => { soc.gift = { to: id || null, offer: { gold: 0, items: {} }, note: '' }; if (tab !== 'mail') HANDLERS.tab('mail'); else renderMain(); },
   giftto: id => { readOffer('gift', soc.gift.offer); soc.gift.to = id; renderMain(); },
@@ -272,7 +294,7 @@ document.addEventListener('change', e => {
   if (t.id === 'trgold' && soc.offer) { soc.offer.gold = Math.max(0, Math.floor(+t.value || 0)); renderMain(); }
   const q = t.dataset && t.dataset.offerq; if (q) { const p = q.split('|')[0], k = q.slice(q.indexOf('|') + 1), o = p === 'gift' ? soc.gift && soc.gift.offer : soc.offer; if (o) o.items[k] = Math.max(1, Math.floor(+t.value || 1)); if (p === 'tr') renderMain(); }
 });
-setInterval(() => { if (screen === 'game' && socOn() && !document.hidden && Date.now() - soc.lastTick > 60000) socRefresh(); }, 5000);
+setInterval(() => { if (screen === 'game' && socOn() && !document.hidden && Date.now() - soc.lastTick > 20000) socRefresh(); }, 5000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && screen === 'game' && socOn() && Date.now() - soc.lastTick > 15000) { socRefresh(); if (tab === 'chat') chatLoop(); } });
 
 // ---------- Admin letters (v0.11a) ----------

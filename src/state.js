@@ -176,7 +176,7 @@ function startAction(id) {
   const a = ACT(id); if (!a || !isUnlocked(ch, a) || ch.actions.find(x => x.res === id)) return;
   if (typeof tabOpen === 'function' && !tabOpen(actTab(a))) { toast(`🔒 ${esc(tabName(actTab(a)))} unlocks at ${esc(gateText(actTab(a)))}.`); return; }
   const why = cantStart(a); if (why) { toast(esc(why)); return; }
-  if (a.kind === 'combat') { const cur = ch.actions.find(x => ACT(x.res).kind === 'combat'); if (cur) stopAction(cur.res); if (ch.hp != null && ch.hp < D('slaying').maxHP * 0.2) { toast('Too hurt to fight. Rest or eat first.'); return; } }
+  if (a.kind === 'combat') { if (ch.hp != null && ch.hp < D('slaying').maxHP * 0.2) { toast('Too hurt to fight. Rest or eat first.'); return; } }
   if (a.inputs && craftable(ch, a) < 1) { toast(`Not enough materials for ${esc(a.name)}.`); return; }
   const max = D().stamina, used = staminaUsed();
   if (used + a.stamina > max) {
@@ -410,6 +410,7 @@ function combatTick(a, e, d, now) {
   for (const l of r.rare) { const nm = ITEM(l.key).name; addLog('lucky', `Rare drop from ${e.name}: ${nm}!`); if (l.unique) { toast(`<b>Unique drop!</b> ${itemIcon(l.key, 20)} ${esc(nm)}`, 'gold'); chime(988, 1480); flash(); } }
   if (r.died) {
     ch.hp = d.maxHP * BALANCE.combat.defeatHpFrac;
+    for (const o of [...ch.actions]) if (o.res !== a.res && ACT(o.res).kind === 'combat') stopAction(o.res); // one defeat ends every fight
     stopAction(a.res, `${e.name} defeated you. You limp back to ${REGION_BY[ch.loc].town} to recover.`);
     clog(`Defeated by ${e.name}.`, 'bad'); return;
   }

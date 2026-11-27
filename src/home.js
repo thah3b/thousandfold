@@ -15,7 +15,7 @@ function bnavBadge(id) {
   if (id === 'skills') return ch.actions.some(a => ACT(a.res).kind !== 'combat') ? '<span class="dot"></span>' : '';
   if (id === 'adventure') return (ch.quest.done && ch.qactive.some(q => questHave(q) >= q.need)) ? '<span class="dot"></span>' : '';
   if (id === 'more') return (tabOpen('events') && ch.daily && !ch.daily.claimed) || (tabOpen('games') && typeof rwPlayedToday === 'function' && !rwPlayedToday()) || (ch.gate && ch.gate.fresh && Object.keys(ch.gate.fresh).length) ? '<span class="dot"></span>' : '';
-  if (id === 'social') { const n = (typeof soc !== 'undefined' && soc.me ? soc.mail || 0 : 0) + (typeof fb !== 'undefined' && fb.unread ? fb.unread : 0); return n ? `<span class="bcount">${n}</span>` : ''; }
+  if (id === 'social') { const n = (typeof soc !== 'undefined' && soc.me ? (soc.mail || 0) + socAlerts() : 0) + (typeof fb !== 'undefined' && fb.unread ? fb.unread : 0); return n ? `<span class="bcount">${n}</span>` : ''; }
   return '';
 }
 function renderBnav() {
