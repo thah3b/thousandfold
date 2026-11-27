@@ -2,8 +2,11 @@
 // VERSION & PATCH NOTES
 // Version scheme (alpha): v1.1, v1.2 ... with a letter for small fixes (v1.1a). After v1.5 comes v2.0.
 // ============================================================
-const GAME_VERSION = 'v2.5e';
+const GAME_VERSION = 'v2.5f';
 const PATCH_NOTES = [
+  { v: 'v2.5f', date: '2026-11-26', title: '500-slot bags', notes: [
+    "Bigger bags: every character's inventory goes from 200 to 500 slots. Characters that already exist get +300 slots, and any space you bought at the Bank is kept on top.",
+  ] },
   { v: 'v2.5e', date: '2026-11-26', title: 'Notifications and multiple fights', notes: [
     "Notifications: a pop-up tells you when someone sends you a friend request or a private message, with a button to open it. A \ud83d\udcac counter in the top bar (and on the Social menu and the phone's Social button) shows friend requests and unread chat. Social info now refreshes every 20 seconds.",
     "Fight several enemies at once in the same area: each fight uses stamina like any action and they all share your HP. Being defeated ends all of them.",

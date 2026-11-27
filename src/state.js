@@ -53,9 +53,10 @@ function migrate(c) {
   c.visited = c.visited || { [c.loc]: true };
   c.secrets = c.secrets || {}; c.riddle = c.riddle || null;
   c.fashion = c.fashion || {}; c.wardrobe = c.wardrobe || {}; c.tour = c.tour || { done: true }; c.gate = c.gate || { all: true }; c.coach = c.coach || { on: false, done: {} }; c.presets = c.presets || [];
-  if (c.invSlots != null && !c.bag100) c.invSlots += BALANCE.storage.invSlots - 60; // v0.12a: base bag 60 -> 100 (now -> 200 in one go)
+  if (c.invSlots != null && !c.bag100) c.invSlots += 140; // v0.12a: base bag 60 -> 100 (-> 200 in one go; the v2.5f step below adds the rest)
   else if (c.invSlots != null && !c.bag200) c.invSlots += 100; // v2.0e: base bag 100 -> 200
-  c.bag100 = true; c.bag200 = true;
+  if (c.invSlots != null && !c.bag500) c.invSlots += 300; // v2.5f: base bag 200 -> 500 (bought upgrades kept)
+  c.bag100 = true; c.bag200 = true; c.bag500 = true;
   Object.assign(c, Object.assign({ market: {}, bank: {}, questStats: {}, seen: {}, bossKilled: {}, areasSeen: {}, clog: [], combatFood: null, travel: null, nextEvent: 0, eventBuff: null, hp: null, invSlots: BALANCE.storage.invSlots, bankSlots: BALANCE.storage.bankSlots, invUps: 0, bankUps: 0, savings: { bal: 0, t: Date.now() }, merchant: { day: 0, bought: {} }, titlesSeen: [], secretTitles: {}, pins: [], ach: {}, potions: {}, log: [] }, c));
   return c;
 }
